@@ -55,10 +55,15 @@ export default function DashboardPage() {
   const loadWorkspaces = async () => {
     try {
       const response = await fetch('/api/workspaces');
-      const data = await response.json();
-      setWorkspaces(data.workspaces);
-      if (data.workspaces.length > 0) {
-        setSelectedWorkspace(data.workspaces[0].id);
+      if (!response.ok) throw new Error('Failed to load workspaces');
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const workspacesData = result.ok && result.data ? result.data.workspaces : result.workspaces;
+
+      setWorkspaces(workspacesData || []);
+      if (workspacesData && workspacesData.length > 0) {
+        setSelectedWorkspace(workspacesData[0].id);
       }
     } catch (error) {
       toast({
@@ -74,8 +79,13 @@ export default function DashboardPage() {
       const response = await fetch(
         `/api/workspaces/${workspaceId}/projects`
       );
-      const data = await response.json();
-      setProjects(data.projects);
+      if (!response.ok) throw new Error('Failed to load projects');
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const projectsData = result.ok && result.data ? result.data.projects : result.projects;
+
+      setProjects(projectsData || []);
     } catch (error) {
       toast({
         title: 'Error',
@@ -105,8 +115,12 @@ export default function DashboardPage() {
 
       if (!response.ok) throw new Error('Failed to create project');
 
-      const data = await response.json();
-      setProjects([data.project, ...projects]);
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const project = result.ok && result.data ? result.data.project : result.project;
+
+      setProjects([project, ...projects]);
       setNewProjectName('');
       setNewProjectDescription('');
       setShowNewProject(false);
