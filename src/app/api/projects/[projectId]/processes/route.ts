@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 const createProcessSchema = z.object({
   name: z.string().min(1),
@@ -18,7 +20,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify user has access to project
@@ -36,7 +38,7 @@ export async function GET(
     });
 
     if (!project || project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this project');
     }
 
     const processes = await db.process.findMany({
@@ -44,13 +46,10 @@ export async function GET(
       orderBy: { updatedAt: 'desc' },
     });
 
-    return NextResponse.json({ processes });
+    return ok({ processes });
   } catch (error) {
-    console.error('Get processes error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Get processes', error, { projectId: params.projectId });
+    return CommonErrors.internalError('Failed to load processes');
   }
 }
 
@@ -62,7 +61,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify user has access to project
@@ -80,7 +79,7 @@ export async function POST(
     });
 
     if (!project || project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this project');
     }
 
     const body = await req.json();
@@ -93,16 +92,13 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ process });
+    return ok({ process });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return CommonErrors.invalidInput(error.errors[0]?.message || 'Invalid input');
     }
 
-    console.error('Create process error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Create process', error, { projectId: params.projectId });
+    return CommonErrors.internalError('Failed to create process');
   }
 }
