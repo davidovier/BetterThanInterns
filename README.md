@@ -34,39 +34,52 @@ This implementation includes:
 ### Prerequisites
 
 - Node.js 18+ installed
-- PostgreSQL database (local or hosted)
+- Supabase account (database already configured)
 - OpenAI API key
+- Vercel account (for deployment)
 
 ### Installation
 
-1. **Clone and install dependencies:**
+**Option A: Quick Setup Script (Recommended)**
+
+```bash
+# Run the automated setup script
+./scripts/setup-supabase.sh
+```
+
+This will:
+- Install all dependencies
+- Generate Prisma client
+- Push database schema to Supabase
+- Verify configuration
+
+Then just add your OpenAI API key to `.env` and run:
+
+```bash
+npm run dev
+```
+
+**Option B: Manual Setup**
+
+1. **Install dependencies:**
 
 ```bash
 npm install
 ```
 
-2. **Set up environment variables:**
+2. **Environment variables:**
 
-Copy `.env.example` to `.env` and fill in your values:
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and add:
-
-```env
-DATABASE_URL="postgresql://user:password@localhost:5432/betterthaninterns?schema=public"
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="generate-with-openssl-rand-base64-32"
-OPENAI_API_KEY="sk-your-openai-key-here"
-```
-
-To generate a `NEXTAUTH_SECRET`:
+The `.env` file is already configured with Supabase credentials. You only need to add your OpenAI API key:
 
 ```bash
-openssl rand -base64 32
+# Open .env and add your OpenAI key
+OPENAI_API_KEY="sk-your-actual-openai-key-here"
 ```
+
+Current configuration:
+- ✅ Database: Supabase (PostgreSQL with connection pooling)
+- ✅ NextAuth: Pre-configured with secret
+- ⚠️ OpenAI: **You need to add your key**
 
 3. **Set up the database:**
 
@@ -74,9 +87,9 @@ openssl rand -base64 32
 npm run db:push
 ```
 
-This will create all the necessary tables in your PostgreSQL database.
+This creates all tables in your Supabase database.
 
-4. **Start the development server:**
+4. **Start development server:**
 
 ```bash
 npm run dev
@@ -85,6 +98,25 @@ npm run dev
 5. **Open your browser:**
 
 Navigate to [http://localhost:3000](http://localhost:3000)
+
+---
+
+## Deployment to Production
+
+This app is configured for **Vercel + Supabase** deployment.
+
+### Quick Deploy
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
+
+**Quick steps:**
+
+1. Push to GitHub
+2. Import to Vercel from GitHub
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+The database is already set up on Supabase - you just need to deploy the frontend to Vercel.
 
 ---
 
