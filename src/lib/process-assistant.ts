@@ -137,7 +137,7 @@ export async function callProcessAssistant(
     };
   } catch (error) {
     console.error('Process assistant error:', error);
-    throw new Error('Failed to process message');
+    throw new Error(`LLM error: Failed to process message - ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
