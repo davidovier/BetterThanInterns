@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 export async function GET(
   req: NextRequest,
@@ -10,7 +12,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const { blueprintId } = params;
@@ -36,11 +38,10 @@ export async function GET(
     });
 
     if (!blueprint || blueprint.project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Blueprint not found or access denied' }, { status: 404 });
+      return CommonErrors.notFound('Blueprint', 'Blueprint not found or access denied');
     }
 
-    return NextResponse.json({
-      success: true,
+    return ok({
       blueprint: {
         id: blueprint.id,
         projectId: blueprint.projectId,
@@ -54,10 +55,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error fetching blueprint:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch blueprint' },
-      { status: 500 }
-    );
+    logError('Fetch blueprint', error, { blueprintId: params.blueprintId });
+    return CommonErrors.internalError('Failed to fetch blueprint');
   }
 }

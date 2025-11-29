@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 const createStepSchema = z.object({
   title: z.string().min(1),
@@ -45,7 +47,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const hasAccess = await verifyProcessAccess(
@@ -53,7 +55,7 @@ export async function POST(
       session.user.id
     );
     if (!hasAccess) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this process');
     }
 
     const body = await req.json();
@@ -74,16 +76,13 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ step });
+    return ok({ step });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return CommonErrors.invalidInput(error.errors[0]?.message || 'Invalid input');
     }
 
-    console.error('Create step error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Create step', error, { processId: params.processId });
+    return CommonErrors.internalError('Failed to create step');
   }
 }

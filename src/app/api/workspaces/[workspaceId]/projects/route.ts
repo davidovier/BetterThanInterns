@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 const createProjectSchema = z.object({
   name: z.string().min(1),
@@ -19,7 +21,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify user has access to workspace
@@ -33,7 +35,7 @@ export async function GET(
     });
 
     if (!member) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
     const projects = await db.project.findMany({
@@ -45,13 +47,10 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ projects });
+    return ok({ projects });
   } catch (error) {
-    console.error('Get projects error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Get projects', error, { workspaceId: params.workspaceId });
+    return CommonErrors.internalError('Failed to load projects');
   }
 }
 
@@ -63,7 +62,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify user has access to workspace
@@ -77,7 +76,7 @@ export async function POST(
     });
 
     if (!member) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
     const body = await req.json();
@@ -90,16 +89,13 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({ project });
+    return ok({ project });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return CommonErrors.invalidInput(error.errors[0]?.message || 'Invalid input');
     }
 
-    console.error('Create project error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Create project', error, { workspaceId: params.workspaceId });
+    return CommonErrors.internalError('Failed to create project');
   }
 }

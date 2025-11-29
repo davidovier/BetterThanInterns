@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, Workflow, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { apiFetch, getErrorMessage } from '@/lib/api-client';
 
 type Process = {
   id: string;
@@ -62,21 +63,14 @@ export default function ProjectProcessesPage({
 
   const loadProject = async () => {
     try {
-      const response = await fetch(`/api/projects/${params.projectId}`);
-      if (!response.ok) throw new Error('Failed to load project');
-      const result = await response.json();
-
-      // Handle new API response format { ok: true, data: {...} }
-      if (result.ok && result.data) {
-        setProject(result.data.project);
-      } else if (result.project) {
-        // Fallback for old format
-        setProject(result.project);
-      }
+      const data = await apiFetch<{ project: Project }>(
+        `/api/projects/${params.projectId}`
+      );
+      setProject(data.project);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to load project',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -84,23 +78,14 @@ export default function ProjectProcessesPage({
 
   const loadProcesses = async () => {
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ processes: Process[] }>(
         `/api/projects/${params.projectId}/processes`
       );
-      if (!response.ok) throw new Error('Failed to load processes');
-      const result = await response.json();
-
-      // Handle new API response format { ok: true, data: {...} }
-      if (result.ok && result.data) {
-        setProcesses(result.data.processes || []);
-      } else if (result.processes) {
-        // Fallback for old format
-        setProcesses(result.processes);
-      }
+      setProcesses(data.processes);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to load processes',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -108,23 +93,14 @@ export default function ProjectProcessesPage({
 
   const loadBlueprints = async () => {
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ blueprints: Blueprint[] }>(
         `/api/projects/${params.projectId}/blueprints`
       );
-      if (!response.ok) throw new Error('Failed to load blueprints');
-      const result = await response.json();
-
-      // Handle new API response format { ok: true, data: {...} }
-      if (result.ok && result.data) {
-        setBlueprints(result.data.blueprints || []);
-      } else if (result.blueprints) {
-        // Fallback for old format
-        setBlueprints(result.blueprints);
-      }
+      setBlueprints(data.blueprints);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to load blueprints',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     }
@@ -135,7 +111,7 @@ export default function ProjectProcessesPage({
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ process: Process }>(
         `/api/projects/${params.projectId}/processes`,
         {
           method: 'POST',
@@ -147,13 +123,6 @@ export default function ProjectProcessesPage({
         }
       );
 
-      if (!response.ok) throw new Error('Failed to create process');
-
-      const result = await response.json();
-
-      // Handle new API response format
-      const processId = result.ok && result.data ? result.data.process.id : result.process.id;
-
       toast({
         title: 'Process created',
         description: "Let's map one process you secretly hate.",
@@ -161,12 +130,12 @@ export default function ProjectProcessesPage({
 
       // Navigate to process mapping page
       router.push(
-        `/projects/${params.projectId}/processes/${processId}`
+        `/projects/${params.projectId}/processes/${data.process.id}`
       );
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to create process',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {
@@ -187,20 +156,13 @@ export default function ProjectProcessesPage({
     setIsGeneratingBlueprint(true);
 
     try {
-      const response = await fetch(
+      const data = await apiFetch<{ blueprint: Blueprint }>(
         `/api/projects/${params.projectId}/blueprints`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
         }
       );
-
-      if (!response.ok) throw new Error('Failed to generate blueprint');
-
-      const result = await response.json();
-
-      // Handle new API response format
-      const blueprintId = result.ok && result.data ? result.data.blueprint.id : result.blueprint.id;
 
       toast({
         title: 'Blueprint generated',
@@ -209,12 +171,12 @@ export default function ProjectProcessesPage({
 
       // Navigate to blueprint view
       router.push(
-        `/projects/${params.projectId}/blueprints/${blueprintId}`
+        `/projects/${params.projectId}/blueprints/${data.blueprint.id}`
       );
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to generate blueprint',
+        description: getErrorMessage(error),
         variant: 'destructive',
       });
     } finally {

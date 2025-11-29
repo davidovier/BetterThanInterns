@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 const updateProcessSchema = z.object({
   name: z.string().min(1).optional(),
@@ -18,7 +20,7 @@ export async function GET(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const { searchParams } = new URL(req.url);
@@ -50,16 +52,13 @@ export async function GET(
     });
 
     if (!process || process.project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+      return CommonErrors.notFound('Process');
     }
 
-    return NextResponse.json({ process });
+    return ok({ process });
   } catch (error) {
-    console.error('Get process error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Get process', error, { processId: params.processId });
+    return CommonErrors.internalError('Failed to load process');
   }
 }
 
@@ -71,7 +70,7 @@ export async function PATCH(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify access
@@ -96,7 +95,7 @@ export async function PATCH(
       !existingProcess ||
       existingProcess.project.workspace.members.length === 0
     ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this process');
     }
 
     const body = await req.json();
@@ -107,16 +106,13 @@ export async function PATCH(
       data,
     });
 
-    return NextResponse.json({ process });
+    return ok({ process });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+      return CommonErrors.invalidInput(error.errors[0]?.message || 'Invalid input');
     }
 
-    console.error('Update process error:', error);
-    return NextResponse.json(
-      { error: 'Something went wrong' },
-      { status: 500 }
-    );
+    logError('Update process', error, { processId: params.processId });
+    return CommonErrors.internalError('Failed to update process');
   }
 }
