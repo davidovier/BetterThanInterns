@@ -15,15 +15,33 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/step-details-dialog';
 import { ChatMessageType, ProcessStep as ProcessStepType } from '@/types/process';
+import { Badge } from '@/components/ui/badge';
 
 type Process = {
   id: string;
   name: string;
   description?: string;
+};
+
+type Opportunity = {
+  id: string;
+  stepId: string | null;
+  title: string;
+  description: string;
+  opportunityType: string;
+  impactLevel: 'low' | 'medium' | 'high';
+  effortLevel: 'low' | 'medium' | 'high';
+  impactScore: number;
+  feasibilityScore: number;
+  rationaleText: string;
+  step?: {
+    id: string;
+    title: string;
+  };
 };
 
 export default function ProcessMappingPage({
@@ -41,10 +59,14 @@ export default function ProcessMappingPage({
   const [isLoading, setIsLoading] = useState(false);
   const [selectedStep, setSelectedStep] = useState<ProcessStepType | null>(null);
   const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [isScanning, setIsScanning] = useState(false);
+  const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadProcess();
+    loadOpportunities();
   }, [params.processId]);
 
   useEffect(() => {
@@ -67,21 +89,58 @@ export default function ProcessMappingPage({
 
       // Convert steps to React Flow nodes
       if (data.process.steps) {
-        const flowNodes: Node[] = data.process.steps.map((step: any) => ({
-          id: step.id,
-          type: 'default',
-          data: {
-            label: (
-              <div className="text-center">
-                <div className="font-medium">{step.title}</div>
-                {step.owner && (
-                  <div className="text-xs text-muted-foreground">{step.owner}</div>
-                )}
-              </div>
-            ),
-          },
-          position: { x: step.positionX, y: step.positionY },
-        }));
+        const flowNodes: Node[] = data.process.steps.map((step: any) => {
+          // Check if this step has an opportunity
+          const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
+          const impactLevel = stepOpportunity?.impactLevel;
+
+          // Apply heatmap styling based on impact level
+          let nodeStyle: any = {};
+          if (impactLevel === 'high') {
+            nodeStyle = {
+              borderColor: '#ef4444',
+              borderWidth: '3px',
+              backgroundColor: '#fee2e2',
+              borderStyle: 'solid',
+            };
+          } else if (impactLevel === 'medium') {
+            nodeStyle = {
+              borderColor: '#f59e0b',
+              borderWidth: '2px',
+              backgroundColor: '#fef3c7',
+              borderStyle: 'solid',
+            };
+          } else if (impactLevel === 'low') {
+            nodeStyle = {
+              borderColor: '#3b82f6',
+              borderWidth: '2px',
+              backgroundColor: '#dbeafe',
+              borderStyle: 'solid',
+            };
+          }
+
+          // Add highlight if this step is selected
+          if (highlightedStepId === step.id) {
+            nodeStyle.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+          }
+
+          return {
+            id: step.id,
+            type: 'default',
+            data: {
+              label: (
+                <div className="text-center">
+                  <div className="font-medium">{step.title}</div>
+                  {step.owner && (
+                    <div className="text-xs text-muted-foreground">{step.owner}</div>
+                  )}
+                </div>
+              ),
+            },
+            position: { x: step.positionX, y: step.positionY },
+            style: nodeStyle,
+          };
+        });
         setNodes(flowNodes);
       }
 
@@ -102,6 +161,56 @@ export default function ProcessMappingPage({
         description: 'Failed to load process',
         variant: 'destructive',
       });
+    }
+  };
+
+  const loadOpportunities = async () => {
+    try {
+      const response = await fetch(
+        `/api/processes/${params.processId}/opportunities`
+      );
+      if (!response.ok) return; // Silently fail if no opportunities yet
+
+      const data = await response.json();
+      setOpportunities(data.opportunities || []);
+    } catch (error) {
+      // Silently fail - opportunities are optional
+      console.log('No opportunities loaded');
+    }
+  };
+
+  const scanForOpportunities = async () => {
+    setIsScanning(true);
+    try {
+      const response = await fetch(
+        `/api/processes/${params.processId}/scan-opportunities`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to scan for opportunities');
+
+      const data = await response.json();
+
+      toast({
+        title: 'Scan complete!',
+        description: `Found ${data.count} automation ${data.count === 1 ? 'opportunity' : 'opportunities'}`,
+      });
+
+      // Reload opportunities
+      await loadOpportunities();
+
+      // Update graph to show heatmap
+      await loadProcess();
+    } catch (error) {
+      toast({
+        title: 'Scan failed',
+        description: 'Could not analyze process for opportunities',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -306,12 +415,29 @@ export default function ProcessMappingPage({
             )}
           </div>
         </div>
+        <Button
+          onClick={scanForOpportunities}
+          disabled={isScanning || nodes.length === 0}
+          className="gap-2"
+        >
+          {isScanning ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Scanning...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4" />
+              Scan for AI Opportunities
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Two-panel layout */}
-      <div className="flex-1 grid grid-cols-5 gap-4 min-h-0">
+      {/* Three-panel layout */}
+      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
         {/* Chat Panel - Left */}
-        <div className="col-span-2 flex flex-col border rounded-lg bg-card overflow-hidden">
+        <div className="col-span-3 flex flex-col border rounded-lg bg-card overflow-hidden">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Process Assistant</h2>
             <p className="text-xs text-muted-foreground mt-1">
@@ -385,8 +511,8 @@ export default function ProcessMappingPage({
           </div>
         </div>
 
-        {/* Graph Panel - Right */}
-        <div className="col-span-3 border rounded-lg bg-card overflow-hidden">
+        {/* Graph Panel - Center */}
+        <div className="col-span-6 border rounded-lg bg-card overflow-hidden relative">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -399,6 +525,108 @@ export default function ProcessMappingPage({
             <Controls />
             <MiniMap />
           </ReactFlow>
+
+          {/* Heatmap Legend */}
+          {opportunities.length > 0 && (
+            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border text-xs space-y-2">
+              <div className="font-semibold mb-2">Impact Level</div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded"></div>
+                <span>High</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-amber-500 bg-amber-100 rounded"></div>
+                <span>Medium</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-blue-500 bg-blue-100 rounded"></div>
+                <span>Low</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Opportunities Panel - Right */}
+        <div className="col-span-3 flex flex-col border rounded-lg bg-card overflow-hidden">
+          <div className="p-4 border-b">
+            <h2 className="font-semibold flex items-center gap-2">
+              <Target className="h-4 w-4" />
+              AI Opportunities
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              {opportunities.length === 0
+                ? 'Click "Scan" to find automation wins'
+                : `${opportunities.length} ${opportunities.length === 1 ? 'opportunity' : 'opportunities'} found`}
+            </p>
+          </div>
+
+          {/* Opportunities List */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {opportunities.length === 0 ? (
+              <div className="text-center text-muted-foreground text-sm py-8 px-4">
+                <p className="font-medium mb-2">
+                  We didn't find obvious AI wins yet.
+                </p>
+                <p>
+                  Either this process is solid, or someone lied to us.
+                </p>
+              </div>
+            ) : (
+              opportunities.map((opp) => (
+                <div
+                  key={opp.id}
+                  className="border rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (opp.stepId) {
+                      setHighlightedStepId(opp.stepId);
+                      // Reload process to apply highlight
+                      loadProcess();
+                    }
+                  }}
+                  onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
+                  onMouseLeave={() => setHighlightedStepId(null)}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-medium text-sm flex-1">{opp.title}</h3>
+                    <div className="flex gap-1">
+                      <Badge
+                        variant={
+                          opp.impactLevel === 'high'
+                            ? 'destructive'
+                            : opp.impactLevel === 'medium'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className="text-xs"
+                      >
+                        {opp.impactLevel} impact
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {opp.step && (
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Step: {opp.step.title}
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {opp.rationaleText}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-2 text-xs">
+                    <span className="text-muted-foreground">
+                      Effort: {opp.effortLevel}
+                    </span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-muted-foreground">
+                      Impact: {opp.impactScore}/100
+                    </span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
 
