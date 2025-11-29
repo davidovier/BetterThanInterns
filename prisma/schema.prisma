@@ -215,8 +215,48 @@ model Opportunity {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  process Process      @relation(fields: [processId], references: [id], onDelete: Cascade)
-  step    ProcessStep? @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  process          Process           @relation(fields: [processId], references: [id], onDelete: Cascade)
+  step             ProcessStep?      @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  opportunityTools OpportunityTool[]
 
   @@map("opportunities")
+}
+
+// ============================================
+// TOOLS & TOOL MATCHING
+// ============================================
+model Tool {
+  id                    String   @id @default(cuid())
+  name                  String
+  vendor                String?
+  category              String // "ocr", "workflow_automation", "rpa", "llm_agent", "integration", "data_extraction"
+  description           String   @db.Text
+  useCases              Json     @default("[]") // Array of use case strings
+  pricingTier           String // "free", "freemium", "paid", "enterprise"
+  integrationComplexity String // "low" | "medium" | "high"
+  securityNotes         String?  @db.Text
+  websiteUrl            String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  opportunityTools OpportunityTool[]
+
+  @@map("tools")
+}
+
+model OpportunityTool {
+  id            String   @id @default(cuid())
+  opportunityId String
+  toolId        String
+  matchScore    Float // 0.0 - 1.0
+  rationale     String   @db.Text
+  userSelected  Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  tool        Tool        @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, toolId])
+  @@map("opportunity_tools")
 }

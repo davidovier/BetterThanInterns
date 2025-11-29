@@ -15,9 +15,10 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/step-details-dialog';
+import { ToolRecommendationsDialog } from '@/components/tool-recommendations-dialog';
 import { ChatMessageType, ProcessStep as ProcessStepType } from '@/types/process';
 import { Badge } from '@/components/ui/badge';
 
@@ -62,6 +63,8 @@ export default function ProcessMappingPage({
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null);
+  const [selectedOpportunityForTools, setSelectedOpportunityForTools] = useState<Opportunity | null>(null);
+  const [isToolDialogOpen, setIsToolDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -575,54 +578,71 @@ export default function ProcessMappingPage({
               opportunities.map((opp) => (
                 <div
                   key={opp.id}
-                  className="border rounded-lg p-3 hover:bg-accent cursor-pointer transition-colors"
-                  onClick={() => {
-                    if (opp.stepId) {
-                      setHighlightedStepId(opp.stepId);
-                      // Reload process to apply highlight
-                      loadProcess();
-                    }
-                  }}
-                  onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
-                  onMouseLeave={() => setHighlightedStepId(null)}
+                  className="border rounded-lg p-3 transition-colors"
                 >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-medium text-sm flex-1">{opp.title}</h3>
-                    <div className="flex gap-1">
-                      <Badge
-                        variant={
-                          opp.impactLevel === 'high'
-                            ? 'destructive'
-                            : opp.impactLevel === 'medium'
-                            ? 'default'
-                            : 'secondary'
-                        }
-                        className="text-xs"
-                      >
-                        {opp.impactLevel} impact
-                      </Badge>
+                  <div
+                    className="cursor-pointer hover:bg-accent rounded-sm -m-3 p-3 mb-3"
+                    onClick={() => {
+                      if (opp.stepId) {
+                        setHighlightedStepId(opp.stepId);
+                        loadProcess();
+                      }
+                    }}
+                    onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
+                    onMouseLeave={() => setHighlightedStepId(null)}
+                  >
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3 className="font-medium text-sm flex-1">{opp.title}</h3>
+                      <div className="flex gap-1">
+                        <Badge
+                          variant={
+                            opp.impactLevel === 'high'
+                              ? 'destructive'
+                              : opp.impactLevel === 'medium'
+                              ? 'default'
+                              : 'secondary'
+                          }
+                          className="text-xs"
+                        >
+                          {opp.impactLevel} impact
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {opp.step && (
+                      <div className="text-xs text-muted-foreground mb-2">
+                        Step: {opp.step.title}
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {opp.rationaleText}
+                    </p>
+
+                    <div className="flex items-center gap-3 mt-2 text-xs">
+                      <span className="text-muted-foreground">
+                        Effort: {opp.effortLevel}
+                      </span>
+                      <span className="text-muted-foreground">•</span>
+                      <span className="text-muted-foreground">
+                        Impact: {opp.impactScore}/100
+                      </span>
                     </div>
                   </div>
 
-                  {opp.step && (
-                    <div className="text-xs text-muted-foreground mb-2">
-                      Step: {opp.step.title}
-                    </div>
-                  )}
-
-                  <p className="text-xs text-muted-foreground line-clamp-2">
-                    {opp.rationaleText}
-                  </p>
-
-                  <div className="flex items-center gap-3 mt-2 text-xs">
-                    <span className="text-muted-foreground">
-                      Effort: {opp.effortLevel}
-                    </span>
-                    <span className="text-muted-foreground">•</span>
-                    <span className="text-muted-foreground">
-                      Impact: {opp.impactScore}/100
-                    </span>
-                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedOpportunityForTools(opp);
+                      setIsToolDialogOpen(true);
+                    }}
+                  >
+                    <Wrench className="h-4 w-4" />
+                    View recommended tools
+                  </Button>
                 </div>
               ))
             )}
@@ -637,6 +657,19 @@ export default function ProcessMappingPage({
           isOpen={isStepDialogOpen}
           onClose={() => setIsStepDialogOpen(false)}
           onUpdate={handleUpdateStep}
+        />
+      )}
+
+      {/* Tool Recommendations Dialog */}
+      {selectedOpportunityForTools && (
+        <ToolRecommendationsDialog
+          opportunityId={selectedOpportunityForTools.id}
+          opportunityTitle={selectedOpportunityForTools.title}
+          isOpen={isToolDialogOpen}
+          onClose={() => {
+            setIsToolDialogOpen(false);
+            setSelectedOpportunityForTools(null);
+          }}
         />
       )}
     </div>
