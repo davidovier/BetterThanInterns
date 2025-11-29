@@ -104,8 +104,9 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  processes Process[]
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  processes  Process[]
+  blueprints Blueprint[]
 
   @@map("projects")
 }
@@ -259,4 +260,23 @@ model OpportunityTool {
 
   @@unique([opportunityId, toolId])
   @@map("opportunity_tools")
+}
+
+// ============================================
+// BLUEPRINTS
+// ============================================
+model Blueprint {
+  id               String   @id @default(cuid())
+  projectId        String
+  title            String
+  contentJson      Json // Full structured blueprint content
+  renderedMarkdown String   @db.Text
+  version          Int      @default(1)
+  metadataJson     Json     @default("{}") // Counts, ROI summaries, etc.
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("blueprints")
 }

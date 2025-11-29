@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Workflow, ArrowLeft } from 'lucide-react';
+import { Plus, Workflow, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 type Process = {
@@ -30,6 +30,14 @@ type Project = {
   description?: string;
 };
 
+type Blueprint = {
+  id: string;
+  title: string;
+  version: number;
+  createdAt: string;
+  metadataJson: any;
+};
+
 export default function ProjectProcessesPage({
   params,
 }: {
@@ -39,14 +47,17 @@ export default function ProjectProcessesPage({
   const { toast } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [processes, setProcesses] = useState<Process[]>([]);
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [showNewProcess, setShowNewProcess] = useState(false);
   const [newProcessName, setNewProcessName] = useState('');
   const [newProcessDescription, setNewProcessDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
 
   useEffect(() => {
     loadProject();
     loadProcesses();
+    loadBlueprints();
   }, [params.projectId]);
 
   const loadProject = async () => {
@@ -76,6 +87,23 @@ export default function ProjectProcessesPage({
       toast({
         title: 'Error',
         description: 'Failed to load processes',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const loadBlueprints = async () => {
+    try {
+      const response = await fetch(
+        `/api/projects/${params.projectId}/blueprints`
+      );
+      if (!response.ok) throw new Error('Failed to load blueprints');
+      const data = await response.json();
+      setBlueprints(data.blueprints);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load blueprints',
         variant: 'destructive',
       });
     }
@@ -121,6 +149,50 @@ export default function ProjectProcessesPage({
     }
   };
 
+  const generateBlueprint = async () => {
+    if (processes.length === 0) {
+      toast({
+        title: 'No processes mapped',
+        description: 'Map at least one process before generating a blueprint.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsGeneratingBlueprint(true);
+
+    try {
+      const response = await fetch(
+        `/api/projects/${params.projectId}/blueprints`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to generate blueprint');
+
+      const data = await response.json();
+      toast({
+        title: 'Blueprint generated',
+        description: 'Your implementation blueprint is ready.',
+      });
+
+      // Navigate to blueprint view
+      router.push(
+        `/projects/${params.projectId}/blueprints/${data.blueprint.id}`
+      );
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to generate blueprint',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsGeneratingBlueprint(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center space-x-4">
@@ -139,10 +211,20 @@ export default function ProjectProcessesPage({
             <p className="text-muted-foreground mt-2">{project.description}</p>
           )}
         </div>
-        <Button onClick={() => setShowNewProcess(!showNewProcess)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Process
-        </Button>
+        <div className="flex space-x-2">
+          <Button onClick={() => setShowNewProcess(!showNewProcess)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Process
+          </Button>
+          <Button
+            onClick={generateBlueprint}
+            disabled={isGeneratingBlueprint || processes.length === 0}
+            variant="default"
+          >
+            <Sparkles className="h-4 w-4 mr-2" />
+            {isGeneratingBlueprint ? 'Generating...' : 'Generate Blueprint'}
+          </Button>
+        </div>
       </div>
 
       {showNewProcess && (
@@ -192,6 +274,43 @@ export default function ProjectProcessesPage({
           </CardContent>
         </Card>
       )}
+
+      {blueprints.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Implementation Blueprints</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {blueprints.map((blueprint) => (
+              <Link
+                key={blueprint.id}
+                href={`/projects/${params.projectId}/blueprints/${blueprint.id}`}
+              >
+                <Card className="hover:bg-accent transition-colors cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center">
+                      <FileText className="h-4 w-4 mr-2" />
+                      {blueprint.title}
+                    </CardTitle>
+                    <CardDescription>
+                      Version {blueprint.version} •{' '}
+                      {new Date(blueprint.createdAt).toLocaleDateString()}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm text-muted-foreground">
+                      {blueprint.metadataJson?.processCount || 0} processes •{' '}
+                      {blueprint.metadataJson?.opportunityCount || 0}{' '}
+                      opportunities •{' '}
+                      {blueprint.metadataJson?.selectedToolCount || 0} tools
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <h2 className="text-2xl font-bold">Processes</h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {processes.length === 0 ? (
