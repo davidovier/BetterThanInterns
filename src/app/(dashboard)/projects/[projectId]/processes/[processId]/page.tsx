@@ -87,12 +87,15 @@ export default function ProcessMappingPage({
       );
       if (!response.ok) throw new Error('Failed to load process');
 
-      const data = await response.json();
-      setProcess(data.process);
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const processData = result.ok && result.data ? result.data.process : result.process;
+      setProcess(processData);
 
       // Convert steps to React Flow nodes
-      if (data.process.steps) {
-        const flowNodes: Node[] = data.process.steps.map((step: any) => {
+      if (processData.steps) {
+        const flowNodes: Node[] = processData.steps.map((step: any) => {
           // Check if this step has an opportunity
           const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
           const impactLevel = stepOpportunity?.impactLevel;
@@ -148,8 +151,8 @@ export default function ProcessMappingPage({
       }
 
       // Convert links to React Flow edges
-      if (data.process.links) {
-        const flowEdges: Edge[] = data.process.links.map((link: any) => ({
+      if (processData.links) {
+        const flowEdges: Edge[] = processData.links.map((link: any) => ({
           id: link.id,
           source: link.fromStepId,
           target: link.toStepId,
@@ -174,8 +177,12 @@ export default function ProcessMappingPage({
       );
       if (!response.ok) return; // Silently fail if no opportunities yet
 
-      const data = await response.json();
-      setOpportunities(data.opportunities || []);
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const opportunitiesData = result.ok && result.data ? result.data.opportunities : result.opportunities;
+
+      setOpportunities(opportunitiesData || []);
     } catch (error) {
       // Silently fail - opportunities are optional
       console.log('No opportunities loaded');
@@ -194,11 +201,14 @@ export default function ProcessMappingPage({
 
       if (!response.ok) throw new Error('Failed to scan for opportunities');
 
-      const data = await response.json();
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const count = result.ok && result.data ? result.data.count : result.count;
 
       toast({
         title: 'Scan complete!',
-        description: `Found ${data.count} automation ${data.count === 1 ? 'opportunity' : 'opportunities'}`,
+        description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
       });
 
       // Reload opportunities
@@ -227,9 +237,13 @@ export default function ProcessMappingPage({
       );
       if (!response.ok) throw new Error('Failed to create chat session');
 
-      const data = await response.json();
-      setChatSessionId(data.chatSession.id);
-      return data.chatSession.id;
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const chatSession = result.ok && result.data ? result.data.chatSession : result.chatSession;
+
+      setChatSessionId(chatSession.id);
+      return chatSession.id;
     } catch (error) {
       toast({
         title: 'Error',
@@ -274,7 +288,10 @@ export default function ProcessMappingPage({
 
       if (!response.ok) throw new Error('Failed to send message');
 
-      const data = await response.json();
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const data = result.ok && result.data ? result.data : result;
 
       // Update messages with real ones from server
       setMessages((prev) =>
@@ -344,8 +361,12 @@ export default function ProcessMappingPage({
         );
         if (!response.ok) throw new Error('Failed to load step');
 
-        const data = await response.json();
-        const step = data.process.steps.find((s: any) => s.id === node.id);
+        const result = await response.json();
+
+        // Handle new API response format { ok: true, data: {...} }
+        const processData = result.ok && result.data ? result.data.process : result.process;
+
+        const step = processData.steps.find((s: any) => s.id === node.id);
         if (step) {
           setSelectedStep({
             id: step.id,
