@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { z } from 'zod';
 import { callProcessAssistant } from '@/lib/process-assistant';
 import { WorkflowDelta } from '@/types/process';
+import { ok, CommonErrors, ErrorCodes, error } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 const sendMessageSchema = z.object({
   content: z.string().min(1),
@@ -18,7 +19,7 @@ export async function POST(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     // Verify access to chat session
@@ -55,7 +56,7 @@ export async function POST(
       !chatSession ||
       chatSession.process.project.workspace.members.length === 0
     ) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this chat session');
     }
 
     const body = await req.json();
@@ -124,7 +125,7 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
+    return ok({
       userMessage: {
         id: userMessage.id,
         role: userMessage.role,
@@ -143,16 +144,23 @@ export async function POST(
         links: updatedProcess?.links || [],
       },
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.errors }, { status: 400 });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      return CommonErrors.invalidInput(err.errors[0]?.message || 'Invalid input');
     }
 
-    console.error('Send message error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process message' },
-      { status: 500 }
-    );
+    logError('Chat message processing', err, { chatSessionId: params.chatSessionId });
+
+    // Check if it's an LLM-specific error
+    if (err instanceof Error && err.message.includes('LLM')) {
+      return error(
+        500,
+        ErrorCodes.PROCESS_ASSISTANT_FAILED,
+        'Failed to process message. The AI assistant encountered an error. Please try again.'
+      );
+    }
+
+    return CommonErrors.internalError('Failed to process message');
   }
 }
 

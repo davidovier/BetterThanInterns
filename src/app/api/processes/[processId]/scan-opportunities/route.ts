@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { scanProcess } from '@/lib/opportunity-scanner';
+import { ok, CommonErrors, ErrorCodes, error } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 /**
  * POST /api/processes/[processId]/scan-opportunities
@@ -17,7 +18,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const processId = params.processId;
@@ -41,27 +42,33 @@ export async function POST(
     });
 
     if (!process) {
-      return NextResponse.json({ error: 'Process not found' }, { status: 404 });
+      return CommonErrors.notFound('Process');
     }
 
     // Check workspace access
     if (process.project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      return CommonErrors.forbidden('You do not have access to this process');
     }
 
     // Run the scan
     const opportunities = await scanProcess(processId);
 
-    return NextResponse.json({
-      success: true,
+    return ok({
       count: opportunities.length,
       opportunities,
     });
-  } catch (error: any) {
-    console.error('Error scanning process for opportunities:', error);
-    return NextResponse.json(
-      { error: 'Failed to scan process', details: error.message },
-      { status: 500 }
-    );
+  } catch (err: any) {
+    logError('Opportunity scan', err, { processId: params.processId });
+
+    // Check if it's an LLM-specific error
+    if (err instanceof Error && err.message.includes('LLM')) {
+      return error(
+        500,
+        ErrorCodes.OPPORTUNITY_SCAN_FAILED,
+        'Failed to scan for opportunities. The AI service encountered an error. Please try again.'
+      );
+    }
+
+    return CommonErrors.internalError('Failed to scan process for opportunities');
   }
 }

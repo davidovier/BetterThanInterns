@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { generateBlueprintForProject } from '@/lib/blueprint-generator';
+import { ok, CommonErrors, ErrorCodes, error } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
 
 export async function POST(
   req: NextRequest,
@@ -11,7 +13,7 @@ export async function POST(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const { projectId } = params;
@@ -33,14 +35,13 @@ export async function POST(
     });
 
     if (!project || project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
+      return CommonErrors.notFound('Project', 'Project not found or access denied');
     }
 
     // Generate blueprint using LLM
     const { blueprint, contentJson, renderedMarkdown } = await generateBlueprintForProject(projectId);
 
-    return NextResponse.json({
-      success: true,
+    return ok({
       blueprint: {
         id: blueprint.id,
         projectId: blueprint.projectId,
@@ -53,12 +54,19 @@ export async function POST(
         updatedAt: blueprint.updatedAt,
       },
     });
-  } catch (error) {
-    console.error('Error generating blueprint:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate blueprint', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    );
+  } catch (err) {
+    logError('Blueprint generation', err, { projectId: params.projectId });
+
+    // Check if it's an LLM-specific error
+    if (err instanceof Error && err.message.includes('LLM')) {
+      return error(
+        500,
+        ErrorCodes.BLUEPRINT_LLM_FAILED,
+        'Failed to generate blueprint. The AI service encountered an error. Please try again.'
+      );
+    }
+
+    return CommonErrors.internalError('Failed to generate blueprint. Please try again.');
   }
 }
 
@@ -69,7 +77,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return CommonErrors.unauthorized();
     }
 
     const { projectId } = params;
@@ -96,18 +104,14 @@ export async function GET(
     });
 
     if (!project || project.workspace.members.length === 0) {
-      return NextResponse.json({ error: 'Project not found or access denied' }, { status: 404 });
+      return CommonErrors.notFound('Project', 'Project not found or access denied');
     }
 
-    return NextResponse.json({
-      success: true,
+    return ok({
       blueprints: project.blueprints,
     });
-  } catch (error) {
-    console.error('Error fetching blueprints:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch blueprints' },
-      { status: 500 }
-    );
+  } catch (err) {
+    logError('Fetch blueprints', err, { projectId: params.projectId });
+    return CommonErrors.databaseError('Failed to fetch blueprints');
   }
 }
