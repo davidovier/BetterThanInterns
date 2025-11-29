@@ -24,9 +24,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
+        // Normalize email to lowercase for case-insensitive login
+        const normalizedEmail = credentials.email.toLowerCase();
+
         const user = await db.user.findUnique({
           where: {
-            email: credentials.email,
+            email: normalizedEmail,
           },
         });
 

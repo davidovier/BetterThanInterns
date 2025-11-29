@@ -14,9 +14,12 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { email, password, name } = signUpSchema.parse(body);
 
+    // Normalize email to lowercase for consistency
+    const normalizedEmail = email.toLowerCase();
+
     // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
     });
 
     if (existingUser) {
@@ -32,7 +35,7 @@ export async function POST(req: Request) {
     // Create user
     const user = await db.user.create({
       data: {
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         name,
       },
