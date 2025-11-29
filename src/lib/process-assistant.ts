@@ -116,7 +116,7 @@ export async function callProcessAssistant(
 
     // Call OpenAI
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
       messages,
       temperature: 0.7,
       max_tokens: 1500,
@@ -137,6 +137,25 @@ export async function callProcessAssistant(
     };
   } catch (error) {
     console.error('Process assistant error:', error);
+
+    // Enhanced error logging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+
+    // Check for OpenAI-specific errors
+    if (error && typeof error === 'object' && 'status' in error) {
+      const apiError = error as any;
+      console.error('OpenAI API Error:', {
+        status: apiError.status,
+        message: apiError.message,
+        type: apiError.type,
+      });
+      throw new Error(`LLM error: OpenAI API returned ${apiError.status} - ${apiError.message || 'Unknown error'}`);
+    }
+
     throw new Error(`LLM error: Failed to process message - ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
