@@ -19,6 +19,7 @@ import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench } from 'lucide-react
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/step-details-dialog';
 import { ToolRecommendationsDialog } from '@/components/tool-recommendations-dialog';
+import { DebugPanel } from '@/components/debug-panel';
 import { ChatMessageType, ProcessStep as ProcessStepType } from '@/types/process';
 import { Badge } from '@/components/ui/badge';
 
@@ -65,6 +66,7 @@ export default function ProcessMappingPage({
   const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null);
   const [selectedOpportunityForTools, setSelectedOpportunityForTools] = useState<Opportunity | null>(null);
   const [isToolDialogOpen, setIsToolDialogOpen] = useState(false);
+  const [lastChatDebugPayload, setLastChatDebugPayload] = useState<any | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -315,6 +317,16 @@ export default function ProcessMappingPage({
 
       // Handle new API response format { ok: true, data: {...} }
       const data = result.ok && result.data ? result.data : result;
+
+      // 🔧 Capture debug payload for developer analysis
+      setLastChatDebugPayload({
+        workflowDelta: data.workflowDelta || null,
+        updatedGraph: data.updatedGraph || null,
+        userMessage: data.userMessage || null,
+        assistantMessage: data.assistantMessage || null,
+        timestamp: new Date().toISOString(),
+        raw: result,
+      });
 
       // Update messages with real ones from server
       setMessages((prev) =>
@@ -716,6 +728,12 @@ export default function ProcessMappingPage({
           }}
         />
       )}
+
+      {/* Debug Panel - Dev Only */}
+      <DebugPanel
+        title="Debug – Last Process Assistant Response"
+        data={lastChatDebugPayload}
+      />
     </div>
   );
 }
