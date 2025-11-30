@@ -308,9 +308,43 @@ model AiUseCase {
   updatedAt DateTime @updatedAt
 
   // Relations
-  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  blueprint Blueprint? @relation(fields: [blueprintId], references: [id], onDelete: SetNull)
+  workspace      Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  blueprint      Blueprint?         @relation(fields: [blueprintId], references: [id], onDelete: SetNull)
+  riskAssessment AiRiskAssessment?
 
   @@map("ai_use_cases")
+}
+
+// ============================================
+// GOVERNANCE – RISK & IMPACT ASSESSMENT
+// ============================================
+model AiRiskAssessment {
+  id          String   @id @default(cuid())
+  aiUseCaseId String   @unique
+
+  // High-level fields
+  riskLevel           String   @default("medium") // "low" | "medium" | "high" | "critical"
+  impactAreas         Json     @default("[]") // e.g. ["customers", "employees", "compliance"]
+  dataSensitivity     String?  // e.g. "none", "low", "medium", "high"
+  regulatoryRelevance Json     @default("[]") // e.g. ["GDPR", "HIPAA"]
+
+  // Structured content
+  summaryText      String  @db.Text // plain-language description
+  risksJson        Json    @default("[]") // array of { title, description, mitigation }
+  assumptionsJson  Json    @default("[]") // array of strings
+  residualRiskText String? @db.Text
+
+  // LLM-related metadata
+  draftedByAi    Boolean   @default(false)
+  lastDraftedAt  DateTime?
+  lastReviewedAt DateTime?
+  lastReviewedBy String? // free-text user name/email for now
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  aiUseCase AiUseCase @relation(fields: [aiUseCaseId], references: [id], onDelete: Cascade)
+
+  @@map("ai_risk_assessments")
 }
