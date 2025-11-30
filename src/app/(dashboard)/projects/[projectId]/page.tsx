@@ -361,6 +361,64 @@ export default function ProjectProcessesPage({
         </Card>
       )}
 
+      {/* Next Steps Nudge */}
+      {!isLoadingProcesses && processes.length === 0 && !showNewProcess && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-primary" />
+              Next Step: Map a process
+            </CardTitle>
+            <CardDescription>
+              Start by mapping one workflow with the chat assistant
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              The AI assistant will interview you about a process and build a visual workflow map as you chat.
+              Takes 10-15 minutes.
+            </p>
+            <Button onClick={() => setShowNewProcess(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Start mapping
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!isLoadingProcesses && !isLoadingBlueprints && processes.length > 0 && blueprints.length === 0 && (
+        <Card className="border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center">
+              <Sparkles className="h-5 w-5 mr-2 text-primary" />
+              Next Step: Scan for opportunities & generate blueprint
+            </CardTitle>
+            <CardDescription>
+              You've mapped {processes.length} {processes.length === 1 ? 'process' : 'processes'}. Time to find automation opportunities!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Generate a blueprint to analyze your processes, identify AI opportunities, match tools, and export a professional implementation plan.
+            </p>
+            <div className="flex space-x-2">
+              {processes.length > 0 && (
+                <Link href={`/projects/${params.projectId}/processes/${processes[0].id}`}>
+                  <Button variant="outline">
+                    <Workflow className="h-4 w-4 mr-2" />
+                    Open first process
+                  </Button>
+                </Link>
+              )}
+              <Button onClick={generateBlueprint} disabled={isGeneratingBlueprint}>
+                <Sparkles className="h-4 w-4 mr-2" />
+                {isGeneratingBlueprint ? 'Generating...' : 'Generate Blueprint'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {isLoadingBlueprints ? (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Implementation Blueprints</h2>

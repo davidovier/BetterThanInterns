@@ -13,9 +13,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FolderOpen } from 'lucide-react';
+import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 type Workspace = {
   id: string;
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
+  const [isCreatingDemo, setIsCreatingDemo] = useState(false);
 
   useEffect(() => {
     loadWorkspaces();
@@ -144,6 +146,39 @@ export default function DashboardPage() {
     }
   };
 
+  const createDemoProject = async () => {
+    if (!selectedWorkspace) return;
+
+    setIsCreatingDemo(true);
+    try {
+      const response = await fetch('/api/demo-project', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceId: selectedWorkspace }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create demo project');
+
+      const result = await response.json();
+      const projectId = result.ok && result.data ? result.data.projectId : result.projectId;
+
+      toast({
+        title: 'Demo project created!',
+        description: 'Opening your demo project...',
+      });
+
+      // Redirect to the demo project
+      window.location.href = `/projects/${projectId}`;
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create demo project',
+        variant: 'destructive',
+      });
+      setIsCreatingDemo(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -226,11 +261,67 @@ export default function DashboardPage() {
             ))}
           </>
         ) : projects.length === 0 ? (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-center">
-                No projects yet. Create one to get started.
+          <Card className="col-span-full border-2 border-dashed">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-8 w-8 text-primary" />
+              </div>
+              <CardTitle className="text-2xl">Let's make you better than interns</CardTitle>
+              <CardDescription className="text-base pt-2">
+                3 steps to your first AI implementation plan
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4 max-w-2xl mx-auto">
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
+                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">Create your first project</p>
+                    <p className="text-sm text-muted-foreground">
+                      Start with something real. Pick a messy process that needs fixing.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
+                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">Map one real process</p>
+                    <p className="text-sm text-muted-foreground">
+                      Chat with our AI assistant to build a visual workflow. Takes 10-15 minutes.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
+                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="font-medium">Scan for AI opportunities & generate a blueprint</p>
+                    <p className="text-sm text-muted-foreground">
+                      We analyze each step, match tools, and export a professional plan.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
+                <Button size="lg" onClick={() => setShowNewProject(true)}>
+                  <Plus className="h-5 w-5 mr-2" />
+                  Create a project
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={createDemoProject}
+                  disabled={isCreatingDemo}
+                >
+                  <Sparkles className="h-5 w-5 mr-2" />
+                  {isCreatingDemo ? 'Creating demo...' : 'Spin up a demo project'}
+                </Button>
+              </div>
+
+              <p className="text-xs text-center text-muted-foreground pt-4">
+                Demo project comes pre-populated with a sample workflow you can explore
               </p>
             </CardContent>
           </Card>
