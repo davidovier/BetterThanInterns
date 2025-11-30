@@ -292,14 +292,23 @@ export default function ProcessMappingPage({
     setInputMessage('');
     setIsLoading(true);
 
-    // Add user message to UI
+    // Add user message to UI (optimistic update)
     const tempUserMsg: ChatMessageType = {
-      id: 'temp-' + Date.now(),
+      id: 'temp-user-' + Date.now(),
       role: 'user',
       content: userMsg,
       createdAt: new Date(),
     };
-    setMessages((prev) => [...prev, tempUserMsg]);
+
+    // Add loading assistant message (optimistic placeholder)
+    const tempAssistantMsg: ChatMessageType = {
+      id: 'temp-assistant-' + Date.now(),
+      role: 'assistant',
+      content: '...',
+      createdAt: new Date(),
+    };
+
+    setMessages((prev) => [...prev, tempUserMsg, tempAssistantMsg]);
 
     try {
       const response = await fetch(
@@ -328,10 +337,10 @@ export default function ProcessMappingPage({
         raw: result,
       });
 
-      // Update messages with real ones from server
+      // Update messages with real ones from server (replace optimistic placeholders)
       setMessages((prev) =>
         prev
-          .filter((m) => m.id !== tempUserMsg.id)
+          .filter((m) => m.id !== tempUserMsg.id && m.id !== tempAssistantMsg.id)
           .concat([
             {
               id: data.userMessage.id,

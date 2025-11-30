@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { z } from 'zod';
 import { ok, CommonErrors } from '@/lib/api-response';
 import { logError } from '@/lib/logging';
+import { verifyProjectAccess } from '@/lib/access-control';
 
 const createProcessSchema = z.object({
   name: z.string().min(1),
@@ -24,20 +25,8 @@ export async function GET(
     }
 
     // Verify user has access to project
-    const project = await db.project.findUnique({
-      where: { id: params.projectId },
-      include: {
-        workspace: {
-          include: {
-            members: {
-              where: { userId: session.user.id },
-            },
-          },
-        },
-      },
-    });
-
-    if (!project || project.workspace.members.length === 0) {
+    const hasAccess = await verifyProjectAccess(params.projectId, session.user.id);
+    if (!hasAccess) {
       return CommonErrors.forbidden('You do not have access to this project');
     }
 
@@ -65,20 +54,8 @@ export async function POST(
     }
 
     // Verify user has access to project
-    const project = await db.project.findUnique({
-      where: { id: params.projectId },
-      include: {
-        workspace: {
-          include: {
-            members: {
-              where: { userId: session.user.id },
-            },
-          },
-        },
-      },
-    });
-
-    if (!project || project.workspace.members.length === 0) {
+    const hasAccess = await verifyProjectAccess(params.projectId, session.user.id);
+    if (!hasAccess) {
       return CommonErrors.forbidden('You do not have access to this project');
     }
 

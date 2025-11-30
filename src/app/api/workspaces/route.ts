@@ -21,12 +21,14 @@ export async function GET() {
           },
         },
       },
-      include: {
-        members: {
-          where: {
-            userId: session.user.id,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      orderBy: {
+        updatedAt: 'desc',
       },
     });
 

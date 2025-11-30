@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import { Plus, FolderOpen } from 'lucide-react';
 import Link from 'next/link';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Workspace = {
   id: string;
@@ -41,6 +42,7 @@ export default function DashboardPage() {
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   useEffect(() => {
     loadWorkspaces();
@@ -75,6 +77,7 @@ export default function DashboardPage() {
   };
 
   const loadProjects = async (workspaceId: string) => {
+    setIsLoadingProjects(true);
     try {
       const response = await fetch(
         `/api/workspaces/${workspaceId}/projects`
@@ -92,6 +95,8 @@ export default function DashboardPage() {
         description: 'Failed to load projects',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoadingProjects(false);
     }
   };
 
@@ -203,7 +208,24 @@ export default function DashboardPage() {
       )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {projects.length === 0 ? (
+        {isLoadingProjects ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : projects.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
@@ -214,7 +236,7 @@ export default function DashboardPage() {
           </Card>
         ) : (
           projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`}>
+            <Link key={project.id} href={`/projects/${project.id}`} prefetch={true}>
               <Card className="hover:bg-accent transition-colors cursor-pointer">
                 <CardHeader>
                   <CardTitle className="text-lg">{project.name}</CardTitle>

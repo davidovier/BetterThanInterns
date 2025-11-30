@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Plus, Workflow, ArrowLeft, FileText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch, getErrorMessage } from '@/lib/api-client';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type Process = {
   id: string;
@@ -54,6 +55,8 @@ export default function ProjectProcessesPage({
   const [newProcessDescription, setNewProcessDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
+  const [isLoadingProcesses, setIsLoadingProcesses] = useState(true);
+  const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(true);
 
   useEffect(() => {
     loadProject();
@@ -77,6 +80,7 @@ export default function ProjectProcessesPage({
   };
 
   const loadProcesses = async () => {
+    setIsLoadingProcesses(true);
     try {
       const data = await apiFetch<{ processes: Process[] }>(
         `/api/projects/${params.projectId}/processes`
@@ -88,10 +92,13 @@ export default function ProjectProcessesPage({
         description: getErrorMessage(error),
         variant: 'destructive',
       });
+    } finally {
+      setIsLoadingProcesses(false);
     }
   };
 
   const loadBlueprints = async () => {
+    setIsLoadingBlueprints(true);
     try {
       const data = await apiFetch<{ blueprints: Blueprint[] }>(
         `/api/projects/${params.projectId}/blueprints`
@@ -103,6 +110,8 @@ export default function ProjectProcessesPage({
         description: getErrorMessage(error),
         variant: 'destructive',
       });
+    } finally {
+      setIsLoadingBlueprints(false);
     }
   };
 
@@ -266,7 +275,24 @@ export default function ProjectProcessesPage({
         </Card>
       )}
 
-      {blueprints.length > 0 && (
+      {isLoadingBlueprints ? (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold">Implementation Blueprints</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {[1, 2].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="h-4 w-1/2 mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-4 w-full" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : blueprints.length > 0 ? (
         <div className="space-y-4">
           <h2 className="text-2xl font-bold">Implementation Blueprints</h2>
           <div className="grid gap-4 md:grid-cols-2">
@@ -274,6 +300,7 @@ export default function ProjectProcessesPage({
               <Link
                 key={blueprint.id}
                 href={`/projects/${params.projectId}/blueprints/${blueprint.id}`}
+                prefetch={true}
               >
                 <Card className="hover:bg-accent transition-colors cursor-pointer">
                   <CardHeader>
@@ -299,12 +326,29 @@ export default function ProjectProcessesPage({
             ))}
           </div>
         </div>
-      )}
+      ) : null}
 
       <h2 className="text-2xl font-bold">Processes</h2>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {processes.length === 0 ? (
+        {isLoadingProcesses ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <Skeleton className="h-4 w-20" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : processes.length === 0 ? (
           <Card className="col-span-full">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Workflow className="h-12 w-12 text-muted-foreground mb-4" />
@@ -321,6 +365,7 @@ export default function ProjectProcessesPage({
             <Link
               key={process.id}
               href={`/projects/${params.projectId}/processes/${process.id}`}
+              prefetch={true}
             >
               <Card className="hover:bg-accent transition-colors cursor-pointer">
                 <CardHeader>
