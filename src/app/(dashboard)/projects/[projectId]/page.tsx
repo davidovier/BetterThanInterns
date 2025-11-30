@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Workflow, ArrowLeft, FileText, Sparkles, Shield } from 'lucide-react';
+import { Plus, Workflow, ArrowLeft, FileText, Sparkles, Shield, Info, X } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch, getErrorMessage } from '@/lib/api-client';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -68,6 +68,9 @@ export default function ProjectProcessesPage({
   const [isLoadingProcesses, setIsLoadingProcesses] = useState(true);
   const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(true);
   const [isLoadingAiUseCases, setIsLoadingAiUseCases] = useState(true);
+  const [showDemoBanner, setShowDemoBanner] = useState(true);
+
+  const isDemoProject = project?.name?.startsWith('Demo – ');
 
   useEffect(() => {
     loadProject();
@@ -312,6 +315,53 @@ export default function ProjectProcessesPage({
           </Button>
         </div>
       </div>
+
+      {/* Demo Project Banner */}
+      {isDemoProject && showDemoBanner && (
+        <Card className="bg-blue-50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900">
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start space-x-3 flex-1">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="flex-1 space-y-3">
+                  <div>
+                    <p className="font-semibold text-blue-900 dark:text-blue-100">
+                      You're exploring a demo project
+                    </p>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                      This is sample data so you can click around without breaking anything.
+                      When you're ready, create a real project for your own process.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href="/dashboard">
+                      <Button variant="default" size="sm">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create a real project
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowDemoBanner(false)}
+                    >
+                      Keep exploring demo
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDemoBanner(false)}
+                className="ml-2 flex-shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {showNewProcess && (
         <Card>

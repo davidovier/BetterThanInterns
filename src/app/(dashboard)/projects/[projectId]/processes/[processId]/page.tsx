@@ -15,7 +15,7 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, X, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/step-details-dialog';
 import { ToolRecommendationsDialog } from '@/components/tool-recommendations-dialog';
@@ -27,6 +27,10 @@ type Process = {
   id: string;
   name: string;
   description?: string;
+  project?: {
+    id: string;
+    name: string;
+  };
 };
 
 type Opportunity = {
@@ -67,7 +71,11 @@ export default function ProcessMappingPage({
   const [selectedOpportunityForTools, setSelectedOpportunityForTools] = useState<Opportunity | null>(null);
   const [isToolDialogOpen, setIsToolDialogOpen] = useState(false);
   const [lastChatDebugPayload, setLastChatDebugPayload] = useState<any | null>(null);
+  const [showFirstRunHint, setShowFirstRunHint] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const isDemoProject = process?.project?.name?.startsWith('Demo – ');
+  const shouldShowHint = isDemoProject && messages.length === 0 && showFirstRunHint;
 
   useEffect(() => {
     loadProcess();
@@ -516,7 +524,41 @@ export default function ProcessMappingPage({
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.length === 0 && (
+            {/* First-run hint for demo projects */}
+            {shouldShowHint && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 dark:bg-amber-950/20 dark:border-amber-900">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-2 flex-1">
+                    <Lightbulb className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                        Try this to see how it works
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        Paste a short description like:<br />
+                        <em className="block mt-1 italic">
+                          "We receive invoices by email, someone types them into a spreadsheet,
+                          then a manager approves them before payment."
+                        </em>
+                      </p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
+                        Then hit send and watch the graph update.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowFirstRunHint(false)}
+                    className="ml-2 h-6 w-6 p-0 flex-shrink-0"
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {messages.length === 0 && !shouldShowHint && (
               <div className="text-center text-muted-foreground text-sm py-8">
                 <p>No steps yet. That's normal.</p>
                 <p className="mt-2">

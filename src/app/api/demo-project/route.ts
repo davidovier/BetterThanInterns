@@ -30,6 +30,33 @@ export async function POST(req: Request) {
       return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
+    // Check for recent demo projects (rate limiting)
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentDemo = await db.project.findFirst({
+      where: {
+        workspaceId: data.workspaceId,
+        name: {
+          startsWith: 'Demo – ',
+        },
+        createdAt: {
+          gte: oneDayAgo,
+        },
+      },
+    });
+
+    if (recentDemo) {
+      return Response.json(
+        {
+          ok: false,
+          error: {
+            code: 'DEMO_RATE_LIMIT',
+            message: 'You already have a recent demo project. Please use or delete that one first.',
+          },
+        },
+        { status: 429 }
+      );
+    }
+
     // Create demo project
     const project = await db.project.create({
       data: {

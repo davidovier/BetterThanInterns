@@ -157,9 +157,22 @@ export default function DashboardPage() {
         body: JSON.stringify({ workspaceId: selectedWorkspace }),
       });
 
-      if (!response.ok) throw new Error('Failed to create demo project');
-
       const result = await response.json();
+
+      // Check for rate limit error
+      if (!response.ok) {
+        if (result.error?.code === 'DEMO_RATE_LIMIT') {
+          toast({
+            title: 'You already have a demo project',
+            description: 'You can reuse or delete it from your dashboard.',
+            variant: 'destructive',
+          });
+          setIsCreatingDemo(false);
+          return;
+        }
+        throw new Error('Failed to create demo project');
+      }
+
       const projectId = result.ok && result.data ? result.data.projectId : result.projectId;
 
       toast({

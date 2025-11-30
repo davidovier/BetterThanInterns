@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
@@ -15,15 +15,28 @@ import {
   CardTitle,
   CardFooter,
 } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { Check } from 'lucide-react';
 
-export default function SignUpPage() {
+type PlanType = 'starter' | 'pro' | 'enterprise' | null;
+
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>(null);
+
+  useEffect(() => {
+    const planParam = searchParams.get('plan');
+    if (planParam === 'starter' || planParam === 'pro' || planParam === 'enterprise') {
+      setSelectedPlan(planParam);
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,6 +105,73 @@ export default function SignUpPage() {
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
+            {/* Plan Selection */}
+            <div className="space-y-3">
+              <Label>Pick where you want to start (you can change this later)</Label>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan('starter')}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    selectedPlan === 'starter'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border bg-background hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Starter</p>
+                      <p className="text-xs text-muted-foreground">Solo or small team, just getting started.</p>
+                    </div>
+                    {selectedPlan === 'starter' && (
+                      <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan('pro')}
+                  className={`p-3 rounded-lg border-2 text-left transition-all relative ${
+                    selectedPlan === 'pro'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border bg-background hover:border-primary/50'
+                  }`}
+                >
+                  <Badge className="absolute -top-2 right-2 text-xs">Recommended</Badge>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Pro</p>
+                      <p className="text-xs text-muted-foreground">Teams who actually ship AI projects.</p>
+                    </div>
+                    {selectedPlan === 'pro' && (
+                      <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan('enterprise')}
+                  className={`p-3 rounded-lg border-2 text-left transition-all ${
+                    selectedPlan === 'enterprise'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border bg-background hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Enterprise</p>
+                      <p className="text-xs text-muted-foreground">You want AI and sleep. We'll talk.</p>
+                    </div>
+                    {selectedPlan === 'enterprise' && (
+                      <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                    )}
+                  </div>
+                </button>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -145,5 +225,26 @@ export default function SignUpPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold">
+              Better Than Interns
+            </CardTitle>
+            <CardDescription>
+              Loading...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <SignUpForm />
+    </Suspense>
   );
 }
