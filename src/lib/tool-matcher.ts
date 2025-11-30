@@ -49,6 +49,7 @@ export type ToolRecommendation = {
 
 /**
  * Match tools for an opportunity and store recommendations
+ * Uses GPT-4o to intelligently analyze and rank tools
  */
 export async function matchToolsForOpportunity(
   opportunityId: string
@@ -74,48 +75,46 @@ export async function matchToolsForOpportunity(
       return [];
     }
 
-    // Filter and score candidate tools
-    const candidateTools = filterAndScoreTools(opportunity, allTools);
+    // Use GPT-4o to intelligently match and rank tools
+    const toolMatches = await intelligentToolMatching(opportunity, allTools);
 
-    // Generate LLM-powered rationale for top tools
+    // Store recommendations in database
     const recommendations: ToolRecommendation[] = [];
 
-    for (const candidate of candidateTools.slice(0, 5)) {
-      // Top 5 tools
-      const rationale = await generateToolRationale(opportunity, candidate.tool);
-
+    for (const match of toolMatches) {
       // Upsert OpportunityTool record
       const oppTool = await db.opportunityTool.upsert({
         where: {
           opportunityId_toolId: {
             opportunityId: opportunityId,
-            toolId: candidate.tool.id,
+            toolId: match.toolId,
           },
         },
         create: {
           opportunityId: opportunityId,
-          toolId: candidate.tool.id,
-          matchScore: candidate.score,
-          rationale: rationale,
+          toolId: match.toolId,
+          matchScore: match.score,
+          rationale: match.rationale,
           userSelected: false,
         },
         update: {
-          matchScore: candidate.score,
-          rationale: rationale,
+          matchScore: match.score,
+          rationale: match.rationale,
         },
       });
 
+      const tool = allTools.find((t) => t.id === match.toolId)!;
       recommendations.push({
-        toolId: candidate.tool.id,
-        name: candidate.tool.name,
-        vendor: candidate.tool.vendor,
-        category: candidate.tool.category,
-        description: candidate.tool.description,
-        pricingTier: candidate.tool.pricingTier,
-        integrationComplexity: candidate.tool.integrationComplexity,
-        websiteUrl: candidate.tool.websiteUrl,
-        matchScore: candidate.score,
-        rationale: rationale,
+        toolId: tool.id,
+        name: tool.name,
+        vendor: tool.vendor,
+        category: tool.category,
+        description: tool.description,
+        pricingTier: tool.pricingTier,
+        integrationComplexity: tool.integrationComplexity,
+        websiteUrl: tool.websiteUrl,
+        matchScore: match.score,
+        rationale: match.rationale,
         userSelected: oppTool.userSelected,
       });
     }
@@ -128,128 +127,115 @@ export async function matchToolsForOpportunity(
 }
 
 /**
- * Filter and score tools based on opportunity characteristics
+ * Use GPT-4o to intelligently analyze and match tools to the opportunity
  */
-function filterAndScoreTools(
+async function intelligentToolMatching(
   opportunity: any,
   allTools: any[]
-): { tool: any; score: number }[] {
-  const scored = allTools.map((tool) => {
-    let score = 0;
+): Promise<Array<{ toolId: string; score: number; rationale: string }>> {
+  try {
+    // Build a concise tool catalog for the LLM
+    const toolCatalog = allTools.map((tool, index) => ({
+      index,
+      id: tool.id,
+      name: tool.name,
+      category: tool.category,
+      description: tool.description.substring(0, 200), // Truncate long descriptions
+      useCases: tool.useCases,
+      pricingTier: tool.pricingTier,
+      integrationComplexity: tool.integrationComplexity,
+    }));
 
-    // Base score from category matching
-    const relevantCategories =
-      CATEGORY_MAPPING[opportunity.opportunityType] || [];
-    if (relevantCategories.includes(tool.category)) {
-      score += 0.4;
+    const systemPrompt = `You are an expert AI consultant specializing in automation and AI tool selection.
+Your job is to analyze an automation opportunity and recommend the BEST matching tools from the available catalog.
+
+Guidelines:
+- Only recommend tools that are ACTUALLY suitable for the specific opportunity
+- Consider the opportunity type, description, impact level, and effort level
+- Prioritize tools that match the use case and have appropriate complexity/pricing
+- Provide a clear rationale for each recommendation
+- Return 2-5 tools maximum (only the best matches)
+- If no tools are truly suitable, return fewer recommendations
+
+Return a JSON array of recommendations, each with:
+{
+  "toolId": "the tool ID from the catalog",
+  "score": 0.0-1.0 (how well it matches),
+  "rationale": "2-3 sentences explaining why this tool fits this specific opportunity"
+}`;
+
+    const userPrompt = `Analyze this automation opportunity and recommend the best tools:
+
+OPPORTUNITY:
+Title: ${opportunity.title}
+Type: ${opportunity.opportunityType}
+Description: ${opportunity.description}
+Impact Level: ${opportunity.impactLevel}
+Effort Level: ${opportunity.effortLevel}
+Rationale: ${opportunity.rationaleText}
+${opportunity.step ? `Process Step: ${opportunity.step.title}` : ''}
+
+AVAILABLE TOOLS:
+${JSON.stringify(toolCatalog, null, 2)}
+
+Return a JSON array of tool recommendations (2-5 best matches only):`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.3, // Lower temperature for more consistent recommendations
+      max_tokens: 1500,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      throw new Error('LLM returned empty response for tool matching');
     }
 
-    // Keyword matching in title/description
-    const text =
-      `${opportunity.title} ${opportunity.description}`.toLowerCase();
-    for (const [keyword, categories] of Object.entries(KEYWORD_PATTERNS)) {
-      if (text.includes(keyword) && categories.includes(tool.category)) {
-        score += 0.2;
-      }
-    }
+    const parsed = JSON.parse(content);
 
-    // Use case matching
-    const toolUseCases = (tool.useCases as string[]) || [];
-    const oppType = opportunity.opportunityType;
-    if (toolUseCases.some((uc: string) => uc === oppType || text.includes(uc))) {
-      score += 0.2;
-    }
+    // Handle both array and object with recommendations array
+    const recommendations = Array.isArray(parsed) ? parsed : (parsed.recommendations || []);
 
-    // Integration complexity penalty for low-effort opportunities
-    if (opportunity.effortLevel === 'low' && tool.integrationComplexity === 'high') {
-      score -= 0.15;
-    }
-
-    // Pricing tier considerations
-    // High-impact opportunities can justify enterprise tools
-    if (opportunity.impactLevel === 'high' && tool.pricingTier === 'enterprise') {
-      score += 0.1;
-    } else if (
-      opportunity.impactLevel === 'low' &&
-      tool.pricingTier === 'enterprise'
-    ) {
-      score -= 0.1;
-    }
-
-    // Boost free/freemium tools slightly for low impact
-    if (opportunity.impactLevel === 'low' && tool.pricingTier === 'free') {
-      score += 0.1;
-    }
-
-    // Normalize score to 0-1 range
-    score = Math.max(0, Math.min(1, score));
-
-    return { tool, score };
-  });
-
-  // Filter out very low scores and sort by score descending
-  return scored.filter((s) => s.score > 0.1).sort((a, b) => b.score - a.score);
+    // Validate and return recommendations
+    return recommendations
+      .filter((rec: any) => rec.toolId && rec.score && rec.rationale)
+      .slice(0, 5) // Max 5 tools
+      .map((rec: any) => ({
+        toolId: rec.toolId,
+        score: Math.max(0, Math.min(1, rec.score)), // Clamp to 0-1
+        rationale: rec.rationale,
+      }));
+  } catch (error) {
+    console.error('Error in intelligent tool matching:', error);
+    // Fallback to simple category-based matching
+    return fallbackToolMatching(opportunity, allTools);
+  }
 }
 
 /**
- * Generate LLM-powered rationale for why a tool matches an opportunity
+ * Fallback matching if LLM fails
  */
-async function generateToolRationale(
+function fallbackToolMatching(
   opportunity: any,
-  tool: any
-): Promise<string> {
-  try {
-    const prompt = `You are an AI consultant recommending automation tools.
+  allTools: any[]
+): Array<{ toolId: string; score: number; rationale: string }> {
+  const relevantCategories = CATEGORY_MAPPING[opportunity.opportunityType] || [];
 
-Opportunity:
-- Title: ${opportunity.title}
-- Type: ${opportunity.opportunityType}
-- Impact Level: ${opportunity.impactLevel}
-- Description: ${opportunity.rationaleText}
-
-Tool:
-- Name: ${tool.name}
-- Category: ${tool.category}
-- Description: ${tool.description}
-- Pricing: ${tool.pricingTier}
-- Integration Complexity: ${tool.integrationComplexity}
-
-Write a 2-3 sentence rationale explaining why this tool is a good fit for this opportunity.
-Focus on:
-1. How the tool's capabilities address the specific need
-2. Key benefits (time savings, accuracy, ease of use)
-3. Any relevant considerations (pricing, complexity)
-
-Return ONLY the rationale text, no JSON or extra formatting.`;
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better performance)
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a helpful AI consultant. Provide clear, concise tool recommendations.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 200,
-    });
-
-    const rationale = response.choices[0]?.message?.content?.trim();
-    return (
-      rationale ||
-      `${tool.name} is well-suited for ${opportunity.opportunityType} tasks with ${tool.integrationComplexity} integration complexity.`
-    );
-  } catch (error) {
-    console.error('Error generating rationale:', error);
-    // Fallback rationale
-    return `${tool.name} is a ${tool.category} tool that can help automate this ${opportunity.opportunityType} opportunity.`;
-  }
+  return allTools
+    .filter((tool) => relevantCategories.includes(tool.category))
+    .slice(0, 3)
+    .map((tool) => ({
+      toolId: tool.id,
+      score: 0.6,
+      rationale: `${tool.name} is a ${tool.category} tool suitable for ${opportunity.opportunityType} opportunities.`,
+    }));
 }
+
 
 /**
  * Get existing tool recommendations for an opportunity
