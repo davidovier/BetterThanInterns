@@ -76,8 +76,12 @@ export default function BlueprintViewPage({
     try {
       const response = await fetch(`/api/blueprints/${params.blueprintId}`);
       if (!response.ok) throw new Error('Failed to load blueprint');
-      const data = await response.json();
-      setBlueprint(data.blueprint);
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const blueprintData = result.ok && result.data ? result.data.blueprint : result.blueprint;
+
+      setBlueprint(blueprintData);
     } catch (error) {
       toast({
         title: 'Error',
