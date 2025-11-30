@@ -70,6 +70,7 @@ export default function ProcessMappingPage({
   useEffect(() => {
     loadProcess();
     loadOpportunities();
+    loadChatSession();
   }, [params.processId]);
 
   useEffect(() => {
@@ -186,6 +187,28 @@ export default function ProcessMappingPage({
     } catch (error) {
       // Silently fail - opportunities are optional
       console.log('No opportunities loaded');
+    }
+  };
+
+  const loadChatSession = async () => {
+    try {
+      const response = await fetch(
+        `/api/processes/${params.processId}/chat-sessions`
+      );
+      if (!response.ok) return; // Silently fail if no session yet
+
+      const result = await response.json();
+
+      // Handle new API response format { ok: true, data: {...} }
+      const chatSession = result.ok && result.data ? result.data.chatSession : result.chatSession;
+
+      if (chatSession) {
+        setChatSessionId(chatSession.id);
+        setMessages(chatSession.messages || []);
+      }
+    } catch (error) {
+      // Silently fail - chat session is optional
+      console.log('No chat session loaded');
     }
   };
 
