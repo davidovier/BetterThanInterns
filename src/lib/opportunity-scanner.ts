@@ -97,7 +97,7 @@ ${getHeuristicHints(step)}
 `;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {
