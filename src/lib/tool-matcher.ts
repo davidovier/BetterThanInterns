@@ -223,7 +223,7 @@ Focus on:
 Return ONLY the rationale text, no JSON or extra formatting.`;
 
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better performance)
       messages: [
         {
           role: 'system',
