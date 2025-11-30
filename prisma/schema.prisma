@@ -73,6 +73,7 @@ model Workspace {
   members    WorkspaceMember[]
   projects   Project[]
   aiUseCases AiUseCase[]
+  aiPolicies AiPolicy[]
 
   @@map("workspaces")
 }
@@ -312,6 +313,7 @@ model AiUseCase {
   project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   blueprint      Blueprint?         @relation(fields: [blueprintId], references: [id], onDelete: SetNull)
   riskAssessment AiRiskAssessment?
+  policyMappings AiPolicyMapping[]
 
   @@map("ai_use_cases")
 }
@@ -347,4 +349,47 @@ model AiRiskAssessment {
   aiUseCase AiUseCase @relation(fields: [aiUseCaseId], references: [id], onDelete: Cascade)
 
   @@map("ai_risk_assessments")
+}
+
+// ============================================
+// GOVERNANCE – POLICIES & CONTROLS
+// ============================================
+model AiPolicy {
+  id          String   @id @default(cuid())
+  workspaceId String
+
+  key         String // e.g. "GDPR_DATA_MINIMIZATION", unique per workspace
+  name        String // e.g. "GDPR – Data Minimization"
+  category    String // e.g. "privacy" | "security" | "ethics" | "governance"
+  description String   @db.Text
+  isActive    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspace Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  mappings  AiPolicyMapping[]
+
+  @@unique([workspaceId, key])
+  @@map("ai_policies")
+}
+
+model AiPolicyMapping {
+  id          String   @id @default(cuid())
+  aiUseCaseId String
+  aiPolicyId  String
+
+  status        String    @default("not_assessed") // "not_assessed" | "not_applicable" | "in_progress" | "compliant" | "non_compliant"
+  notes         String?   @db.Text
+  lastUpdatedBy String?
+  lastUpdatedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  aiUseCase AiUseCase @relation(fields: [aiUseCaseId], references: [id], onDelete: Cascade)
+  aiPolicy  AiPolicy  @relation(fields: [aiPolicyId], references: [id], onDelete: Cascade)
+
+  @@unique([aiUseCaseId, aiPolicyId])
+  @@map("ai_policy_mappings")
 }

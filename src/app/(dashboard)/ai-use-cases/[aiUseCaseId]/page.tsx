@@ -20,12 +20,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, FileText, FolderOpen, Shield, AlertCircle, Sparkles, Save } from 'lucide-react';
+import { ArrowLeft, FileText, FolderOpen, Shield, AlertCircle, Sparkles, Save, Plus, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 
 type AiUseCase = {
   id: string;
+  workspaceId: string;
   title: string;
   description: string;
   status: string;
@@ -78,6 +87,29 @@ type AiRiskAssessment = {
   lastReviewedBy: string | null;
 } | null;
 
+type AiPolicy = {
+  id: string;
+  key: string;
+  name: string;
+  category: 'privacy' | 'security' | 'ethics' | 'governance';
+  description: string;
+  isActive: boolean;
+};
+
+type PolicyMapping = {
+  id: string;
+  status: 'not_assessed' | 'not_applicable' | 'in_progress' | 'compliant' | 'non_compliant';
+  notes: string | null;
+  lastUpdatedBy: string | null;
+  lastUpdatedAt: string | null;
+  policy: AiPolicy;
+};
+
+type PolicySuggestion = {
+  policyId: string;
+  reason: string;
+};
+
 const STATUS_COLORS: Record<string, string> = {
   planned: 'bg-blue-100 text-blue-800',
   pilot: 'bg-yellow-100 text-yellow-800',
@@ -90,6 +122,21 @@ const RISK_LEVEL_COLORS: Record<string, string> = {
   medium: 'bg-yellow-100 text-yellow-800',
   high: 'bg-orange-100 text-orange-800',
   critical: 'bg-red-100 text-red-800',
+};
+
+const POLICY_STATUS_COLORS: Record<string, string> = {
+  not_assessed: 'bg-gray-100 text-gray-800',
+  not_applicable: 'bg-gray-100 text-gray-600',
+  in_progress: 'bg-blue-100 text-blue-800',
+  compliant: 'bg-green-100 text-green-800',
+  non_compliant: 'bg-red-100 text-red-800',
+};
+
+const POLICY_CATEGORY_COLORS: Record<string, string> = {
+  privacy: 'bg-purple-100 text-purple-800',
+  security: 'bg-blue-100 text-blue-800',
+  ethics: 'bg-green-100 text-green-800',
+  governance: 'bg-orange-100 text-orange-800',
 };
 
 export default function AiUseCaseDetailPage({
@@ -120,9 +167,30 @@ export default function AiUseCaseDetailPage({
   const [assumptionsJson, setAssumptionsJson] = useState<string>('');
   const [residualRiskText, setResidualRiskText] = useState<string>('');
 
+  // Policies & Controls state
+  const [policies, setPolicies] = useState<AiPolicy[]>([]);
+  const [mappings, setMappings] = useState<PolicyMapping[]>([]);
+  const [isLoadingPolicies, setIsLoadingPolicies] = useState(false);
+  const [isSavingPolicies, setIsSavingPolicies] = useState(false);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [suggestions, setSuggestions] = useState<PolicySuggestion[]>([]);
+  const [suggestedPolicyIds, setSuggestedPolicyIds] = useState<string[]>([]);
+
+  // Policy creation dialog
+  const [showCreatePolicyDialog, setShowCreatePolicyDialog] = useState(false);
+  const [newPolicyKey, setNewPolicyKey] = useState('');
+  const [newPolicyName, setNewPolicyName] = useState('');
+  const [newPolicyCategory, setNewPolicyCategory] = useState<'privacy' | 'security' | 'ethics' | 'governance'>('privacy');
+  const [newPolicyDescription, setNewPolicyDescription] = useState('');
+  const [isCreatingPolicy, setIsCreatingPolicy] = useState(false);
+
+  // Policy mapping edits
+  const [editedMappings, setEditedMappings] = useState<Record<string, { status: string; notes: string }>>({});
+
   useEffect(() => {
     loadUseCase();
     loadRiskAssessment();
+    loadPolicies();
   }, [params.aiUseCaseId]);
 
   const loadUseCase = async () => {
@@ -277,6 +345,177 @@ export default function AiUseCaseDetailPage({
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const loadPolicies = async () => {
+    if (!useCase) return;
+
+    setIsLoadingPolicies(true);
+    try {
+      // Load workspace policies
+      const policiesResponse = await fetch(
+        `/api/workspaces/${useCase.workspaceId}/policies`
+      );
+      if (policiesResponse.ok) {
+        const policiesResult = await policiesResponse.json();
+        const policiesData = policiesResult.ok && policiesResult.data ? policiesResult.data : policiesResult;
+        setPolicies(policiesData.policies || []);
+      }
+
+      // Load policy mappings
+      const mappingsResponse = await fetch(
+        `/api/ai-use-cases/${params.aiUseCaseId}/policies`
+      );
+      if (mappingsResponse.ok) {
+        const mappingsResult = await mappingsResponse.json();
+        const mappingsData = mappingsResult.ok && mappingsResult.data ? mappingsResult.data : mappingsResult;
+        setMappings(mappingsData.mappings || []);
+      }
+    } catch (error) {
+      console.error('Failed to load policies', error);
+    } finally {
+      setIsLoadingPolicies(false);
+    }
+  };
+
+  // Reload policies when useCase is loaded
+  useEffect(() => {
+    if (useCase) {
+      loadPolicies();
+    }
+  }, [useCase?.id]);
+
+  const createPolicy = async () => {
+    if (!useCase) return;
+
+    setIsCreatingPolicy(true);
+    try {
+      const response = await fetch(
+        `/api/workspaces/${useCase.workspaceId}/policies`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: newPolicyKey,
+            name: newPolicyName,
+            category: newPolicyCategory,
+            description: newPolicyDescription,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create policy');
+      }
+
+      toast({
+        title: 'Policy created',
+        description: `${newPolicyName} has been added to your policy library.`,
+      });
+
+      // Reset form and close dialog
+      setNewPolicyKey('');
+      setNewPolicyName('');
+      setNewPolicyCategory('privacy');
+      setNewPolicyDescription('');
+      setShowCreatePolicyDialog(false);
+
+      // Reload policies
+      await loadPolicies();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create policy',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingPolicy(false);
+    }
+  };
+
+  const suggestPolicies = async () => {
+    setIsSuggesting(true);
+    try {
+      const response = await fetch(
+        `/api/ai-use-cases/${params.aiUseCaseId}/policies/suggest`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to get policy suggestions');
+
+      const result = await response.json();
+      const data = result.ok && result.data ? result.data : result;
+
+      setSuggestions(data.rationales || []);
+      setSuggestedPolicyIds(data.suggestedPolicyIds || []);
+
+      toast({
+        title: 'AI suggestions ready',
+        description: `Found ${data.suggestedPolicyIds?.length || 0} relevant policies. Review and select which ones to apply.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to get AI suggestions. Try again later.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSuggesting(false);
+    }
+  };
+
+  const updateMappingEdit = (policyId: string, field: 'status' | 'notes', value: string) => {
+    setEditedMappings((prev) => ({
+      ...prev,
+      [policyId]: {
+        ...(prev[policyId] || { status: 'not_assessed', notes: '' }),
+        [field]: value,
+      },
+    }));
+  };
+
+  const savePolicyMappings = async () => {
+    setIsSavingPolicies(true);
+    try {
+      const mappingsToSave = Object.entries(editedMappings).map(([policyId, data]) => ({
+        policyId,
+        status: data.status as any,
+        notes: data.notes || undefined,
+      }));
+
+      const response = await fetch(
+        `/api/ai-use-cases/${params.aiUseCaseId}/policies`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mappings: mappingsToSave }),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to save policy mappings');
+
+      const result = await response.json();
+      const data = result.ok && result.data ? result.data : result;
+
+      setMappings(data.mappings || []);
+      setEditedMappings({});
+
+      toast({
+        title: 'Policy mappings saved',
+        description: 'Your control status has been updated.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save policy mappings',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingPolicies(false);
     }
   };
 
@@ -670,18 +909,298 @@ export default function AiUseCaseDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="border-dashed">
+      {/* Policies & Controls (G3) */}
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <AlertCircle className="h-5 w-5 text-muted-foreground" />
-            <span>Policies & Controls</span>
-          </CardTitle>
-          <CardDescription>Coming soon in Governance Milestone G2</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Policies & Controls</CardTitle>
+              <CardDescription>
+                This is where your AI ideas meet your legal reality.
+              </CardDescription>
+            </div>
+            {policies.length > 0 && (
+              <div className="flex items-center space-x-2">
+                {mappings.length > 0 && (
+                  <Button
+                    onClick={suggestPolicies}
+                    disabled={isSuggesting}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    {isSuggesting ? 'Suggesting...' : 'Ask AI'}
+                  </Button>
+                )}
+                <Button
+                  onClick={() => setShowCreatePolicyDialog(true)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Policy
+                </Button>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Map applicable policies and implement controls for responsible AI deployment.
-          </p>
+          {isLoadingPolicies ? (
+            <p className="text-sm text-muted-foreground">Loading policies...</p>
+          ) : policies.length === 0 ? (
+            /* State A: No policies in workspace */
+            <div className="space-y-4 text-center py-8">
+              <p className="text-sm text-muted-foreground">
+                No policies yet. Add your first policy to start tracking compliance.
+              </p>
+              <Button onClick={() => setShowCreatePolicyDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Policy
+              </Button>
+            </div>
+          ) : mappings.length === 0 ? (
+            /* State B: Policies exist but no mappings yet */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b">
+                <p className="text-sm text-muted-foreground">
+                  {policies.length} {policies.length === 1 ? 'policy' : 'policies'} available. Map which ones apply to this use case.
+                </p>
+                <Button onClick={suggestPolicies} disabled={isSuggesting} size="sm">
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isSuggesting ? 'Suggesting...' : 'Ask AI which are relevant'}
+                </Button>
+              </div>
+
+              <div className="space-y-2">
+                {policies.map((policy) => {
+                  const isSuggested = suggestedPolicyIds.includes(policy.id);
+                  const suggestion = suggestions.find((s) => s.policyId === policy.id);
+                  const currentEdit = editedMappings[policy.id] || { status: 'not_assessed', notes: '' };
+
+                  return (
+                    <div
+                      key={policy.id}
+                      className={`p-3 border rounded-md ${isSuggested ? 'border-blue-300 bg-blue-50' : ''}`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <p className="font-medium text-sm">{policy.name}</p>
+                            <Badge className={POLICY_CATEGORY_COLORS[policy.category]}>
+                              {policy.category}
+                            </Badge>
+                            {isSuggested && (
+                              <Badge variant="outline" className="text-blue-700 border-blue-300">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                Suggested by AI
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">{policy.description}</p>
+                          {suggestion && (
+                            <p className="text-xs text-blue-700 italic mb-2">
+                              AI rationale: {suggestion.reason}
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                              <Label htmlFor={`status-${policy.id}`} className="text-xs">Status</Label>
+                              <Select
+                                value={currentEdit.status}
+                                onValueChange={(v) => updateMappingEdit(policy.id, 'status', v)}
+                              >
+                                <SelectTrigger id={`status-${policy.id}`} className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="not_assessed">Not Assessed</SelectItem>
+                                  <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                                  <SelectItem value="in_progress">In Progress</SelectItem>
+                                  <SelectItem value="compliant">Compliant</SelectItem>
+                                  <SelectItem value="non_compliant">Non-Compliant</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor={`notes-${policy.id}`} className="text-xs">Notes</Label>
+                              <Input
+                                id={`notes-${policy.id}`}
+                                value={currentEdit.notes}
+                                onChange={(e) => updateMappingEdit(policy.id, 'notes', e.target.value)}
+                                placeholder="Optional notes..."
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {Object.keys(editedMappings).length > 0 && (
+                <div className="flex justify-end pt-4 border-t">
+                  <Button onClick={savePolicyMappings} disabled={isSavingPolicies}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSavingPolicies ? 'Saving...' : 'Save Mappings'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            /* State C: Existing mappings */
+            <div className="space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b">
+                <p className="text-sm text-muted-foreground">
+                  {mappings.length} {mappings.length === 1 ? 'policy' : 'policies'} mapped
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                {mappings.map((mapping) => {
+                  const currentEdit = editedMappings[mapping.policy.id] || {
+                    status: mapping.status,
+                    notes: mapping.notes || '',
+                  };
+
+                  return (
+                    <div key={mapping.id} className="p-3 border rounded-md">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <p className="font-medium text-sm">{mapping.policy.name}</p>
+                            <Badge className={POLICY_CATEGORY_COLORS[mapping.policy.category]}>
+                              {mapping.policy.category}
+                            </Badge>
+                            <Badge className={POLICY_STATUS_COLORS[currentEdit.status]}>
+                              {currentEdit.status.replace('_', ' ')}
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-2">
+                            {mapping.policy.description}
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label htmlFor={`status-edit-${mapping.policy.id}`} className="text-xs">
+                                Status
+                              </Label>
+                              <Select
+                                value={currentEdit.status}
+                                onValueChange={(v) => updateMappingEdit(mapping.policy.id, 'status', v)}
+                              >
+                                <SelectTrigger id={`status-edit-${mapping.policy.id}`} className="h-8 text-xs">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="not_assessed">Not Assessed</SelectItem>
+                                  <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                                  <SelectItem value="in_progress">In Progress</SelectItem>
+                                  <SelectItem value="compliant">Compliant</SelectItem>
+                                  <SelectItem value="non_compliant">Non-Compliant</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
+                              <Label htmlFor={`notes-edit-${mapping.policy.id}`} className="text-xs">
+                                Notes
+                              </Label>
+                              <Input
+                                id={`notes-edit-${mapping.policy.id}`}
+                                value={currentEdit.notes}
+                                onChange={(e) => updateMappingEdit(mapping.policy.id, 'notes', e.target.value)}
+                                placeholder="Optional notes..."
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+
+                          {mapping.lastUpdatedBy && mapping.lastUpdatedAt && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Last updated by {mapping.lastUpdatedBy} on{' '}
+                              {new Date(mapping.lastUpdatedAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Unmapped policies */}
+                {policies.filter((p) => !mappings.some((m) => m.policy.id === p.id)).length > 0 && (
+                  <>
+                    <div className="pt-4 border-t">
+                      <p className="text-sm font-medium mb-2">Available Policies (Not Yet Mapped)</p>
+                      {policies
+                        .filter((p) => !mappings.some((m) => m.policy.id === p.id))
+                        .map((policy) => {
+                          const currentEdit = editedMappings[policy.id] || { status: 'not_assessed', notes: '' };
+
+                          return (
+                            <div key={policy.id} className="p-3 border rounded-md mb-2">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <p className="font-medium text-sm">{policy.name}</p>
+                                    <Badge className={POLICY_CATEGORY_COLORS[policy.category]}>
+                                      {policy.category}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mb-2">{policy.description}</p>
+
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                      <Label htmlFor={`status-new-${policy.id}`} className="text-xs">Status</Label>
+                                      <Select
+                                        value={currentEdit.status}
+                                        onValueChange={(v) => updateMappingEdit(policy.id, 'status', v)}
+                                      >
+                                        <SelectTrigger id={`status-new-${policy.id}`} className="h-8 text-xs">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="not_assessed">Not Assessed</SelectItem>
+                                          <SelectItem value="not_applicable">Not Applicable</SelectItem>
+                                          <SelectItem value="in_progress">In Progress</SelectItem>
+                                          <SelectItem value="compliant">Compliant</SelectItem>
+                                          <SelectItem value="non_compliant">Non-Compliant</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <Label htmlFor={`notes-new-${policy.id}`} className="text-xs">Notes</Label>
+                                      <Input
+                                        id={`notes-new-${policy.id}`}
+                                        value={currentEdit.notes}
+                                        onChange={(e) => updateMappingEdit(policy.id, 'notes', e.target.value)}
+                                        placeholder="Optional notes..."
+                                        className="h-8 text-xs"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {Object.keys(editedMappings).length > 0 && (
+                <div className="flex justify-end pt-4 border-t">
+                  <Button onClick={savePolicyMappings} disabled={isSavingPolicies}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {isSavingPolicies ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -703,6 +1222,97 @@ export default function AiUseCaseDetailPage({
       <div className="text-center text-sm text-muted-foreground pb-8">
         Created {new Date(useCase.createdAt).toLocaleDateString()}
       </div>
+
+      {/* Create Policy Dialog */}
+      <Dialog open={showCreatePolicyDialog} onOpenChange={setShowCreatePolicyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Policy</DialogTitle>
+            <DialogDescription>
+              Add a new policy to your workspace library. It will be available for all AI use cases.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="new-policy-key">
+                Key <span className="text-xs text-muted-foreground">(uppercase, numbers, underscores only)</span>
+              </Label>
+              <Input
+                id="new-policy-key"
+                value={newPolicyKey}
+                onChange={(e) => setNewPolicyKey(e.target.value.toUpperCase())}
+                placeholder="e.g., GDPR_DATA_MINIMIZATION"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-policy-name">Name</Label>
+              <Input
+                id="new-policy-name"
+                value={newPolicyName}
+                onChange={(e) => setNewPolicyName(e.target.value)}
+                placeholder="e.g., GDPR – Data Minimization"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="new-policy-category">Category</Label>
+              <Select
+                value={newPolicyCategory}
+                onValueChange={(v: any) => setNewPolicyCategory(v)}
+              >
+                <SelectTrigger id="new-policy-category">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="privacy">Privacy</SelectItem>
+                  <SelectItem value="security">Security</SelectItem>
+                  <SelectItem value="ethics">Ethics</SelectItem>
+                  <SelectItem value="governance">Governance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="new-policy-description">Description</Label>
+              <Textarea
+                id="new-policy-description"
+                value={newPolicyDescription}
+                onChange={(e) => setNewPolicyDescription(e.target.value)}
+                rows={4}
+                placeholder="Describe the policy requirements..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCreatePolicyDialog(false);
+                setNewPolicyKey('');
+                setNewPolicyName('');
+                setNewPolicyCategory('privacy');
+                setNewPolicyDescription('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={createPolicy}
+              disabled={
+                isCreatingPolicy ||
+                !newPolicyKey ||
+                !newPolicyName ||
+                !newPolicyDescription
+              }
+            >
+              {isCreatingPolicy ? 'Creating...' : 'Create Policy'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

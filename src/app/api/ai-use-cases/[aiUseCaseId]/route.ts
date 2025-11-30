@@ -61,6 +61,7 @@ export async function GET(
 
     const formattedUseCase = {
       id: aiUseCase.id,
+      workspaceId: aiUseCase.workspaceId,
       title: aiUseCase.title,
       description: aiUseCase.description,
       status: aiUseCase.status,
