@@ -70,8 +70,9 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members  WorkspaceMember[]
-  projects Project[]
+  members    WorkspaceMember[]
+  projects   Project[]
+  aiUseCases AiUseCase[]
 
   @@map("workspaces")
 }
@@ -107,6 +108,7 @@ model Project {
   workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   processes  Process[]
   blueprints Blueprint[]
+  aiUseCases AiUseCase[]
 
   @@map("projects")
 }
@@ -276,7 +278,39 @@ model Blueprint {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  aiUseCases AiUseCase[]
 
   @@map("blueprints")
+}
+
+// ============================================
+// GOVERNANCE – AI USE CASE REGISTRY
+// ============================================
+model AiUseCase {
+  id          String   @id @default(cuid())
+  workspaceId String
+  projectId   String
+  blueprintId String?
+
+  title       String
+  description String   @db.Text
+  status      String   @default("planned") // "planned" | "pilot" | "production" | "paused"
+  owner       String?
+  source      String   @default("manual") // "manual" | "blueprint"
+
+  linkedProcessIds     Json @default("[]") // array of process IDs
+  linkedOpportunityIds Json @default("[]") // array of opportunity IDs
+  linkedToolIds        Json @default("[]") // array of tool IDs
+  metadataJson         Json @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  workspace Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  blueprint Blueprint? @relation(fields: [blueprintId], references: [id], onDelete: SetNull)
+
+  @@map("ai_use_cases")
 }

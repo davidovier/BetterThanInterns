@@ -13,10 +13,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, Workflow, ArrowLeft, FileText, Sparkles } from 'lucide-react';
+import { Plus, Workflow, ArrowLeft, FileText, Sparkles, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { apiFetch, getErrorMessage } from '@/lib/api-client';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
 
 type Process = {
   id: string;
@@ -40,6 +41,14 @@ type Blueprint = {
   metadataJson: any;
 };
 
+type AiUseCase = {
+  id: string;
+  title: string;
+  status: string;
+  source: string;
+  createdAt: string;
+};
+
 export default function ProjectProcessesPage({
   params,
 }: {
@@ -50,6 +59,7 @@ export default function ProjectProcessesPage({
   const [project, setProject] = useState<Project | null>(null);
   const [processes, setProcesses] = useState<Process[]>([]);
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
+  const [aiUseCases, setAiUseCases] = useState<AiUseCase[]>([]);
   const [showNewProcess, setShowNewProcess] = useState(false);
   const [newProcessName, setNewProcessName] = useState('');
   const [newProcessDescription, setNewProcessDescription] = useState('');
@@ -57,11 +67,13 @@ export default function ProjectProcessesPage({
   const [isGeneratingBlueprint, setIsGeneratingBlueprint] = useState(false);
   const [isLoadingProcesses, setIsLoadingProcesses] = useState(true);
   const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(true);
+  const [isLoadingAiUseCases, setIsLoadingAiUseCases] = useState(true);
 
   useEffect(() => {
     loadProject();
     loadProcesses();
     loadBlueprints();
+    loadAiUseCases();
   }, [params.projectId]);
 
   const loadProject = async () => {
@@ -112,6 +124,80 @@ export default function ProjectProcessesPage({
       });
     } finally {
       setIsLoadingBlueprints(false);
+    }
+  };
+
+  const loadAiUseCases = async () => {
+    setIsLoadingAiUseCases(true);
+    try {
+      // Get workspace first
+      const workspacesRes = await fetch('/api/workspaces');
+      const workspacesData = await workspacesRes.json();
+      const workspaces = workspacesData.ok && workspacesData.data
+        ? workspacesData.data.workspaces
+        : workspacesData.workspaces;
+
+      if (workspaces && workspaces.length > 0) {
+        const wsId = workspaces[0].id;
+        const response = await fetch(`/api/workspaces/${wsId}/ai-use-cases?projectId=${params.projectId}`);
+        const result = await response.json();
+        const useCases = result.ok && result.data
+          ? result.data.aiUseCases
+          : result.aiUseCases;
+        setAiUseCases(useCases || []);
+      }
+    } catch (error) {
+      // Silently fail - AI use cases section is optional
+      console.log('Could not load AI use cases');
+    } finally {
+      setIsLoadingAiUseCases(false);
+    }
+  };
+
+  const createAiUseCase = async (mode: 'manual' | 'from_blueprint') => {
+    try {
+      let body;
+      if (mode === 'from_blueprint' && blueprints.length > 0) {
+        body = JSON.stringify({
+          mode: 'from_blueprint',
+          blueprintId: blueprints[0].id,
+        });
+      } else {
+        body = JSON.stringify({
+          mode: 'manual',
+          title: `AI Implementation - ${project?.name || 'Untitled'}`,
+          description: 'Automated business process implementation.',
+          status: 'planned',
+        });
+      }
+
+      const response = await fetch(`/api/projects/${params.projectId}/ai-use-cases`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      });
+
+      if (!response.ok) throw new Error('Failed to create AI use case');
+
+      const result = await response.json();
+      const aiUseCase = result.ok && result.data ? result.data.aiUseCase : result.aiUseCase;
+
+      toast({
+        title: 'AI use case created',
+        description: 'Navigate to Governance to view and manage it.',
+      });
+
+      // Reload AI use cases
+      await loadAiUseCases();
+
+      // Navigate to detail page
+      router.push(`/ai-use-cases/${aiUseCase.id}`);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create AI use case',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -327,6 +413,56 @@ export default function ProjectProcessesPage({
           </div>
         </div>
       ) : null}
+
+      {/* AI Use Cases Section (Governance MVP) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold flex items-center space-x-2">
+            <Shield className="h-6 w-6" />
+            <span>AI Use Cases (Governance)</span>
+          </h2>
+          <Button
+            onClick={() => createAiUseCase(blueprints.length > 0 ? 'from_blueprint' : 'manual')}
+            variant="outline"
+            size="sm"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create AI Use Case
+          </Button>
+        </div>
+
+        {isLoadingAiUseCases ? (
+          <Card>
+            <CardContent className="py-6">
+              <p className="text-sm text-muted-foreground">Loading AI use cases...</p>
+            </CardContent>
+          </Card>
+        ) : aiUseCases.length > 0 ? (
+          <div className="grid gap-4 md:grid-cols-2">
+            {aiUseCases.map((uc) => (
+              <Link key={uc.id} href={`/ai-use-cases/${uc.id}`} prefetch={true}>
+                <Card className="hover:bg-accent transition-colors cursor-pointer">
+                  <CardHeader>
+                    <CardTitle className="text-lg">{uc.title}</CardTitle>
+                    <CardDescription className="flex items-center space-x-2">
+                      <Badge variant="secondary">{uc.status}</Badge>
+                      <span className="text-xs">• {uc.source === 'blueprint' ? 'From Blueprint' : 'Manual'}</span>
+                    </CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-6">
+              <p className="text-sm text-muted-foreground">
+                No AI use cases yet. Create one to track governance and deployment.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       <h2 className="text-2xl font-bold">Processes</h2>
 
