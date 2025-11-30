@@ -131,7 +131,7 @@ export async function generateBlueprintForProject(
 
     // Call LLM
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better JSON mode)
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         {

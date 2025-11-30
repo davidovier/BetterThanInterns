@@ -7,7 +7,7 @@ export const openai = new OpenAI({
 export async function testLLMCall(prompt: string): Promise<string> {
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better performance)
       messages: [
         {
           role: 'system',
