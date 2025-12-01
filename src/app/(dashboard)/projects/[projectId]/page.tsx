@@ -18,7 +18,6 @@ import Link from 'next/link';
 import { apiFetch, getErrorMessage } from '@/lib/api-client';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { AppShell } from '@/components/layout/AppShell';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SectionCard } from '@/components/layout/SectionCard';
 
@@ -286,7 +285,7 @@ export default function ProjectProcessesPage({
   };
 
   return (
-    <AppShell>
+    <>
       <PageHeader
         title={project?.name || 'Project'}
         description={project?.description}
@@ -698,6 +697,6 @@ export default function ProjectProcessesPage({
           )}
         </SectionCard>
       </div>
-    </AppShell>
+    </>
   );
 }

@@ -17,7 +17,6 @@ import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap } from 
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { AppShell } from '@/components/layout/AppShell';
 
 type Workspace = {
   id: string;
@@ -194,8 +193,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <AppShell>
-      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -456,6 +454,5 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </AppShell>
   );
 }
