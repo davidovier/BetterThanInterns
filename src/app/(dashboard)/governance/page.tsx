@@ -12,9 +12,10 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Shield, FileText } from 'lucide-react';
+import { Shield, FileText, Activity, CheckCircle2, Clock, Pause } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 type AiUseCase = {
   id: string;
@@ -31,11 +32,11 @@ type AiUseCase = {
   };
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  planned: 'bg-blue-100 text-blue-800',
-  pilot: 'bg-yellow-100 text-yellow-800',
-  production: 'bg-green-100 text-green-800',
-  paused: 'bg-gray-100 text-gray-800',
+const STATUS_CONFIG: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline', icon: any, label: string }> = {
+  planned: { variant: 'secondary', icon: Clock, label: 'Planned' },
+  pilot: { variant: 'default', icon: Activity, label: 'Pilot' },
+  production: { variant: 'outline', icon: CheckCircle2, label: 'Production' },
+  paused: { variant: 'secondary', icon: Pause, label: 'Paused' },
 };
 
 export default function GovernancePage() {
@@ -85,18 +86,24 @@ export default function GovernancePage() {
     }
   };
 
+  // Group by status
+  const groupedByStatus = aiUseCases.reduce((acc, useCase) => {
+    const status = useCase.status || 'planned';
+    if (!acc[status]) acc[status] = [];
+    acc[status].push(useCase);
+    return acc;
+  }, {} as Record<string, AiUseCase[]>);
+
   if (isLoading) {
     return (
-      <div className="space-y-8">
+      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         <div>
-          <h1 className="text-3xl font-bold">Governance</h1>
-          <p className="text-muted-foreground mt-2">
-            Track and manage your AI implementations
-          </p>
+          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-5 w-96" />
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
+            <Card key={i} className="rounded-2xl">
               <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
                 <Skeleton className="h-4 w-1/2 mt-2" />
@@ -112,67 +119,100 @@ export default function GovernancePage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
+    <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+      <PageHeader
+        title="AI Governance"
+        description="Track and manage your AI implementations. Because someone has to."
+        actions={
           <div className="flex items-center space-x-2">
-            <Shield className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">Governance</h1>
+            <div className="rounded-full bg-muted/60 px-4 py-1.5">
+              <span className="text-sm font-medium">{aiUseCases.length} use {aiUseCases.length === 1 ? 'case' : 'cases'}</span>
+            </div>
           </div>
-          <p className="text-muted-foreground mt-2">
-            Track and manage your AI implementations. Because someone has to.
-          </p>
-        </div>
-      </div>
+        }
+      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {aiUseCases.length === 0 ? (
-          <Card className="col-span-full">
-            <CardContent className="flex flex-col items-center justify-center py-12">
-              <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground text-center mb-2">
-                No AI use cases yet.
-              </p>
-              <p className="text-sm text-muted-foreground text-center">
-                Once you decide which automations to actually ship, they'll show up here instead of your notebook.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          aiUseCases.map((useCase) => (
-            <Link key={useCase.id} href={`/ai-use-cases/${useCase.id}`} prefetch={true}>
-              <Card className="hover:bg-accent transition-colors cursor-pointer h-full">
-                <CardHeader>
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge className={STATUS_COLORS[useCase.status] || 'bg-gray-100'}>
-                      {useCase.status}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {useCase.source === 'blueprint' ? 'From Blueprint' : 'Manual'}
-                    </span>
+      {aiUseCases.length === 0 ? (
+        <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">
+          <CardContent className="flex flex-col items-center justify-center py-16">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center mx-auto mb-6 shadow-soft">
+              <Shield className="h-10 w-10 text-muted-foreground/40" />
+            </div>
+            <p className="text-lg font-semibold mb-2">No AI use cases yet</p>
+            <p className="text-sm text-muted-foreground text-center max-w-md">
+              Once you decide which automations to actually ship, they'll show up here instead of your notebook.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-8">
+          {/* Group by status */}
+          {Object.entries(groupedByStatus).map(([status, cases]) => {
+            const config = STATUS_CONFIG[status] || STATUS_CONFIG.planned;
+            const StatusIcon = config.icon;
+
+            return (
+              <div key={status} className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <div className="rounded-full bg-muted/60 p-2">
+                    <StatusIcon className="h-4 w-4 text-muted-foreground" />
                   </div>
-                  <CardTitle className="text-lg">{useCase.title}</CardTitle>
-                  <CardDescription className="line-clamp-1">
-                    {useCase.projectName}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex space-x-4 text-sm text-muted-foreground">
-                    <span>{useCase.metadata.processCount} processes</span>
-                    <span>•</span>
-                    <span>{useCase.metadata.opportunityCount} opportunities</span>
-                    <span>•</span>
-                    <span>{useCase.metadata.toolCount} tools</span>
-                  </div>
-                  <div className="mt-2 text-xs text-muted-foreground">
-                    Created {new Date(useCase.createdAt).toLocaleDateString()}
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))
-        )}
-      </div>
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    {config.label}
+                  </h2>
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">{cases.length}</span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {cases.map((useCase) => (
+                    <Link key={useCase.id} href={`/ai-use-cases/${useCase.id}`} prefetch={true}>
+                      <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium hover:border-primary/40 hover:-translate-y-[1px] transition-all h-full">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between mb-3">
+                            <Badge variant={config.variant} className="text-xs">
+                              {config.label}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {useCase.source === 'blueprint' ? 'Blueprint' : 'Manual'}
+                            </span>
+                          </div>
+                          <CardTitle className="text-base font-semibold leading-tight">
+                            {useCase.title}
+                          </CardTitle>
+                          <CardDescription className="text-xs line-clamp-1">
+                            {useCase.projectName}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="flex items-center space-x-3 text-xs text-muted-foreground mb-2">
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">{useCase.metadata.processCount}</span>
+                              <span>processes</span>
+                            </div>
+                            <span>•</span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-medium">{useCase.metadata.toolCount}</span>
+                              <span>tools</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {new Date(useCase.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

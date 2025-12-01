@@ -536,126 +536,131 @@ export default function AiUseCaseDetailPage({
   }
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
+    <div className="max-w-7xl mx-auto px-8 py-8">
+      <div className="mb-6">
         <Link href="/governance">
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="hover:-translate-y-[1px] transition-all">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Governance
           </Button>
         </Link>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-4 mb-8">
         <div className="flex items-center space-x-3">
-          <Shield className="h-8 w-8" />
-          <h1 className="text-4xl font-bold">{useCase.title}</h1>
+          <div className="rounded-full bg-gradient-to-br from-muted to-muted/40 p-3 shadow-soft">
+            <Shield className="h-7 w-7 text-muted-foreground" />
+          </div>
+          <h1 className="text-3xl font-bold">{useCase.title}</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <Badge className={STATUS_COLORS[useCase.status] || 'bg-gray-100'}>
+          <Badge variant="outline" className="text-xs font-medium">
             {useCase.status}
           </Badge>
-          <span className="text-sm text-muted-foreground">
-            {useCase.source === 'blueprint' ? 'Created from Blueprint' : 'Manually Created'}
+          <span className="text-xs text-muted-foreground uppercase tracking-wide">
+            {useCase.source === 'blueprint' ? 'From Blueprint' : 'Manual'}
           </span>
           {useCase.owner && (
             <>
-              <span className="text-sm text-muted-foreground">•</span>
-              <span className="text-sm text-muted-foreground">Owner: {useCase.owner}</span>
+              <span className="text-xs text-muted-foreground">•</span>
+              <span className="text-xs text-muted-foreground">Owner: {useCase.owner}</span>
             </>
           )}
         </div>
       </div>
 
-      {/* Description */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Description</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="whitespace-pre-wrap">{useCase.description}</p>
-        </CardContent>
-      </Card>
+      {/* 2-Column Layout */}
+      <div className="grid md:grid-cols-5 gap-8">
+        {/* Left Column: Summary (2/5) */}
+        <div className="md:col-span-2 space-y-6">
+          {/* Description */}
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Description</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed">{useCase.description}</p>
+            </CardContent>
+          </Card>
 
-      {/* Project & Blueprint Links */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Project</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <p className="font-medium">{project.name}</p>
+          {/* Project Link */}
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Project</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="font-medium text-base">{project.name}</p>
               {project.description && (
                 <p className="text-sm text-muted-foreground">{project.description}</p>
               )}
               <Link href={`/projects/${project.id}`}>
-                <Button variant="outline" size="sm" className="mt-2">
+                <Button variant="outline" size="sm" className="hover:-translate-y-[1px] transition-all">
                   <FolderOpen className="h-4 w-4 mr-2" />
                   View Project
                 </Button>
               </Link>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        {blueprint && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Blueprint</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <p className="font-medium">{blueprint.title}</p>
-                <p className="text-sm text-muted-foreground">
+          {/* Blueprint Link (if exists) */}
+          {blueprint && (
+            <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Blueprint</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="font-medium text-base">{blueprint.title}</p>
+                <p className="text-xs text-muted-foreground">
                   Version {blueprint.version} • {new Date(blueprint.createdAt).toLocaleDateString()}
                 </p>
                 <Link href={`/projects/${project.id}/blueprints/${blueprint.id}`}>
-                  <Button variant="outline" size="sm" className="mt-2">
+                  <Button variant="outline" size="sm" className="hover:-translate-y-[1px] transition-all">
                     <FileText className="h-4 w-4 mr-2" />
                     View Blueprint
                   </Button>
                 </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Linked Resources */}
+          <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/20 shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Linked Resources</CardTitle>
+              <CardDescription className="text-xs">
+                Associated processes, opportunities, and tools
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between p-2 rounded-lg bg-card/60">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Processes</span>
+                <span className="font-semibold">{useCase.metadata.processCount}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-card/60">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Opportunities</span>
+                <span className="font-semibold">{useCase.metadata.opportunityCount}</span>
+              </div>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-card/60">
+                <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Tools</span>
+                <span className="font-semibold">{useCase.metadata.toolCount}</span>
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
 
-      {/* Linked Resources */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Linked Resources</CardTitle>
-          <CardDescription>
-            Processes, opportunities, and tools associated with this AI use case
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <p className="font-medium mb-2">Processes</p>
-            <p className="text-muted-foreground">{useCase.metadata.processCount} process{useCase.metadata.processCount !== 1 ? 'es' : ''} linked</p>
-          </div>
-          <div>
-            <p className="font-medium mb-2">Opportunities</p>
-            <p className="text-muted-foreground">{useCase.metadata.opportunityCount} automation opportunit{useCase.metadata.opportunityCount !== 1 ? 'ies' : 'y'} identified</p>
-          </div>
-          <div>
-            <p className="font-medium mb-2">Tools</p>
-            <p className="text-muted-foreground">{useCase.metadata.toolCount} tool{useCase.metadata.toolCount !== 1 ? 's' : ''} recommended</p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Right Column: Risk & Policies (3/5) */}
+        <div className="md:col-span-3 space-y-6">
 
-      {/* Risk & Impact Assessment (G2) */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Risk & Impact Assessment</CardTitle>
-          <CardDescription>
-            {!riskAssessment
-              ? 'Governance isn\'t sexy, but fines are even less sexy.'
-              : 'Conservative assessment reviewed by humans.'}
-          </CardDescription>
-        </CardHeader>
+          {/* Risk & Impact Assessment (G2) */}
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Risk & Impact Assessment</CardTitle>
+              <CardDescription className="text-xs">
+                {!riskAssessment
+                  ? 'Governance isn\'t sexy, but fines are even less sexy.'
+                  : 'Conservative assessment reviewed by humans.'}
+              </CardDescription>
+            </CardHeader>
         <CardContent>
           {isLoadingRisk ? (
             <p className="text-sm text-muted-foreground">Loading risk assessment...</p>
@@ -664,7 +669,7 @@ export default function AiUseCaseDetailPage({
               <p className="text-sm text-muted-foreground">
                 No risk assessment yet. Use the AI helper to draft one, then tweak it so your lawyer sleeps at night.
               </p>
-              <Button onClick={draftRiskAssessment} disabled={isDrafting}>
+              <Button onClick={draftRiskAssessment} disabled={isDrafting} className="hover:-translate-y-[1px] transition-all">
                 <Sparkles className="h-4 w-4 mr-2" />
                 {isDrafting ? 'Drafting...' : 'Draft with AI'}
               </Button>
@@ -674,7 +679,7 @@ export default function AiUseCaseDetailPage({
                   setIsEditing(true);
                   setSummaryText('Enter risk summary...');
                 }}
-                className="ml-2"
+                className="ml-2 hover:-translate-y-[1px] transition-all"
               >
                 Fill Manually
               </Button>
@@ -909,16 +914,16 @@ export default function AiUseCaseDetailPage({
         </CardContent>
       </Card>
 
-      {/* Policies & Controls (G3) */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Policies & Controls</CardTitle>
-              <CardDescription>
-                This is where your AI ideas meet your legal reality.
-              </CardDescription>
-            </div>
+          {/* Policies & Controls (G3) */}
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Policies & Controls</CardTitle>
+                  <CardDescription className="text-xs">
+                    This is where your AI ideas meet your legal reality.
+                  </CardDescription>
+                </div>
             {policies.length > 0 && (
               <div className="flex items-center space-x-2">
                 {mappings.length > 0 && (
@@ -1204,13 +1209,17 @@ export default function AiUseCaseDetailPage({
         </CardContent>
       </Card>
 
-      <Card className="border-dashed">
+        </div>
+      </div>
+
+      {/* Future: Monitoring & Reviews */}
+      <Card className="rounded-2xl border-2 border-dashed border-border/40 bg-gradient-to-br from-muted/20 to-muted/10 shadow-soft mt-8">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
+          <CardTitle className="flex items-center space-x-2 text-base">
             <AlertCircle className="h-5 w-5 text-muted-foreground" />
             <span>Monitoring & Reviews</span>
           </CardTitle>
-          <CardDescription>Coming soon in Governance Milestone G3</CardDescription>
+          <CardDescription className="text-xs">Coming soon in Governance Milestone G3</CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
@@ -1219,7 +1228,7 @@ export default function AiUseCaseDetailPage({
         </CardContent>
       </Card>
 
-      <div className="text-center text-sm text-muted-foreground pb-8">
+      <div className="text-center text-xs text-muted-foreground pb-8 mt-8 uppercase tracking-wide">
         Created {new Date(useCase.createdAt).toLocaleDateString()}
       </div>
 
