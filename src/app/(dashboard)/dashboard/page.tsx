@@ -13,10 +13,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { AppShell } from '@/components/layout/AppShell';
 
 type Workspace = {
   id: string;
@@ -193,174 +194,268 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Projects</h1>
-          <p className="text-muted-foreground mt-2">
-            Your workflows are a mess. We fix them with AI.
-          </p>
+    <AppShell>
+      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-[32px] font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground mt-2">
+              Your workflows are a mess. We fix them with AI.
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowNewProject(!showNewProject)}
+            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            New Project
+          </Button>
         </div>
-        <Button onClick={() => setShowNewProject(!showNewProject)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Project
-        </Button>
-      </div>
 
-      {showNewProject && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Project</CardTitle>
-            <CardDescription>
-              Start with something ugly. That's where the value is.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={createProject} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name</Label>
-                <Input
-                  id="project-name"
-                  value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
-                  placeholder="e.g., Invoice Processing Automation"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="project-description">
-                  Description (optional)
-                </Label>
-                <Input
-                  id="project-description"
-                  value={newProjectDescription}
-                  onChange={(e) => setNewProjectDescription(e.target.value)}
-                  placeholder="What's this project about?"
-                />
-              </div>
-              <div className="flex space-x-2">
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Creating...' : 'Create Project'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setShowNewProject(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+        {/* Quick Actions Row - Only show when there are projects */}
+        {!isLoadingProjects && projects.length > 0 && (
+          <div className="grid md:grid-cols-3 gap-4">
+            <Card
+              className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
+              onClick={() => setShowNewProject(true)}
+            >
+              <CardHeader className="flex flex-row items-center space-x-4 pb-4">
+                <div className="rounded-full bg-brand-50 p-3">
+                  <Plus className="h-6 w-6 text-brand-500" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold">New Project</CardTitle>
+                  <CardDescription className="text-sm">Start fresh</CardDescription>
+                </div>
+              </CardHeader>
+            </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {isLoadingProjects ? (
-          <>
-            {[1, 2, 3].map((i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-full mt-2" />
+            <Card
+              className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
+              onClick={createDemoProject}
+            >
+              <CardHeader className="flex flex-row items-center space-x-4 pb-4">
+                <div className="rounded-full bg-warm-50 p-3">
+                  <Sparkles className="h-6 w-6 text-warm-500" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-semibold">Demo Project</CardTitle>
+                  <CardDescription className="text-sm">
+                    {isCreatingDemo ? 'Creating...' : 'Try it out'}
+                  </CardDescription>
+                </div>
+              </CardHeader>
+            </Card>
+
+            <Link href="/governance">
+              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer">
+                <CardHeader className="flex flex-row items-center space-x-4 pb-4">
+                  <div className="rounded-full bg-brand-50 p-3">
+                    <FileText className="h-6 w-6 text-brand-500" />
+                  </div>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg font-semibold">Governance</CardTitle>
+                    <CardDescription className="text-sm">View AI use cases</CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </>
-        ) : projects.length === 0 ? (
-          <Card className="col-span-full border-2 border-dashed">
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Sparkles className="h-8 w-8 text-primary" />
-              </div>
-              <CardTitle className="text-2xl">Let's make you better than interns</CardTitle>
-              <CardDescription className="text-base pt-2">
-                3 steps to your first AI implementation plan
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4 max-w-2xl mx-auto">
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
-                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-medium">Create your first project</p>
-                    <p className="text-sm text-muted-foreground">
-                      Start with something real. Pick a messy process that needs fixing.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
-                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-medium">Map one real process</p>
-                    <p className="text-sm text-muted-foreground">
-                      Chat with our AI assistant to build a visual workflow. Takes 10-15 minutes.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start space-x-3 p-3 rounded-lg bg-muted/30">
-                  <Circle className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="font-medium">Scan for AI opportunities & generate a blueprint</p>
-                    <p className="text-sm text-muted-foreground">
-                      We analyze each step, match tools, and export a professional plan.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                <Button size="lg" onClick={() => setShowNewProject(true)}>
-                  <Plus className="h-5 w-5 mr-2" />
-                  Create a project
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={createDemoProject}
-                  disabled={isCreatingDemo}
-                >
-                  <Sparkles className="h-5 w-5 mr-2" />
-                  {isCreatingDemo ? 'Creating demo...' : 'Spin up a demo project'}
-                </Button>
-              </div>
-
-              <p className="text-xs text-center text-muted-foreground pt-4">
-                Demo project comes pre-populated with a sample workflow you can explore
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`} prefetch={true}>
-              <Card className="hover:bg-accent transition-colors cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="text-lg">{project.name}</CardTitle>
-                  {project.description && (
-                    <CardDescription>{project.description}</CardDescription>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-muted-foreground">
-                    <span className="capitalize">{project.status}</span>
-                    <span>
-                      {new Date(project.updatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                </CardContent>
               </Card>
             </Link>
-          ))
+          </div>
         )}
+
+        {/* New Project Form */}
+        {showNewProject && (
+          <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Create New Project</CardTitle>
+              <CardDescription>
+                Start with something ugly. That's where the value is.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={createProject} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="project-name">Project Name</Label>
+                  <Input
+                    id="project-name"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="e.g., Invoice Processing Automation"
+                    required
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project-description">
+                    Description (optional)
+                  </Label>
+                  <Input
+                    id="project-description"
+                    value={newProjectDescription}
+                    onChange={(e) => setNewProjectDescription(e.target.value)}
+                    placeholder="What's this project about?"
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                  >
+                    {isLoading ? 'Creating...' : 'Create Project'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowNewProject(false)}
+                    className="hover:-translate-y-[1px] transition-all"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Projects Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {isLoadingProjects ? (
+            <>
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="rounded-2xl">
+                  <CardHeader>
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full mt-2" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          ) : projects.length === 0 ? (
+            <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">
+              <CardHeader className="text-center pt-12 pb-8">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center mx-auto mb-6 shadow-soft">
+                  <Sparkles className="h-10 w-10 text-brand-500" />
+                </div>
+                <CardTitle className="text-3xl font-bold">Let's make you better than interns</CardTitle>
+                <CardDescription className="text-lg pt-3">
+                  3 steps to your first AI implementation plan
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8 pb-12">
+                <div className="space-y-4 max-w-2xl mx-auto">
+                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
+                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
+                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-base">Create your first project</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Start with something real. Pick a messy process that needs fixing.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
+                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
+                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-base">Map one real process</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Chat with our AI assistant to build a visual workflow. Takes 10-15 minutes.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
+                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
+                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-base">Scan for AI opportunities & generate a blueprint</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        We analyze each step, match tools, and export a professional plan.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                  <Button
+                    size="lg"
+                    onClick={() => setShowNewProject(true)}
+                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[2px] transition-all shadow-md"
+                  >
+                    <Plus className="h-5 w-5 mr-2" />
+                    Create a project
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    onClick={createDemoProject}
+                    disabled={isCreatingDemo}
+                    className="hover:-translate-y-[2px] transition-all"
+                  >
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    {isCreatingDemo ? 'Creating demo...' : 'Spin up a demo project'}
+                  </Button>
+                </div>
+
+                <p className="text-sm text-center text-muted-foreground pt-4">
+                  Demo project comes pre-populated with a sample workflow you can explore
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            projects.map((project) => (
+              <Link key={project.id} href={`/projects/${project.id}`} prefetch={true}>
+                <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <CardTitle className="text-xl font-semibold">{project.name}</CardTitle>
+                      <Badge
+                        variant="outline"
+                        className="capitalize text-xs"
+                      >
+                        {project.status}
+                      </Badge>
+                    </div>
+                    {project.description && (
+                      <CardDescription className="text-base line-clamp-2">
+                        {project.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center text-muted-foreground">
+                        <FolderOpen className="h-4 w-4 mr-2" />
+                        <span>Project</span>
+                      </div>
+                      <span className="text-muted-foreground">
+                        {new Date(project.updatedAt).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))
+          )}
+        </div>
       </div>
-    </div>
+    </AppShell>
   );
 }

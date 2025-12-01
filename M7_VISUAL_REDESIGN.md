@@ -83,25 +83,26 @@
 
 ---
 
-### Sprint 3: Dashboard & Projects ⏸️ NOT STARTED
+### Sprint 3: Dashboard & Projects ✅ COMPLETE
 **Estimated effort:** 45-60 min
-**Files:** 2-3
+**Files:** 2
+**Actual time:** ~35 min
 
-- [ ] Polish `/src/app/(dashboard)/dashboard/page.tsx`
+- [x] Polish `/src/app/(dashboard)/dashboard/page.tsx`
   - Wrap in AppShell
-  - Quick actions row (New project, Generate blueprint, Last use case)
+  - Quick actions row (New project, Demo project, Governance)
   - Enhanced zero-state card with gradient
   - Project cards: new style, metadata chips
   - Hover states and transitions
 
-- [ ] Polish `/src/app/(dashboard)/projects/[projectId]/page.tsx`
-  - Use PageHeader component
-  - Visually distinct nudge callouts (blue for "map process")
+- [x] Polish `/src/app/(dashboard)/projects/[projectId]/page.tsx`
+  - Use PageHeader component with breadcrumb and actions
+  - Visually distinct nudge callouts (brand-50 gradient for "map process")
   - Group sections in SectionCards (Processes, Blueprints, AI Use Cases)
   - Consistent empty states
   - Smooth transitions
 
-**Exit criteria:** Dashboard and project pages feel cohesive with new design system
+**Exit criteria:** ✅ Dashboard and project pages feel cohesive with new design system
 
 ---
 
@@ -186,9 +187,10 @@
 ### Completed Sprints
 1. Sprint 1: Foundation & Design System ✅
 2. Sprint 2: Landing & Pricing Pages ✅
+3. Sprint 3: Dashboard & Projects ✅
 
 ### Current Sprint
-Sprint 3: Dashboard & Projects (ready to start)
+Sprint 4: Process Mapping (Hero UX) (ready to start)
 
 ### Blockers
 *None*
@@ -213,8 +215,8 @@ Sprint 3: Dashboard & Projects (ready to start)
 - [x] `src/app/pricing/page.tsx` - Pricing redesign (Sprint 2)
 
 ### Dashboard & Projects
-- [ ] `src/app/(dashboard)/dashboard/page.tsx` - Dashboard polish
-- [ ] `src/app/(dashboard)/projects/[projectId]/page.tsx` - Project detail polish
+- [x] `src/app/(dashboard)/dashboard/page.tsx` - Dashboard polish (Sprint 3)
+- [x] `src/app/(dashboard)/projects/[projectId]/page.tsx` - Project detail polish (Sprint 3)
 
 ### Process Mapping
 - [ ] `src/app/(dashboard)/projects/[projectId]/processes/[processId]/page.tsx` - Hero UX redesign
