@@ -60,11 +60,12 @@
 
 ---
 
-### Sprint 2: Landing & Pricing Pages ⏸️ NOT STARTED
+### Sprint 2: Landing & Pricing Pages ✅ COMPLETE
 **Estimated effort:** 45-60 min
 **Files:** 2
+**Actual time:** ~40 min
 
-- [ ] Redesign `/src/app/page.tsx` (Landing)
+- [x] Redesign `/src/app/page.tsx` (Landing)
   - Hero: headline + subheadline + 2 CTAs + product preview card
   - "How it works" section: 4 step cards with staggered animations
   - "Who it's for" section: 3 persona cards
@@ -72,13 +73,13 @@
   - CTA section + footer
   - Framer Motion: fade-in on scroll, hero slide-up
 
-- [ ] Redesign `/src/app/pricing/page.tsx`
+- [x] Redesign `/src/app/pricing/page.tsx`
   - 3 plan cards in centered container
-  - Pro card: elevated with ring-primary/60
+  - Pro card: elevated with ring-2 ring-brand-400/60
   - Improve FAQ spacing and typography
   - Add animations on scroll
 
-**Exit criteria:** Landing and pricing feel premium, animations smooth
+**Exit criteria:** ✅ Landing and pricing feel premium, animations smooth
 
 ---
 
@@ -184,9 +185,10 @@
 
 ### Completed Sprints
 1. Sprint 1: Foundation & Design System ✅
+2. Sprint 2: Landing & Pricing Pages ✅
 
 ### Current Sprint
-Sprint 2: Landing & Pricing Pages (ready to start)
+Sprint 3: Dashboard & Projects (ready to start)
 
 ### Blockers
 *None*
@@ -207,8 +209,8 @@ Sprint 2: Landing & Pricing Pages (ready to start)
 - [x] `src/components/ui/dropdown-menu.tsx` (Sprint 1)
 
 ### Landing & Marketing
-- [ ] `src/app/page.tsx` - Landing redesign
-- [ ] `src/app/pricing/page.tsx` - Pricing redesign
+- [x] `src/app/page.tsx` - Landing redesign (Sprint 2)
+- [x] `src/app/pricing/page.tsx` - Pricing redesign (Sprint 2)
 
 ### Dashboard & Projects
 - [ ] `src/app/(dashboard)/dashboard/page.tsx` - Dashboard polish

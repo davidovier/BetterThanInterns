@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,32 +10,57 @@ import {
   Wrench,
   FileText,
   Shield,
-  AlertCircle,
   Sparkles,
   ArrowRight,
-  CheckCircle2
+  CheckCircle2,
+  Workflow,
+  BarChart3,
+  Zap
 } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const fadeIn = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+    <div className="min-h-screen bg-gradient-radial from-background via-background to-muted/30">
       {/* Navigation */}
-      <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-xl shadow-soft">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Sparkles className="h-6 w-6" />
+            <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105">
+              <Sparkles className="h-6 w-6 text-brand-500" />
               <span className="font-bold text-xl">Better Than Interns</span>
-            </div>
-            <div className="flex items-center space-x-4">
+            </Link>
+            <div className="flex items-center space-x-3">
               <Link href="/pricing">
-                <Button variant="ghost">Pricing</Button>
+                <Button variant="ghost" className="hover:-translate-y-[1px] transition-all">
+                  Pricing
+                </Button>
               </Link>
               <Link href="/login">
-                <Button variant="ghost">Login</Button>
+                <Button variant="ghost" className="hover:-translate-y-[1px] transition-all">
+                  Login
+                </Button>
               </Link>
               <Link href="/signup">
-                <Button>Get Started</Button>
+                <Button className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-medium transition-all">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </Link>
             </div>
           </div>
@@ -41,318 +68,332 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <Badge variant="outline" className="mb-4">
-            No interns were harmed in the making of this product
-          </Badge>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left: Content */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="space-y-8"
+          >
+            <motion.div variants={fadeIn}>
+              <Badge variant="outline" className="mb-6 border-brand-200 text-brand-700">
+                No interns were harmed in the making of this product
+              </Badge>
+            </motion.div>
 
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
-            Turn messy processes into AI projects in under an hour
-          </h1>
+            <motion.h1
+              variants={fadeIn}
+              className="text-[52px] md:text-6xl font-bold tracking-tight leading-[1.1]"
+            >
+              Turn messy processes into{' '}
+              <span className="text-brand-500">AI projects</span> in under an hour
+            </motion.h1>
 
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Better Than Interns interviews your team, maps workflows, finds automation opportunities,
-            and spits out an AI implementation plan your boss and lawyer can both live with.
-          </p>
+            <motion.p
+              variants={fadeIn}
+              className="text-lg text-muted-foreground max-w-xl"
+            >
+              Better Than Interns interviews your team, maps workflows, finds automation opportunities,
+              and spits out an AI implementation plan your boss and lawyer can both live with.
+            </motion.p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Link href="/signup">
-              <Button size="lg" className="text-lg px-8">
-                Get started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-            <Link href="#how-it-works">
-              <Button size="lg" variant="outline" className="text-lg px-8">
-                See how it works
-              </Button>
-            </Link>
-          </div>
+            <motion.div
+              variants={fadeIn}
+              className="flex flex-col sm:flex-row gap-4 pt-4"
+            >
+              <Link href="/signup">
+                <Button size="lg" className="text-lg px-8 bg-brand-500 hover:bg-brand-600 hover:-translate-y-[2px] hover:shadow-strong transition-all">
+                  Get started
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+              <Link href="#how-it-works">
+                <Button size="lg" variant="outline" className="text-lg px-8 hover:-translate-y-[1px] hover:shadow-medium transition-all">
+                  See how it works
+                </Button>
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Right: Product Preview Card */}
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="relative"
+          >
+            <Card className="rounded-3xl border-border/60 bg-gradient-to-br from-card via-card to-muted/40 shadow-strong overflow-hidden">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Invoice Processing Workflow
+                  </CardTitle>
+                  <Badge className="bg-brand-100 text-brand-700 border-0">4 steps</Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Workflow preview */}
+                <div className="space-y-3">
+                  {['Receive Email', 'Manual Entry', 'Approval', 'Payment'].map((step, i) => (
+                    <motion.div
+                      key={step}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + i * 0.1 }}
+                      className="flex items-center space-x-3 p-3 rounded-xl bg-background/50 border border-border/40"
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-brand-100 flex items-center justify-center">
+                        <span className="text-sm font-semibold text-brand-700">{i + 1}</span>
+                      </div>
+                      <span className="text-sm font-medium">{step}</span>
+                      {i === 1 && (
+                        <Badge className="ml-auto bg-warm-100 text-warm-700 border-0 text-xs">
+                          AI Opportunity
+                        </Badge>
+                      )}
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Chat snippet */}
+                <div className="pt-4 border-t border-border/40">
+                  <div className="flex items-start space-x-2">
+                    <div className="w-6 h-6 rounded-full bg-brand-500 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="h-3 w-3 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground italic">
+                        "I found an automation opportunity: replace manual data entry with OCR..."
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            {/* Floating badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 1, duration: 0.3 }}
+              className="absolute -bottom-4 -right-4 bg-warm-500 text-white px-4 py-2 rounded-full shadow-strong text-sm font-semibold"
+            >
+              85% Impact Score
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Social Proof Strip */}
-      <section className="border-y bg-muted/30 py-12">
+      {/* Social Proof */}
+      <section className="border-y bg-muted/20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground mb-6">
+          <p className="text-center text-sm text-muted-foreground mb-8">
             Trusted by teams who are allergic to busy work
           </p>
-          <div className="flex flex-wrap justify-center gap-8 items-center opacity-60">
-            <div className="px-6 py-3 bg-background rounded-lg border">
-              <span className="font-semibold text-lg">Company A</span>
-            </div>
-            <div className="px-6 py-3 bg-background rounded-lg border">
-              <span className="font-semibold text-lg">Company B</span>
-            </div>
-            <div className="px-6 py-3 bg-background rounded-lg border">
-              <span className="font-semibold text-lg">Company C</span>
-            </div>
-            <div className="px-6 py-3 bg-background rounded-lg border">
-              <span className="font-semibold text-lg">Company D</span>
-            </div>
+          <div className="flex flex-wrap justify-center gap-8 items-center opacity-50">
+            {['Company A', 'Company B', 'Company C', 'Company D'].map((company) => (
+              <div key={company} className="px-8 py-4 bg-card rounded-2xl border border-border/40">
+                <span className="font-semibold text-lg">{company}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-          <p className="text-xl text-muted-foreground">
-            From chaos to implementation plan in four simple steps
-          </p>
-        </div>
+      <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-16"
+        >
+          <motion.div variants={fadeIn} className="text-center max-w-3xl mx-auto">
+            <h2 className="text-[40px] font-bold mb-4">How It Works</h2>
+            <p className="text-xl text-muted-foreground">
+              From chaos to implementation plan in four simple steps
+            </p>
+          </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <MessageSquare className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>Chat to map your process</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Talk to our AI assistant like you're explaining to a smart intern.
-                It builds a visual workflow map while you chat.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <Search className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>Scan for AI opportunities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                We analyze each step and flag what's ripe for automation.
-                No hype, just honest assessments of impact vs. effort.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <Wrench className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>Pick tools that don't suck</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Get matched with AI tools and platforms that actually solve your problem.
-                We'll handle the AI brain, you handle the client lunch.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>Export a real blueprint</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">
-                Download a professional implementation document with ROI estimates,
-                tool recommendations, and risk assessments.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              { icon: MessageSquare, title: 'Chat to map your process', desc: "Talk to our AI assistant like you're explaining to a smart intern. It builds a visual workflow map while you chat." },
+              { icon: Search, title: 'Scan for AI opportunities', desc: "We analyze each step and flag what's ripe for automation. No hype, just honest assessments of impact vs. effort." },
+              { icon: Wrench, title: "Pick tools that don't suck", desc: "Get matched with AI tools and platforms that actually solve your problem. We'll handle the AI brain, you handle the client lunch." },
+              { icon: FileText, title: 'Export a real blueprint', desc: 'Download a professional implementation document with ROI estimates, tool recommendations, and risk assessments.' }
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <motion.div key={item.title} variants={fadeIn}>
+                  <Card className="h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-1 transition-all duration-300">
+                    <CardHeader>
+                      <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center mb-4">
+                        <Icon className="h-6 w-6 text-brand-600" />
+                      </div>
+                      <CardTitle className="text-lg">{item.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
       </section>
 
       {/* Governance Teaser */}
-      <section className="bg-muted/30 py-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Card className="border-2">
-            <CardHeader className="text-center">
-              <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Shield className="h-8 w-8 text-primary" />
+      <section className="bg-muted/20 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeIn}
+          className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8"
+        >
+          <Card className="rounded-3xl border-2 border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-strong overflow-hidden">
+            <CardHeader className="text-center pb-8">
+              <div className="w-20 h-20 rounded-2xl bg-brand-100 flex items-center justify-center mx-auto mb-6">
+                <Shield className="h-10 w-10 text-brand-600" />
               </div>
-              <CardTitle className="text-3xl">When you're ready, flip on Governance Mode</CardTitle>
-              <CardDescription className="text-lg pt-2">
+              <CardTitle className="text-[32px] font-semibold">
+                When you're ready, flip on Governance Mode
+              </CardTitle>
+              <CardDescription className="text-lg pt-3">
                 Governance isn't sexy, but fines are worse
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-6 pt-4">
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  { title: 'AI Use Case Registry', desc: 'Track every AI system from pilot to production' },
+                  { title: 'Risk Assessment', desc: 'AI-drafted risk analysis that your lawyer can sleep on' },
+                  { title: 'Policies & Controls', desc: 'Map GDPR, SOC2, and custom policies to AI projects' }
+                ].map((item) => (
+                  <div key={item.title} className="flex items-start space-x-3 p-4 rounded-xl bg-background/50">
                     <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="font-medium">AI Use Case Registry</p>
-                      <p className="text-sm text-muted-foreground">
-                        Track every AI system from pilot to production
-                      </p>
+                      <p className="font-semibold mb-1">{item.title}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Risk Assessment</p>
-                      <p className="text-sm text-muted-foreground">
-                        AI-drafted risk analysis that your lawyer can sleep on
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-start space-x-3">
-                    <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-medium">Policies & Controls</p>
-                      <p className="text-sm text-muted-foreground">
-                        Map GDPR, SOC2, and custom policies to AI projects
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
-        </div>
+        </motion.div>
       </section>
 
       {/* Use Cases / Personas */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">Built for people who ship AI</h2>
-          <p className="text-xl text-muted-foreground">
-            Whether you're solo or scaling
-          </p>
-        </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-16"
+        >
+          <motion.div variants={fadeIn} className="text-center max-w-3xl mx-auto">
+            <h2 className="text-[40px] font-bold mb-4">Built for people who ship AI</h2>
+            <p className="text-xl text-muted-foreground">
+              Whether you're solo or scaling
+            </p>
+          </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Solo consultant</CardTitle>
-              <CardDescription>
-                Sell on speed and polish
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Turn client interviews into polished AI implementation plans in hours, not weeks.
-                Win more proposals with professional blueprints that show you know your stuff.
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Interview → Blueprint in one session</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Professional exports for client decks</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Reusable process templates</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="border-primary">
-            <CardHeader>
-              <Badge className="w-fit mb-2">Most Popular</Badge>
-              <CardTitle>Ops / AI lead</CardTitle>
-              <CardDescription>
-                Sell on visibility and ROI
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Get exec buy-in with clear before/after process maps and ROI calculations.
-                Track all AI initiatives in one place so nothing falls through the cracks.
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Portfolio view of all AI projects</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Impact vs. effort scoring</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Team collaboration on blueprints</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Legal / Risk / Compliance</CardTitle>
-              <CardDescription>
-                Sell on governance
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Finally, a system that tracks AI use cases, risk profiles, and policy compliance
-                without making you build yet another spreadsheet.
-              </p>
-              <ul className="space-y-2 text-sm">
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>AI use case registry from day one</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Risk assessments with audit trails</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 mt-0.5 text-primary flex-shrink-0" />
-                  <span>Policy mapping (GDPR, SOC2, custom)</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-        </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                title: 'Solo consultant',
+                subtitle: 'Sell on speed and polish',
+                desc: 'Turn client interviews into polished AI implementation plans in hours, not weeks. Win more proposals with professional blueprints that show you know your stuff.',
+                features: ['Interview → Blueprint in one session', 'Professional exports for client decks', 'Reusable process templates']
+              },
+              {
+                title: 'Ops / AI lead',
+                subtitle: 'Sell on visibility and ROI',
+                desc: 'Get exec buy-in with clear before/after process maps and ROI calculations. Track all AI initiatives in one place so nothing falls through the cracks.',
+                features: ['Portfolio view of all AI projects', 'Impact vs. effort scoring', 'Team collaboration on blueprints'],
+                highlighted: true
+              },
+              {
+                title: 'Legal / Risk / Compliance',
+                subtitle: 'Sell on governance',
+                desc: 'Finally, a system that tracks AI use cases, risk profiles, and policy compliance without making you build yet another spreadsheet.',
+                features: ['AI use case registry from day one', 'Risk assessments with audit trails', 'Policy mapping (GDPR, SOC2, custom)']
+              }
+            ].map((persona) => (
+              <motion.div key={persona.title} variants={fadeIn}>
+                <Card className={`h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft hover:shadow-medium hover:-translate-y-1 transition-all duration-300 ${persona.highlighted ? 'ring-2 ring-brand-400 border-brand-300' : ''}`}>
+                  <CardHeader>
+                    {persona.highlighted && (
+                      <Badge className="w-fit mb-3 bg-brand-500 text-white border-0">Most Popular</Badge>
+                    )}
+                    <CardTitle className="text-xl">{persona.title}</CardTitle>
+                    <CardDescription className="text-sm">{persona.subtitle}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {persona.desc}
+                    </p>
+                    <ul className="space-y-2">
+                      {persona.features.map((feature) => (
+                        <li key={feature} className="flex items-start text-sm">
+                          <CheckCircle2 className="h-4 w-4 mr-2 mt-0.5 text-brand-500 flex-shrink-0" />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </section>
 
-      {/* Pricing Teaser */}
-      <section className="bg-muted/30 py-20">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-3xl">Simple pricing</CardTitle>
-              <CardDescription className="text-lg">
-                No hidden fees. No surprise invoices. Cancel anytime.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <p className="text-muted-foreground mb-6">
-                Start with a free trial. Upgrade when spreadsheets and sticky notes stop working.
-              </p>
-              <Link href="/pricing">
-                <Button size="lg" variant="outline">
-                  View pricing
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
+      {/* CTA Section */}
+      <section className="bg-gradient-to-br from-brand-500 to-brand-600 py-20">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeIn}
+          className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white"
+        >
+          <h2 className="text-[40px] font-bold mb-6">
+            Ready to be better than interns?
+          </h2>
+          <p className="text-xl text-brand-50 mb-8 max-w-2xl mx-auto">
+            Start with a free trial. Upgrade when spreadsheets and sticky notes stop working.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg" className="text-lg px-8 bg-white text-brand-600 hover:bg-brand-50 hover:-translate-y-[2px] hover:shadow-strong transition-all">
+                Get started free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button size="lg" variant="outline" className="text-lg px-8 border-white/30 text-white hover:bg-white/10 hover:-translate-y-[1px] transition-all">
+                View pricing
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30 py-12">
+      <footer className="border-t bg-muted/20 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5" />
+                <Sparkles className="h-5 w-5 text-brand-500" />
                 <span className="font-bold">Better Than Interns</span>
               </div>
               <p className="text-sm text-muted-foreground">
@@ -361,15 +402,15 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Product</h4>
+              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wide">Product</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/pricing" className="text-muted-foreground hover:text-foreground">
+                  <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground">
+                  <Link href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                     How It Works
                   </Link>
                 </li>
@@ -377,15 +418,15 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Account</h4>
+              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wide">Account</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/login" className="text-muted-foreground hover:text-foreground">
+                  <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors">
                     Login
                   </Link>
                 </li>
                 <li>
-                  <Link href="/signup" className="text-muted-foreground hover:text-foreground">
+                  <Link href="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
                     Sign Up
                   </Link>
                 </li>
@@ -393,17 +434,17 @@ export default function LandingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4">Legal & Contact</h4>
+              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wide">Legal & Contact</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="text-muted-foreground hover:text-foreground">
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
                     Privacy Policy (coming soon)
                   </a>
                 </li>
                 <li>
                   <a
                     href="mailto:hello@betterthaninterns.com?subject=Contact%20Better%20Than%20Interns"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
                     Contact Us
                   </a>
