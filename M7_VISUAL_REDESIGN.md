@@ -106,30 +106,33 @@
 
 ---
 
-### Sprint 4: Process Mapping (Hero UX) ⏸️ NOT STARTED
+### Sprint 4: Process Mapping (Hero UX) ✅ COMPLETE
 **Estimated effort:** 60-90 min
 **Files:** 1 complex file
+**Actual time:** ~50 min
 
-- [ ] Redesign `/src/app/(dashboard)/projects/[projectId]/processes/[processId]/page.tsx`
+- [x] Redesign `/src/app/(dashboard)/projects/[projectId]/processes/[processId]/page.tsx`
   - 3-panel layout: Chat (30-35%) | Graph (45-50%) | Opportunities (20-25%)
   - Chat panel:
     - Bubble UI for messages (left/right alignment)
-    - Sticky input bar with rounded-full input
-    - Subtle shadow and polish
+    - Sticky input bar with rounded-2xl input
+    - Gradient backgrounds and shadow-soft polish
+    - Animated warm hint callout for demo projects
   - Graph panel:
-    - Card wrapper with no inner border
-    - Top overlay chip: process name + #steps + help icon
+    - Clean background with no border
+    - Top overlay chip: process name + step count + help icon
+    - Bottom-right heatmap legend with impact levels
   - Right panel:
-    - Mini opportunity cards
-    - Impact/effort badges
-    - Match scores
-    - Clear hover/selected states
+    - Mini opportunity cards with rounded-xl borders
+    - Impact/effort badges with color coding
+    - Match scores displayed
+    - Clear hover/selected states with -translate-y-[1px]
   - Animations:
-    - New messages fade in
-    - New nodes animate in
-    - Opportunities slide in
+    - New messages fade-in and slide-in-from-bottom
+    - Opportunities slide-in-from-right with staggered delay
+    - Smooth transitions on all interactive elements
 
-**Exit criteria:** Process mapping page is the hero experience
+**Exit criteria:** ✅ Process mapping page is now the hero experience
 
 ---
 
@@ -188,9 +191,10 @@
 1. Sprint 1: Foundation & Design System ✅
 2. Sprint 2: Landing & Pricing Pages ✅
 3. Sprint 3: Dashboard & Projects ✅
+4. Sprint 4: Process Mapping (Hero UX) ✅
 
 ### Current Sprint
-Sprint 4: Process Mapping (Hero UX) (ready to start)
+Sprint 5: Governance Pages (ready to start)
 
 ### Blockers
 *None*
@@ -219,7 +223,7 @@ Sprint 4: Process Mapping (Hero UX) (ready to start)
 - [x] `src/app/(dashboard)/projects/[projectId]/page.tsx` - Project detail polish (Sprint 3)
 
 ### Process Mapping
-- [ ] `src/app/(dashboard)/projects/[projectId]/processes/[processId]/page.tsx` - Hero UX redesign
+- [x] `src/app/(dashboard)/projects/[projectId]/processes/[processId]/page.tsx` - Hero UX redesign (Sprint 4)
 
 ### Governance
 - [ ] `src/app/(dashboard)/governance/page.tsx` - Governance dashboard

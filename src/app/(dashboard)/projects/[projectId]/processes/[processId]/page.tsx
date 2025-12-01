@@ -15,7 +15,7 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, X, Lightbulb } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, X, Lightbulb, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/step-details-dialog';
 import { ToolRecommendationsDialog } from '@/components/tool-recommendations-dialog';
@@ -138,7 +138,7 @@ export default function ProcessMappingPage({
 
           // Add highlight if this step is selected
           if (highlightedStepId === step.id) {
-            nodeStyle.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.5)';
+            nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
           }
 
           return {
@@ -472,77 +472,75 @@ export default function ProcessMappingPage({
   };
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="h-[calc(100vh-4rem)] flex flex-col">
+      {/* Header - Compact */}
+      <div className="flex items-center justify-between px-8 py-4 border-b bg-card/50 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
           <Link href={`/projects/${params.projectId}`}>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" className="hover:-translate-y-[1px] transition-all">
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Processes
+              Back
             </Button>
           </Link>
+          <div className="h-6 w-px bg-border" />
           <div>
-            <h1 className="text-2xl font-bold">{process?.name}</h1>
-            {process?.description && (
-              <p className="text-sm text-muted-foreground">
-                {process.description}
-              </p>
-            )}
+            <h1 className="text-lg font-semibold">{process?.name || 'Process Mapping'}</h1>
           </div>
         </div>
         <Button
           onClick={scanForOpportunities}
           disabled={isScanning || nodes.length === 0}
-          className="gap-2"
+          className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
         >
           {isScanning ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
               Scanning...
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4" />
-              Scan for AI Opportunities
+              <Sparkles className="h-4 w-4 mr-2" />
+              Scan for Opportunities
             </>
           )}
         </Button>
       </div>
 
-      {/* Three-panel layout */}
-      <div className="flex-1 grid grid-cols-12 gap-4 min-h-0">
-        {/* Chat Panel - Left */}
-        <div className="col-span-3 flex flex-col border rounded-lg bg-card overflow-hidden">
-          <div className="p-4 border-b">
-            <h2 className="font-semibold">Process Assistant</h2>
-            <p className="text-xs text-muted-foreground mt-1">
-              Describe how this process actually works, not how it's supposed to
-              work.
+      {/* Three-panel layout: Chat (30%) | Graph (45%) | Opportunities (25%) */}
+      <div className="flex-1 grid grid-cols-12 gap-0 min-h-0">
+        {/* Chat Panel - Left (30-35%) */}
+        <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20">
+          {/* Chat Header */}
+          <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
+            <h2 className="font-semibold text-base mb-1">Process Assistant</h2>
+            <p className="text-xs text-muted-foreground">
+              Describe how this process actually works
             </p>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          {/* Messages - Bubble UI */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {/* First-run hint for demo projects */}
             {shouldShowHint && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 dark:bg-amber-950/20 dark:border-amber-900">
+              <div className="bg-gradient-to-br from-warm-50 to-warm-100/50 border border-warm-200 rounded-2xl p-4 shadow-soft animate-in fade-in slide-in-from-top-2 duration-500">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-2 flex-1">
-                    <Lightbulb className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex items-start space-x-3 flex-1">
+                    <div className="rounded-full bg-warm-100 p-2 mt-0.5">
+                      <Lightbulb className="h-4 w-4 text-warm-600" />
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
+                      <p className="text-sm font-semibold text-warm-900 mb-2">
                         Try this to see how it works
                       </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                        Paste a short description like:<br />
-                        <em className="block mt-1 italic">
-                          "We receive invoices by email, someone types them into a spreadsheet,
-                          then a manager approves them before payment."
-                        </em>
+                      <p className="text-xs text-warm-700 mb-2">
+                        Paste a short description like:
                       </p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-                        Then hit send and watch the graph update.
+                      <p className="text-xs italic text-warm-600 bg-white/60 rounded-lg p-2 mb-2">
+                        "We receive invoices by email, someone types them into a spreadsheet,
+                        then a manager approves them before payment."
+                      </p>
+                      <p className="text-xs text-warm-700">
+                        Then hit send and watch the graph update in real-time.
                       </p>
                     </div>
                   </div>
@@ -550,7 +548,7 @@ export default function ProcessMappingPage({
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowFirstRunHint(false)}
-                    className="ml-2 h-6 w-6 p-0 flex-shrink-0"
+                    className="ml-2 h-6 w-6 p-0 flex-shrink-0 hover:bg-warm-200/50"
                   >
                     <X className="h-3 w-3" />
                   </Button>
@@ -559,70 +557,76 @@ export default function ProcessMappingPage({
             )}
 
             {messages.length === 0 && !shouldShowHint && (
-              <div className="text-center text-muted-foreground text-sm py-8">
-                <p>No steps yet. That's normal.</p>
-                <p className="mt-2">
+              <div className="text-center text-muted-foreground text-sm py-12 px-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center mx-auto mb-4 shadow-soft">
+                  <Sparkles className="h-8 w-8 text-brand-500" />
+                </div>
+                <p className="font-medium mb-2">No steps yet. That's normal.</p>
+                <p className="text-xs">
                   Start by describing the first step of your process.
                 </p>
               </div>
             )}
 
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
               <div
                 key={msg.id}
-                className={`flex ${
+                className={`flex animate-in fade-in slide-in-from-bottom-2 duration-300 ${
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
+                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-soft ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
+                      ? 'bg-gradient-to-br from-brand-500 to-brand-600 text-white'
+                      : 'bg-card border border-border/60'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                 </div>
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className="p-4 border-t">
+          {/* Input - Sticky at bottom with rounded-full style */}
+          <div className="p-4 border-t bg-card/80 backdrop-blur-sm">
             <div className="flex space-x-2">
-              <Textarea
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                  }
-                }}
-                placeholder="Describe the process steps..."
-                className="resize-none"
-                rows={3}
-                disabled={isLoading}
-              />
+              <div className="flex-1 relative">
+                <Textarea
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
+                  placeholder="Describe the process steps..."
+                  className="resize-none rounded-2xl border-border/60 focus:border-brand-300 focus:ring-brand-200 pr-12"
+                  rows={2}
+                  disabled={isLoading}
+                />
+              </div>
               <Button
                 onClick={sendMessage}
                 disabled={!inputMessage.trim() || isLoading}
                 size="icon"
-                className="h-auto"
+                className="h-auto rounded-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
               >
                 {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5" />
                 )}
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Graph Panel - Center */}
-        <div className="col-span-6 border rounded-lg bg-card overflow-hidden relative">
+        {/* Graph Panel - Center (45-50%) */}
+        <div className="col-span-5 relative bg-muted/20">
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -636,59 +640,85 @@ export default function ProcessMappingPage({
             <MiniMap />
           </ReactFlow>
 
-          {/* Heatmap Legend */}
+          {/* Top overlay chip with process info */}
+          <div className="absolute top-4 left-4 bg-card/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-medium border border-border/60 flex items-center space-x-3">
+            <div className="text-sm font-medium">{process?.name || 'Workflow'}</div>
+            <div className="h-4 w-px bg-border" />
+            <div className="text-xs text-muted-foreground">
+              {nodes.length} {nodes.length === 1 ? 'step' : 'steps'}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 rounded-full hover:bg-muted"
+              title="Click steps to edit details"
+            >
+              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
+
+          {/* Heatmap Legend - Bottom right */}
           {opportunities.length > 0 && (
-            <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-sm p-3 rounded-lg shadow-lg border text-xs space-y-2">
-              <div className="font-semibold mb-2">Impact Level</div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded"></div>
-                <span>High</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-amber-500 bg-amber-100 rounded"></div>
-                <span>Medium</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-blue-500 bg-blue-100 rounded"></div>
-                <span>Low</span>
+            <div className="absolute bottom-4 right-4 bg-card/95 backdrop-blur-sm rounded-2xl p-4 shadow-medium border border-border/60">
+              <div className="text-xs font-semibold mb-3">Impact Level</div>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded-sm"></div>
+                  <span className="text-xs">High impact</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-amber-500 bg-amber-100 rounded-sm"></div>
+                  <span className="text-xs">Medium impact</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-blue-500 bg-blue-100 rounded-sm"></div>
+                  <span className="text-xs">Low impact</span>
+                </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Opportunities Panel - Right */}
-        <div className="col-span-3 flex flex-col border rounded-lg bg-card overflow-hidden">
-          <div className="p-4 border-b">
-            <h2 className="font-semibold flex items-center gap-2">
-              <Target className="h-4 w-4" />
+        {/* Opportunities Panel - Right (20-25%) */}
+        <div className="col-span-3 flex flex-col border-l bg-gradient-to-b from-card to-muted/20">
+          {/* Opportunities Header */}
+          <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
+            <h2 className="font-semibold text-base flex items-center gap-2 mb-1">
+              <div className="rounded-full bg-brand-100 p-1.5">
+                <Target className="h-4 w-4 text-brand-600" />
+              </div>
               AI Opportunities
             </h2>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground">
               {opportunities.length === 0
-                ? 'Click "Scan" to find automation wins'
-                : `${opportunities.length} ${opportunities.length === 1 ? 'opportunity' : 'opportunities'} found`}
+                ? 'Scan to find automation wins'
+                : `${opportunities.length} found`}
             </p>
           </div>
 
           {/* Opportunities List */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {opportunities.length === 0 ? (
-              <div className="text-center text-muted-foreground text-sm py-8 px-4">
-                <p className="font-medium mb-2">
-                  We didn't find obvious AI wins yet.
+              <div className="text-center text-muted-foreground text-sm py-12 px-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center mx-auto mb-4 shadow-soft">
+                  <Target className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+                <p className="font-medium mb-2 text-xs">
+                  No opportunities found yet
                 </p>
-                <p>
-                  Either this process is solid, or someone lied to us.
+                <p className="text-xs">
+                  Map some steps, then click "Scan" to find automation wins.
                 </p>
               </div>
             ) : (
-              opportunities.map((opp) => (
+              opportunities.map((opp, index) => (
                 <div
                   key={opp.id}
-                  className="border rounded-lg p-3 transition-colors"
+                  className="rounded-xl border border-border/60 bg-card shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all overflow-hidden animate-in slide-in-from-right-4 fade-in duration-300"
+                  style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <div
-                    className="cursor-pointer hover:bg-accent rounded-sm -m-3 p-3 mb-3"
+                    className="cursor-pointer p-4 hover:bg-muted/40 transition-colors"
                     onClick={() => {
                       if (opp.stepId) {
                         setHighlightedStepId(opp.stepId);
@@ -698,58 +728,60 @@ export default function ProcessMappingPage({
                     onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
                     onMouseLeave={() => setHighlightedStepId(null)}
                   >
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="font-medium text-sm flex-1">{opp.title}</h3>
-                      <div className="flex gap-1">
-                        <Badge
-                          variant={
-                            opp.impactLevel === 'high'
-                              ? 'destructive'
-                              : opp.impactLevel === 'medium'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                          className="text-xs"
-                        >
-                          {opp.impactLevel} impact
-                        </Badge>
-                      </div>
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <h3 className="font-semibold text-sm flex-1 leading-tight">{opp.title}</h3>
+                      <Badge
+                        variant={
+                          opp.impactLevel === 'high'
+                            ? 'destructive'
+                            : opp.impactLevel === 'medium'
+                            ? 'default'
+                            : 'secondary'
+                        }
+                        className="text-xs shrink-0"
+                      >
+                        {opp.impactLevel}
+                      </Badge>
                     </div>
 
                     {opp.step && (
-                      <div className="text-xs text-muted-foreground mb-2">
-                        Step: {opp.step.title}
+                      <div className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                        <span className="font-medium">Step:</span> {opp.step.title}
                       </div>
                     )}
 
-                    <p className="text-xs text-muted-foreground line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
                       {opp.rationaleText}
                     </p>
 
-                    <div className="flex items-center gap-3 mt-2 text-xs">
-                      <span className="text-muted-foreground">
-                        Effort: {opp.effortLevel}
-                      </span>
+                    <div className="flex items-center gap-3 text-xs">
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Effort:</span>
+                        <span className="font-medium">{opp.effortLevel}</span>
+                      </div>
                       <span className="text-muted-foreground">•</span>
-                      <span className="text-muted-foreground">
-                        Impact: {opp.impactScore}/100
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Score:</span>
+                        <span className="font-medium">{opp.impactScore}/100</span>
+                      </div>
                     </div>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedOpportunityForTools(opp);
-                      setIsToolDialogOpen(true);
-                    }}
-                  >
-                    <Wrench className="h-4 w-4" />
-                    View recommended tools
-                  </Button>
+                  <div className="px-4 pb-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full gap-2 rounded-lg hover:-translate-y-[1px] transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedOpportunityForTools(opp);
+                        setIsToolDialogOpen(true);
+                      }}
+                    >
+                      <Wrench className="h-3.5 w-3.5" />
+                      View Tools
+                    </Button>
+                  </div>
                 </div>
               ))
             )}
