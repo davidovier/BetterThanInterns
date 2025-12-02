@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,7 +11,8 @@ import {
   Shield,
   Sparkles,
   LogOut,
-  User
+  User,
+  Settings
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -35,6 +36,7 @@ const navItems = [
 
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
 
   const getInitials = (name?: string | null) => {
@@ -111,9 +113,9 @@ export function AppShell({ children }: AppShellProps) {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <User className="mr-2 h-4 w-4" />
-                  Profile
+                <DropdownMenuItem onClick={() => router.push('/account')}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Account Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
