@@ -14,6 +14,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft, Download, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { useWorkspaceContext } from '@/components/workspace/workspace-context';
+import { PlanUpsellBanner } from '@/components/ui/plan-upsell-banner';
 
 type BlueprintContent = {
   title: string;
@@ -65,6 +67,7 @@ export default function BlueprintViewPage({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const { currentWorkspacePlan } = useWorkspaceContext();
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -151,6 +154,12 @@ export default function BlueprintViewPage({
           </span>
         </div>
       </div>
+
+      <PlanUpsellBanner
+        currentPlan={currentWorkspacePlan}
+        from="blueprint"
+        message="Want blueprints that actually ship? Pro gets you governance tracking and risk assessments."
+      />
 
       {/* Executive Summary */}
       <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">

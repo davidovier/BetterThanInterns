@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { redirect } from 'next/navigation';
 import { AppShell } from '@/components/layout/AppShell';
 import AuthProvider from '@/components/providers/session-provider';
+import { WorkspaceContextProvider } from '@/components/workspace/workspace-context';
 
 export default function DashboardLayout({
   children,
@@ -12,7 +13,9 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <AppShell>{children}</AppShell>
+      <WorkspaceContextProvider>
+        <AppShell>{children}</AppShell>
+      </WorkspaceContextProvider>
     </AuthProvider>
   );
 }

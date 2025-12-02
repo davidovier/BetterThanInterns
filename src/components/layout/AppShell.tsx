@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 
 type AppShellProps = {
   children: ReactNode;
@@ -35,46 +36,11 @@ const navItems = [
   { href: '/governance', label: 'Governance', icon: Shield },
 ];
 
-type Workspace = {
-  id: string;
-  name: string;
-  plan: 'starter' | 'pro' | 'enterprise';
-};
-
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
-  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
-
-  useEffect(() => {
-    // Fetch current workspace
-    const fetchWorkspace = async () => {
-      try {
-        const res = await fetch('/api/workspaces');
-        if (res.ok) {
-          const data = await res.json();
-          const workspaces = data.ok && data.data
-            ? data.data.workspaces
-            : data.workspaces;
-
-          if (workspaces && workspaces.length > 0) {
-            setCurrentWorkspace({
-              id: workspaces[0].id,
-              name: workspaces[0].name,
-              plan: workspaces[0].plan || 'starter',
-            });
-          }
-        }
-      } catch (error) {
-        // Silently fail - workspace badge is optional UX enhancement
-      }
-    };
-
-    if (session?.user) {
-      fetchWorkspace();
-    }
-  }, [session]);
+  const { currentWorkspaceName, currentWorkspacePlan } = useWorkspaceContext();
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -150,18 +116,18 @@ export function AppShell({ children }: AppShellProps) {
 
           {/* User section */}
           <div className="border-t p-4 space-y-3">
-            {currentWorkspace && (
+            {currentWorkspaceName && (
               <div className="px-3">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-muted-foreground truncate flex-1">
-                    {currentWorkspace.name}
+                    {currentWorkspaceName}
                   </p>
                   <Badge
                     variant="outline"
-                    className={`text-xs rounded-full px-2 py-0 ml-2 ${getPlanBadgeStyles(currentWorkspace.plan)}`}
-                    title={getPlanTooltip(currentWorkspace.plan)}
+                    className={`text-xs rounded-full px-2 py-0 ml-2 ${getPlanBadgeStyles(currentWorkspacePlan)}`}
+                    title={getPlanTooltip(currentWorkspacePlan)}
                   >
-                    {currentWorkspace.plan.charAt(0).toUpperCase() + currentWorkspace.plan.slice(1)}
+                    {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
                   </Badge>
                 </div>
               </div>

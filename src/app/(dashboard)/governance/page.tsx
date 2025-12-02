@@ -17,6 +17,7 @@ import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PlanUpsellBanner } from '@/components/ui/plan-upsell-banner';
+import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 
 type AiUseCase = {
   id: string;
@@ -43,42 +44,29 @@ const STATUS_CONFIG: Record<string, { variant: 'default' | 'secondary' | 'destru
 export default function GovernancePage() {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const { currentWorkspaceId, currentWorkspacePlan, loading: workspaceLoading } = useWorkspaceContext();
   const [aiUseCases, setAiUseCases] = useState<AiUseCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [workspaceId, setWorkspaceId] = useState<string | null>(null);
-  const [workspacePlan, setWorkspacePlan] = useState<'starter' | 'pro' | 'enterprise'>('starter');
 
   useEffect(() => {
-    loadWorkspaceAndUseCases();
-  }, []);
+    if (currentWorkspaceId && !workspaceLoading) {
+      loadUseCases();
+    }
+  }, [currentWorkspaceId, workspaceLoading]);
 
-  const loadWorkspaceAndUseCases = async () => {
+  const loadUseCases = async () => {
+    if (!currentWorkspaceId) return;
+
     try {
-      // Get first workspace
-      const workspacesRes = await fetch('/api/workspaces');
-      if (!workspacesRes.ok) throw new Error('Failed to load workspaces');
-      const workspacesData = await workspacesRes.json();
-      const workspaces = workspacesData.ok && workspacesData.data
-        ? workspacesData.data.workspaces
-        : workspacesData.workspaces;
+      const response = await fetch(`/api/workspaces/${currentWorkspaceId}/ai-use-cases`);
+      if (!response.ok) throw new Error('Failed to load AI use cases');
 
-      if (workspaces && workspaces.length > 0) {
-        const wsId = workspaces[0].id;
-        const wsPlan = workspaces[0].plan || 'starter';
-        setWorkspaceId(wsId);
-        setWorkspacePlan(wsPlan);
+      const result = await response.json();
+      const useCases = result.ok && result.data
+        ? result.data.aiUseCases
+        : result.aiUseCases;
 
-        // Load AI use cases
-        const response = await fetch(`/api/workspaces/${wsId}/ai-use-cases`);
-        if (!response.ok) throw new Error('Failed to load AI use cases');
-
-        const result = await response.json();
-        const useCases = result.ok && result.data
-          ? result.data.aiUseCases
-          : result.aiUseCases;
-
-        setAiUseCases(useCases || []);
-      }
+      setAiUseCases(useCases || []);
     } catch (error) {
       toast({
         title: 'Error',
@@ -136,7 +124,7 @@ export default function GovernancePage() {
         }
       />
 
-      <PlanUpsellBanner currentPlan={workspacePlan} from="governance" />
+      <PlanUpsellBanner currentPlan={currentWorkspacePlan} from="governance" />
 
       {aiUseCases.length === 0 ? (
         <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">

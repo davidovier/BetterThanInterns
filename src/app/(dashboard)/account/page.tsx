@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { User, Lock, AlertTriangle, CreditCard, Calendar, Shield } from 'lucide-react';
+import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 
 type UserProfile = {
   id: string;
@@ -54,16 +55,28 @@ function AccountContent() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const {
+    currentWorkspaceId,
+    currentWorkspaceName,
+    currentWorkspacePlan,
+    trialEndsAt,
+    isOnTrial,
+    isTrialExpired,
+    loading: workspaceLoading
+  } = useWorkspaceContext();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [billing, setBilling] = useState<WorkspaceBilling | null>(null);
-  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
-  const [currentWorkspaceName, setCurrentWorkspaceName] = useState<string | null>(null);
 
-  // Tab state - support URL query param
+  // Tab state - support URL query param (bidirectional)
   const initialTab = searchParams.get('tab') || 'profile';
   const [activeTab, setActiveTab] = useState(initialTab);
+
+  // Handle tab changes - update URL
+  const handleTabChange = (newTab: string) => {
+    setActiveTab(newTab);
+    router.replace(`/account?tab=${newTab}`, { scroll: false });
+  };
 
   // Profile form state
   const [name, setName] = useState('');
@@ -103,30 +116,7 @@ function AccountContent() {
       setProfile(profileData.data.user);
       setName(profileData.data.user.name || '');
       setEmail(profileData.data.user.email);
-
-      // Load first workspace for billing
-      const workspacesRes = await fetch('/api/workspaces');
-      if (workspacesRes.ok) {
-        const workspacesData = await workspacesRes.json();
-        const workspaces = workspacesData.ok && workspacesData.data
-          ? workspacesData.data.workspaces
-          : workspacesData.workspaces;
-
-        if (workspaces && workspaces.length > 0) {
-          const wsId = workspaces[0].id;
-          const wsName = workspaces[0].name;
-          setCurrentWorkspaceId(wsId);
-          setCurrentWorkspaceName(wsName);
-
-          // Load billing
-          const billingRes = await fetch(`/api/workspaces/${wsId}/billing`);
-          if (billingRes.ok) {
-            const billingData = await billingRes.json();
-            setBilling(billingData.data.billing);
-            setSelectedPlan(billingData.data.billing.plan);
-          }
-        }
-      }
+      setSelectedPlan(currentWorkspacePlan);
     } catch (error) {
       toast({
         title: 'Error',
@@ -314,12 +304,9 @@ function AccountContent() {
         throw new Error(error.error?.message || 'Failed to update plan');
       }
 
-      const data = await response.json();
-      setBilling(data.data.billing);
-
       toast({
         title: 'Success',
-        description: 'Plan updated successfully',
+        description: 'Plan updated successfully. Refresh the page to see changes.',
       });
     } catch (error: any) {
       toast({
@@ -364,7 +351,7 @@ function AccountContent() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="profile">
             <User className="h-4 w-4 mr-2" />
@@ -660,7 +647,7 @@ function AccountContent() {
 
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
-          {billing && currentWorkspaceId && (
+          {currentWorkspaceId && (
             <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
               <CardHeader>
                 <div className="flex items-center space-x-2">
@@ -668,28 +655,28 @@ function AccountContent() {
                   <CardTitle className="text-base">Plan & Billing</CardTitle>
                 </div>
                 <CardDescription className="text-xs">
-                  You're on the {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
+                  You're on the {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <Badge variant="outline" className="text-xs">
-                    {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)}
+                    {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
                   </Badge>
-                  {billing.isOnTrial && billing.trialEndsAt && (
+                  {isOnTrial && trialEndsAt && (
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
                         Trial ends{' '}
-                        {new Date(billing.trialEndsAt).toLocaleDateString()}. We'll never auto-bill you without explicit setup.
+                        {new Date(trialEndsAt).toLocaleDateString()}. We'll never auto-bill you without explicit setup.
                       </span>
                     </div>
                   )}
-                  {billing.isTrialExpired && billing.plan === 'starter' && (
+                  {isTrialExpired && currentWorkspacePlan === 'starter' && (
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span>
-                        Your trial ended on {new Date(billing.trialEndsAt!).toLocaleDateString()}. You're on Starter now, which is perfect for experiments.
+                        Your trial ended on {new Date(trialEndsAt!).toLocaleDateString()}. You're on Starter now, which is perfect for experiments.
                       </span>
                     </div>
                   )}
@@ -716,7 +703,7 @@ function AccountContent() {
 
                 <Button
                   onClick={saveBilling}
-                  disabled={isSavingBilling || selectedPlan === billing.plan}
+                  disabled={isSavingBilling || selectedPlan === currentWorkspacePlan}
                   className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
                 >
                   {isSavingBilling ? 'Saving...' : 'Save Plan'}
