@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -30,9 +30,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { PageHeader } from '@/components/layout/PageHeader';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Lock, AlertTriangle, CreditCard, Calendar } from 'lucide-react';
+import { User, Lock, AlertTriangle, CreditCard, Calendar, Shield } from 'lucide-react';
 
 type UserProfile = {
   id: string;
@@ -49,20 +49,21 @@ type WorkspaceBilling = {
   isTrialExpired: boolean;
 };
 
-export default function AccountPage() {
+function AccountContent() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [isLoading, setIsLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [billing, setBilling] = useState<WorkspaceBilling | null>(null);
-  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(
-    null
-  );
-  const [currentWorkspaceName, setCurrentWorkspaceName] = useState<string | null>(
-    null
-  );
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
+  const [currentWorkspaceName, setCurrentWorkspaceName] = useState<string | null>(null);
+
+  // Tab state - support URL query param
+  const initialTab = searchParams.get('tab') || 'profile';
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Profile form state
   const [name, setName] = useState('');
@@ -147,7 +148,6 @@ export default function AccountPage() {
       return;
     }
 
-    // If changing email, require password
     if (email !== profile?.email && !currentPassword) {
       toast({
         title: 'Error',
@@ -283,7 +283,6 @@ export default function AccountPage() {
         throw new Error(error.error?.message || 'Failed to delete account');
       }
 
-      // Sign out and redirect with deleted flag
       await signOut({ redirect: false });
       router.push('/login?deleted=1');
     } catch (error: any) {
@@ -337,340 +336,404 @@ export default function AccountPage() {
     return (
       <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
         <div>
-          <Skeleton className="h-10 w-64 mb-2" />
+          <Skeleton className="h-10 w-48 mb-2" />
           <Skeleton className="h-5 w-96" />
         </div>
-        <div className="space-y-6">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="rounded-2xl">
-              <CardHeader>
-                <Skeleton className="h-6 w-48" />
-                <Skeleton className="h-4 w-96 mt-2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-24 w-full" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <Skeleton className="h-12 w-full max-w-md" />
+        <Card className="rounded-2xl">
+          <CardHeader>
+            <Skeleton className="h-6 w-1/3" />
+            <Skeleton className="h-4 w-2/3 mt-2" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-32 w-full" />
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
-      <PageHeader
-        title="Account & Settings"
-        description="Manage your profile, security, and workspace billing. We take this seriously."
-      />
+      {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Account</h1>
+        <p className="text-muted-foreground mt-1">
+          Profile, security, billing — the boring but important bits.
+        </p>
+      </div>
 
-      {/* Section 1: Profile & Login */}
-      <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <User className="h-5 w-5 text-brand-500" />
-            <CardTitle className="text-base">Profile & Login</CardTitle>
-          </div>
-          <CardDescription className="text-xs">
-            Update your email, name, and password. We use this to send you important stuff, not nonsense.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Name and Email */}
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Display Name
-              </Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="rounded-xl"
-              />
-            </div>
-          </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsTrigger value="profile">
+            <User className="h-4 w-4 mr-2" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="security">
+            <Lock className="h-4 w-4 mr-2" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="billing">
+            <CreditCard className="h-4 w-4 mr-2" />
+            Billing
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Current Password (for email change) */}
-          {email !== profile?.email && (
-            <div className="space-y-2">
-              <Label htmlFor="current-password" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Current Password (required for email change)
-              </Label>
-              <Input
-                id="current-password"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-                className="rounded-xl"
-              />
-              <p className="text-xs text-muted-foreground">
-                Changing your email will log you out on other devices.
-              </p>
-            </div>
-          )}
-
-          <Button
-            onClick={saveProfile}
-            disabled={isSavingProfile}
-            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
-          >
-            {isSavingProfile ? 'Saving...' : 'Save Profile'}
-          </Button>
-
-          {/* Password Change Section */}
-          <div className="pt-6 border-t border-border">
-            {!showPasswordForm ? (
-              <Button
-                onClick={() => setShowPasswordForm(true)}
-                variant="outline"
-                className="rounded-xl hover:-translate-y-[1px] transition-all"
-              >
-                <Lock className="h-4 w-4 mr-2" />
-                Change Password
-              </Button>
-            ) : (
-              <div className="space-y-4">
-                <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Change Password
-                </h4>
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs">Current Password</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.currentPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          currentPassword: e.target.value,
-                        })
-                      }
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">New Password</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.newPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      placeholder="At least 10 characters, with letter and number"
-                      className="rounded-xl"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      At least 10 characters, with a letter and a number.
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs">Confirm New Password</Label>
-                    <Input
-                      type="password"
-                      value={passwordData.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      className="rounded-xl"
-                    />
-                  </div>
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-6">
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-brand-500" />
+                <CardTitle className="text-base">Profile & Login</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                Your public-facing info. Well, private-facing. You get it.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="rounded-xl"
+                  />
                 </div>
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={changePassword}
-                    disabled={isChangingPassword}
-                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
-                  >
-                    {isChangingPassword ? 'Changing...' : 'Change Password'}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setShowPasswordForm(false);
-                      setPasswordData({
-                        currentPassword: '',
-                        newPassword: '',
-                        confirmPassword: '',
-                      });
-                    }}
-                    variant="ghost"
-                    className="hover:-translate-y-[1px] transition-all"
-                  >
-                    Cancel
-                  </Button>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Email
+                  </Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-xl"
+                  />
                 </div>
               </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Section 2: Plan & Billing */}
-      {billing && currentWorkspaceId && (
-        <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <CreditCard className="h-5 w-5 text-brand-500" />
-              <CardTitle className="text-base">Plan & Billing</CardTitle>
-            </div>
-            <CardDescription className="text-xs">
-              You're on the {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-4">
-              <Badge variant="outline" className="text-xs">
-                {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)}
-              </Badge>
-              {billing.isOnTrial && billing.trialEndsAt && (
-                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    Trial ends{' '}
-                    {new Date(billing.trialEndsAt).toLocaleDateString()}
-                  </span>
+              {email !== profile?.email && (
+                <div className="space-y-2">
+                  <Label htmlFor="current-password" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Current Password (required for email change)
+                  </Label>
+                  <Input
+                    id="current-password"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    className="rounded-xl"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Changing your email requires your current password because we're not monsters.
+                  </p>
                 </div>
               )}
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="plan" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Select Plan
-              </Label>
-              <Select value={selectedPlan} onValueChange={(value: any) => setSelectedPlan(value)}>
-                <SelectTrigger className="rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="starter">Starter</SelectItem>
-                  <SelectItem value="pro">Pro</SelectItem>
-                  <SelectItem value="enterprise">Enterprise</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                We're still wiring payments. For now, plan changes are for internal use only.
+              <Button
+                onClick={saveProfile}
+                disabled={isSavingProfile}
+                className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
+              >
+                {isSavingProfile ? 'Saving...' : 'Save Profile'}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security" className="space-y-6">
+          <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <Lock className="h-5 w-5 text-brand-500" />
+                <CardTitle className="text-base">Password & Security</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                Keep your account locked down. Your therapist would be proud.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {!showPasswordForm ? (
+                <Button
+                  onClick={() => setShowPasswordForm(true)}
+                  variant="outline"
+                  className="rounded-xl hover:-translate-y-[1px] transition-all"
+                >
+                  <Lock className="h-4 w-4 mr-2" />
+                  Change Password
+                </Button>
+              ) : (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                    Change Password
+                  </h4>
+                  <div className="grid gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs">Current Password</Label>
+                      <Input
+                        type="password"
+                        value={passwordData.currentPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            currentPassword: e.target.value,
+                          })
+                        }
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">New Password</Label>
+                      <Input
+                        type="password"
+                        value={passwordData.newPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            newPassword: e.target.value,
+                          })
+                        }
+                        placeholder="At least 10 characters, with letter and number"
+                        className="rounded-xl"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        At least 10 characters, with a letter and a number.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Confirm New Password</Label>
+                      <Input
+                        type="password"
+                        value={passwordData.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={changePassword}
+                      disabled={isChangingPassword}
+                      className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
+                    >
+                      {isChangingPassword ? 'Changing...' : 'Change Password'}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowPasswordForm(false);
+                        setPasswordData({
+                          currentPassword: '',
+                          newPassword: '',
+                          confirmPassword: '',
+                        });
+                      }}
+                      variant="ghost"
+                      className="hover:-translate-y-[1px] transition-all"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-6 border-t border-border space-y-3">
+                <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  Sessions & Devices
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  We'll show active sessions here so you can kick your old laptop off the island.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Danger Zone in Security Tab */}
+          <Card className="rounded-2xl border-red-200 bg-card shadow-soft hover:shadow-medium transition-all">
+            <CardHeader>
+              <div className="flex items-center space-x-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <CardTitle className="text-base text-red-600">Danger Zone</CardTitle>
+              </div>
+              <CardDescription className="text-xs">
+                Delete your account and personal data. This can't be undone.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                We'll delete your personal data and remove you from all workspaces.
+                Workspaces shared with other people stay active; your personal
+                workspace may be removed.
               </p>
-            </div>
 
-            <Button
-              onClick={saveBilling}
-              disabled={isSavingBilling || selectedPlan === billing.plan}
-              className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
-            >
-              {isSavingBilling ? 'Saving...' : 'Save Plan'}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+              <Button
+                variant="destructive"
+                onClick={() => setShowDeleteDialog(true)}
+                className="rounded-xl hover:-translate-y-[1px] hover:shadow-md transition-all"
+              >
+                Delete Account
+              </Button>
 
-      {/* Section 3: Danger Zone */}
-      <Card className="rounded-2xl border-red-200 bg-card shadow-soft hover:shadow-medium transition-all">
-        <CardHeader>
-          <div className="flex items-center space-x-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
-            <CardTitle className="text-base text-red-600">Danger Zone</CardTitle>
-          </div>
-          <CardDescription className="text-xs">
-            Delete your account and personal data. This can't be undone.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            We'll delete your personal data and remove you from all workspaces.
-            Workspaces shared with other people stay active; your personal
-            workspace may be removed.
-          </p>
+              <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent className="rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Delete Account</DialogTitle>
+                    <DialogDescription>
+                      This will permanently delete your account and all associated data.
+                      This action cannot be undone.
+                    </DialogDescription>
+                  </DialogHeader>
 
-          <Button
-            onClick={() => setShowDeleteDialog(true)}
-            variant="destructive"
-            className="hover:-translate-y-[1px] hover:shadow-md transition-all"
-          >
-            Delete My Account
-          </Button>
-        </CardContent>
-      </Card>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-password">Current Password</Label>
+                      <Input
+                        id="delete-password"
+                        type="password"
+                        value={deletePassword}
+                        onChange={(e) => setDeletePassword(e.target.value)}
+                        placeholder="Enter your password"
+                        className="rounded-xl"
+                      />
+                    </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Are you absolutely sure?</DialogTitle>
-            <DialogDescription className="text-sm">
-              We'll anonymize your account and you'll lose access to all projects and blueprints.
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="delete-password" className="text-xs">
-                Current Password
-              </Label>
-              <Input
-                id="delete-password"
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                placeholder="Enter your password"
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="delete-confirmation" className="text-xs">
-                Type DELETE to confirm
-              </Label>
-              <Input
-                id="delete-confirmation"
-                value={deleteConfirmation}
-                onChange={(e) => setDeleteConfirmation(e.target.value)}
-                placeholder="DELETE"
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setShowDeleteDialog(false);
-                setDeletePassword('');
-                setDeleteConfirmation('');
-              }}
-              className="hover:-translate-y-[1px] transition-all"
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={deleteAccount}
-              disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
-              className="hover:-translate-y-[1px] hover:shadow-md transition-all"
-            >
-              {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                    <div className="space-y-2">
+                      <Label htmlFor="delete-confirmation">
+                        Type <strong>DELETE</strong> to confirm
+                      </Label>
+                      <Input
+                        id="delete-confirmation"
+                        type="text"
+                        value={deleteConfirmation}
+                        onChange={(e) => setDeleteConfirmation(e.target.value)}
+                        placeholder="DELETE"
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDeleteDialog(false);
+                        setDeletePassword('');
+                        setDeleteConfirmation('');
+                      }}
+                      className="rounded-xl"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={deleteAccount}
+                      disabled={
+                        isDeletingAccount ||
+                        !deletePassword ||
+                        deleteConfirmation !== 'DELETE'
+                      }
+                      className="rounded-xl"
+                    >
+                      {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Billing Tab */}
+        <TabsContent value="billing" className="space-y-6">
+          {billing && currentWorkspaceId && (
+            <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <CreditCard className="h-5 w-5 text-brand-500" />
+                  <CardTitle className="text-base">Plan & Billing</CardTitle>
+                </div>
+                <CardDescription className="text-xs">
+                  You're on the {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <Badge variant="outline" className="text-xs">
+                    {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)}
+                  </Badge>
+                  {billing.isOnTrial && billing.trialEndsAt && (
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        Trial ends{' '}
+                        {new Date(billing.trialEndsAt).toLocaleDateString()}. We'll never auto-bill you without explicit setup.
+                      </span>
+                    </div>
+                  )}
+                  {billing.isTrialExpired && billing.plan === 'starter' && (
+                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>
+                        Your trial ended on {new Date(billing.trialEndsAt!).toLocaleDateString()}. You're on Starter now, which is perfect for experiments.
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="plan" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Select Plan
+                  </Label>
+                  <Select value={selectedPlan} onValueChange={(value: any) => setSelectedPlan(value)}>
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="starter">Starter</SelectItem>
+                      <SelectItem value="pro">Pro</SelectItem>
+                      <SelectItem value="enterprise">Enterprise</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Plan changes don't bill you yet. We'll wire this to Stripe when the lawyers are done.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={saveBilling}
+                  disabled={isSavingBilling || selectedPlan === billing.plan}
+                  className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
+                >
+                  {isSavingBilling ? 'Saving...' : 'Save Plan'}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense fallback={<div className="max-w-5xl mx-auto px-8 py-8">Loading...</div>}>
+      <AccountContent />
+    </Suspense>
   );
 }

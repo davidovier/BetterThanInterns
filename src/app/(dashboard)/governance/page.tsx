@@ -16,6 +16,7 @@ import { Shield, FileText, Activity, CheckCircle2, Clock, Pause } from 'lucide-r
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PlanUpsellBanner } from '@/components/ui/plan-upsell-banner';
 
 type AiUseCase = {
   id: string;
@@ -45,6 +46,7 @@ export default function GovernancePage() {
   const [aiUseCases, setAiUseCases] = useState<AiUseCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
+  const [workspacePlan, setWorkspacePlan] = useState<'starter' | 'pro' | 'enterprise'>('starter');
 
   useEffect(() => {
     loadWorkspaceAndUseCases();
@@ -62,7 +64,9 @@ export default function GovernancePage() {
 
       if (workspaces && workspaces.length > 0) {
         const wsId = workspaces[0].id;
+        const wsPlan = workspaces[0].plan || 'starter';
         setWorkspaceId(wsId);
+        setWorkspacePlan(wsPlan);
 
         // Load AI use cases
         const response = await fetch(`/api/workspaces/${wsId}/ai-use-cases`);
@@ -131,6 +135,8 @@ export default function GovernancePage() {
           </div>
         }
       />
+
+      <PlanUpsellBanner currentPlan={workspacePlan} from="governance" />
 
       {aiUseCases.length === 0 ? (
         <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">

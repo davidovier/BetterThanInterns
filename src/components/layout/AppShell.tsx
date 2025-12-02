@@ -1,10 +1,11 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard,
   FolderKanban,
@@ -34,10 +35,46 @@ const navItems = [
   { href: '/governance', label: 'Governance', icon: Shield },
 ];
 
+type Workspace = {
+  id: string;
+  name: string;
+  plan: 'starter' | 'pro' | 'enterprise';
+};
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const [currentWorkspace, setCurrentWorkspace] = useState<Workspace | null>(null);
+
+  useEffect(() => {
+    // Fetch current workspace
+    const fetchWorkspace = async () => {
+      try {
+        const res = await fetch('/api/workspaces');
+        if (res.ok) {
+          const data = await res.json();
+          const workspaces = data.ok && data.data
+            ? data.data.workspaces
+            : data.workspaces;
+
+          if (workspaces && workspaces.length > 0) {
+            setCurrentWorkspace({
+              id: workspaces[0].id,
+              name: workspaces[0].name,
+              plan: workspaces[0].plan || 'starter',
+            });
+          }
+        }
+      } catch (error) {
+        // Silently fail - workspace badge is optional UX enhancement
+      }
+    };
+
+    if (session?.user) {
+      fetchWorkspace();
+    }
+  }, [session]);
 
   const getInitials = (name?: string | null) => {
     if (!name) return 'U';
@@ -47,6 +84,30 @@ export function AppShell({ children }: AppShellProps) {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const getPlanBadgeStyles = (plan: string) => {
+    switch (plan) {
+      case 'pro':
+        return 'bg-primary/10 text-primary border-primary/20';
+      case 'enterprise':
+        return 'bg-amber-100/80 text-amber-800 border-amber-200';
+      case 'starter':
+      default:
+        return 'bg-muted/60 text-muted-foreground border-border';
+    }
+  };
+
+  const getPlanTooltip = (plan: string) => {
+    switch (plan) {
+      case 'pro':
+        return 'Pro – for teams actually shipping automations';
+      case 'enterprise':
+        return 'Enterprise – bring your lawyers';
+      case 'starter':
+      default:
+        return 'Starter – perfect for solo experiments';
+    }
   };
 
   return (
@@ -88,7 +149,23 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
 
           {/* User section */}
-          <div className="border-t p-4">
+          <div className="border-t p-4 space-y-3">
+            {currentWorkspace && (
+              <div className="px-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground truncate flex-1">
+                    {currentWorkspace.name}
+                  </p>
+                  <Badge
+                    variant="outline"
+                    className={`text-xs rounded-full px-2 py-0 ml-2 ${getPlanBadgeStyles(currentWorkspace.plan)}`}
+                    title={getPlanTooltip(currentWorkspace.plan)}
+                  >
+                    {currentWorkspace.plan.charAt(0).toUpperCase() + currentWorkspace.plan.slice(1)}
+                  </Badge>
+                </div>
+              </div>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
