@@ -42,7 +42,7 @@ export async function DELETE(request: NextRequest) {
 
     // Get user with password
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user.id, deletedAt: null },
       include: {
         workspaces: true,
       },

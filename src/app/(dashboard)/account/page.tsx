@@ -60,6 +60,9 @@ export default function AccountPage() {
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(
     null
   );
+  const [currentWorkspaceName, setCurrentWorkspaceName] = useState<string | null>(
+    null
+  );
 
   // Profile form state
   const [name, setName] = useState('');
@@ -110,7 +113,9 @@ export default function AccountPage() {
 
         if (workspaces && workspaces.length > 0) {
           const wsId = workspaces[0].id;
+          const wsName = workspaces[0].name;
           setCurrentWorkspaceId(wsId);
+          setCurrentWorkspaceName(wsName);
 
           // Load billing
           const billingRes = await fetch(`/api/workspaces/${wsId}/billing`);
@@ -278,14 +283,9 @@ export default function AccountPage() {
         throw new Error(error.error?.message || 'Failed to delete account');
       }
 
-      toast({
-        title: 'Account deleted',
-        description: 'Your account has been deleted',
-      });
-
-      // Sign out and redirect
+      // Sign out and redirect with deleted flag
       await signOut({ redirect: false });
-      router.push('/login');
+      router.push('/login?deleted=1');
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -477,6 +477,9 @@ export default function AccountPage() {
                       placeholder="At least 10 characters, with letter and number"
                       className="rounded-xl"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      At least 10 characters, with a letter and a number.
+                    </p>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-xs">Confirm New Password</Label>
@@ -531,7 +534,7 @@ export default function AccountPage() {
               <CardTitle className="text-base">Plan & Billing</CardTitle>
             </div>
             <CardDescription className="text-xs">
-              You're on the {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)} plan in this workspace.
+              You're on the {billing.plan.charAt(0).toUpperCase() + billing.plan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

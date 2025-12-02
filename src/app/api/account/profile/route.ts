@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user.id, deletedAt: null },
       select: {
         id: true,
         email: true,
@@ -103,7 +103,7 @@ export async function PATCH(request: NextRequest) {
 
       // Verify current password
       const user = await db.user.findUnique({
-        where: { id: session.user.id },
+        where: { id: session.user.id, deletedAt: null },
       });
 
       if (!user) {
@@ -136,7 +136,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update user
     const updatedUser = await db.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user.id, deletedAt: null },
       data: {
         ...(name !== undefined && { name }),
         ...(email && { email: email.toLowerCase() }),

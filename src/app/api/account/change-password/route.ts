@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     // Get user with password
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: session.user.id, deletedAt: null },
     });
 
     if (!user) {
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hash(newPassword, 10);
 
     await db.user.update({
-      where: { id: session.user.id },
+      where: { id: session.user.id, deletedAt: null },
       data: {
         password: hashedPassword,
       },
