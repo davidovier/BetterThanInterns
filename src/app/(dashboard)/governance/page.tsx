@@ -18,6 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PlanUpsellBanner } from '@/components/ui/plan-upsell-banner';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
+import { EmptyState } from '@/components/design-system/EmptyState';
+import { MetricCard } from '@/components/design-system/MetricCard';
 
 type AiUseCase = {
   id: string;
@@ -127,17 +129,11 @@ export default function GovernancePage() {
       <PlanUpsellBanner currentPlan={currentWorkspacePlan} from="governance" />
 
       {aiUseCases.length === 0 ? (
-        <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center mx-auto mb-6 shadow-soft">
-              <Shield className="h-10 w-10 text-muted-foreground/40" />
-            </div>
-            <p className="text-lg font-semibold mb-2">No AI use cases yet</p>
-            <p className="text-sm text-muted-foreground text-center max-w-md">
-              Once you decide which automations to actually ship, they'll show up here instead of your notebook.
-            </p>
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Shield}
+          title="No AI use cases yet"
+          description="Once you decide which automations to actually ship, create an AI use case from your project to track governance, risk assessments, and policy compliance. Your compliance team will thank you."
+        />
       ) : (
         <div className="space-y-8">
           {/* Group by status */}

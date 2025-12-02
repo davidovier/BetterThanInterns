@@ -101,13 +101,13 @@ export function AppShell({ children }: AppShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all ${
+                  className={`group flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                     isActive
-                      ? 'bg-brand-50 text-brand-700 shadow-soft'
-                      : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
+                      ? 'bg-gradient-to-r from-brand-50 to-brand-50/50 text-brand-700 shadow-soft border border-brand-100'
+                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:-translate-y-[1px] hover:shadow-soft'
                   }`}
                 >
-                  <Icon className={`h-5 w-5 ${isActive ? 'text-brand-600' : ''}`} />
+                  <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-brand-600' : 'group-hover:text-foreground'}`} />
                   <span>{item.label}</span>
                 </Link>
               );
@@ -117,14 +117,17 @@ export function AppShell({ children }: AppShellProps) {
           {/* User section */}
           <div className="border-t p-4 space-y-3">
             {currentWorkspaceName && (
-              <div className="px-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground truncate flex-1">
+              <div className="rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-border/40 p-3 shadow-soft">
+                <p className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
+                  Workspace
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-semibold truncate flex-1">
                     {currentWorkspaceName}
                   </p>
                   <Badge
                     variant="outline"
-                    className={`text-xs rounded-full px-2 py-0 ml-2 ${getPlanBadgeStyles(currentWorkspacePlan)}`}
+                    className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${getPlanBadgeStyles(currentWorkspacePlan)}`}
                     title={getPlanTooltip(currentWorkspacePlan)}
                   >
                     {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}

@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SectionCard } from '@/components/layout/SectionCard';
+import { MetricCard } from '@/components/design-system/MetricCard';
 
 type Process = {
   id: string;
@@ -320,6 +321,30 @@ export default function ProjectProcessesPage({
       />
 
       <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+        {/* Metrics Row */}
+        {!isLoadingProcesses && !isLoadingBlueprints && !isLoadingAiUseCases && (processes.length > 0 || blueprints.length > 0 || aiUseCases.length > 0) && (
+          <div className="grid md:grid-cols-3 gap-6">
+            <MetricCard
+              label="Processes Mapped"
+              value={processes.length}
+              icon={Workflow}
+              variant="default"
+            />
+            <MetricCard
+              label="Blueprints Generated"
+              value={blueprints.length}
+              icon={FileText}
+              variant="primary"
+            />
+            <MetricCard
+              label="AI Use Cases"
+              value={aiUseCases.length}
+              icon={Shield}
+              variant="success"
+            />
+          </div>
+        )}
+
         {/* Demo Project Banner */}
         {isDemoProject && showDemoBanner && (
           <Card className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200 shadow-soft dark:from-blue-950/20 dark:to-blue-900/20 dark:border-blue-900">

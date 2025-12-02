@@ -17,6 +17,8 @@ import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap } from 
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/design-system/EmptyState';
+import { MetricCard } from '@/components/design-system/MetricCard';
 
 type Workspace = {
   id: string;
@@ -211,54 +213,27 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Quick Actions Row - Only show when there are projects */}
+        {/* Metrics Row - Only show when there are projects */}
         {!isLoadingProjects && projects.length > 0 && (
-          <div className="grid md:grid-cols-3 gap-4">
-            <Card
-              className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
-              onClick={() => setShowNewProject(true)}
-            >
-              <CardHeader className="flex flex-row items-center space-x-4 pb-4">
-                <div className="rounded-full bg-brand-50 p-3">
-                  <Plus className="h-6 w-6 text-brand-500" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold">New Project</CardTitle>
-                  <CardDescription className="text-sm">Start fresh</CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-
-            <Card
-              className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
-              onClick={createDemoProject}
-            >
-              <CardHeader className="flex flex-row items-center space-x-4 pb-4">
-                <div className="rounded-full bg-warm-50 p-3">
-                  <Sparkles className="h-6 w-6 text-warm-500" />
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="text-lg font-semibold">Demo Project</CardTitle>
-                  <CardDescription className="text-sm">
-                    {isCreatingDemo ? 'Creating...' : 'Try it out'}
-                  </CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-
-            <Link href="/governance">
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer">
-                <CardHeader className="flex flex-row items-center space-x-4 pb-4">
-                  <div className="rounded-full bg-brand-50 p-3">
-                    <FileText className="h-6 w-6 text-brand-500" />
-                  </div>
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-semibold">Governance</CardTitle>
-                    <CardDescription className="text-sm">View AI use cases</CardDescription>
-                  </div>
-                </CardHeader>
-              </Card>
-            </Link>
+          <div className="grid md:grid-cols-3 gap-6">
+            <MetricCard
+              label="Total Projects"
+              value={projects.length}
+              icon={FolderOpen}
+              variant="default"
+            />
+            <MetricCard
+              label="Active Projects"
+              value={projects.filter(p => p.status === 'active').length}
+              icon={Zap}
+              variant="primary"
+            />
+            <MetricCard
+              label="Completed"
+              value={projects.filter(p => p.status === 'completed').length}
+              icon={CheckCircle2}
+              variant="success"
+            />
           </div>
         )}
 
@@ -338,81 +313,28 @@ export default function DashboardPage() {
               ))}
             </>
           ) : projects.length === 0 ? (
-            <Card className="col-span-full rounded-3xl border-2 border-dashed border-border/60 bg-gradient-to-br from-card via-muted/20 to-muted/40 shadow-medium">
-              <CardHeader className="text-center pt-12 pb-8">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center mx-auto mb-6 shadow-soft">
-                  <Sparkles className="h-10 w-10 text-brand-500" />
-                </div>
-                <CardTitle className="text-3xl font-bold">Let's make you better than interns</CardTitle>
-                <CardDescription className="text-lg pt-3">
-                  3 steps to your first AI implementation plan
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-8 pb-12">
-                <div className="space-y-4 max-w-2xl mx-auto">
-                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
-                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
-                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-base">Create your first project</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Start with something real. Pick a messy process that needs fixing.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
-                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
-                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-base">Map one real process</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Chat with our AI assistant to build a visual workflow. Takes 10-15 minutes.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-4 p-4 rounded-xl bg-gradient-to-br from-card to-muted/30 border border-border/60 shadow-soft">
-                    <div className="rounded-full bg-brand-100 p-2 mt-0.5">
-                      <Circle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-semibold text-base">Scan for AI opportunities & generate a blueprint</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        We analyze each step, match tools, and export a professional plan.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                  <Button
-                    size="lg"
-                    onClick={() => setShowNewProject(true)}
-                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[2px] transition-all shadow-md"
-                  >
-                    <Plus className="h-5 w-5 mr-2" />
-                    Create a project
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    onClick={createDemoProject}
-                    disabled={isCreatingDemo}
-                    className="hover:-translate-y-[2px] transition-all"
-                  >
-                    <Sparkles className="h-5 w-5 mr-2" />
-                    {isCreatingDemo ? 'Creating demo...' : 'Spin up a demo project'}
-                  </Button>
-                </div>
-
-                <p className="text-sm text-center text-muted-foreground pt-4">
-                  Demo project comes pre-populated with a sample workflow you can explore
-                </p>
-              </CardContent>
-            </Card>
+            <div className="col-span-full">
+              <EmptyState
+                icon={Sparkles}
+                title="Let's make you better than interns"
+                description="Create your first project to map processes, find automation opportunities, and generate implementation blueprints. Try the demo project to see how it works."
+                action={{
+                  label: 'Create Your First Project',
+                  onClick: () => setShowNewProject(true),
+                }}
+              />
+              <div className="flex justify-center mt-6">
+                <Button
+                  variant="outline"
+                  onClick={createDemoProject}
+                  disabled={isCreatingDemo}
+                  className="hover:-translate-y-[1px] transition-all"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {isCreatingDemo ? 'Creating demo...' : 'Or try a demo project'}
+                </Button>
+              </div>
+            </div>
           ) : (
             projects.map((project) => (
               <Link key={project.id} href={`/projects/${project.id}`} prefetch={true}>

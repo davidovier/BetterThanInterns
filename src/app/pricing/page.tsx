@@ -93,6 +93,9 @@ export default function PricingPage() {
                 <CardDescription className="text-base">
                   For solo consultants & small teams
                 </CardDescription>
+                <Badge variant="outline" className="w-fit border-muted-foreground/30 text-muted-foreground text-xs">
+                  Best for: Testing the waters
+                </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
                     <span className="text-5xl font-bold">€39</span>
@@ -145,6 +148,9 @@ export default function PricingPage() {
                 <CardDescription className="text-base">
                   For teams who actually ship AI projects
                 </CardDescription>
+                <Badge variant="outline" className="w-fit border-brand-300 text-brand-700 bg-brand-50 text-xs">
+                  Best for: Ops/AI leads & compliance
+                </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
                     <span className="text-5xl font-bold text-brand-600">€99</span>
@@ -198,6 +204,9 @@ export default function PricingPage() {
                 <CardDescription className="text-base">
                   For companies who want AI and sleep
                 </CardDescription>
+                <Badge variant="outline" className="w-fit border-muted-foreground/30 text-muted-foreground text-xs">
+                  Best for: Large orgs with custom needs
+                </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
                     <span className="text-3xl font-bold">Let's talk</span>
@@ -241,6 +250,111 @@ export default function PricingPage() {
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </a>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* Comparison Table */}
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          variants={staggerContainer}
+          className="space-y-8"
+        >
+          <motion.div variants={fadeIn} className="text-center space-y-3">
+            <h2 className="text-3xl font-bold">Compare Plans</h2>
+            <p className="text-lg text-muted-foreground">
+              See what's included in each tier
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeIn}>
+            <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft overflow-hidden">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border/40 bg-muted/20">
+                        <th className="text-left py-4 px-6 font-semibold text-sm">Feature</th>
+                        <th className="text-center py-4 px-4 font-semibold text-sm">Starter</th>
+                        <th className="text-center py-4 px-4 font-semibold text-sm bg-brand-50/50">Pro</th>
+                        <th className="text-center py-4 px-4 font-semibold text-sm">Enterprise</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">Projects</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Up to 3</td>
+                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Unlimited</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Unlimited</td>
+                      </tr>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">Team members</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">1</td>
+                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Unlimited</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Unlimited</td>
+                      </tr>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">AI Use Case Registry</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center bg-brand-50/30">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">Risk & Policy Management</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center bg-brand-50/30">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">Custom integrations & API</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center bg-brand-50/30">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                      </tr>
+                      <tr className="border-b border-border/20">
+                        <td className="py-4 px-6 text-sm">SSO & advanced security</td>
+                        <td className="py-4 px-4 text-center">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center bg-brand-50/30">
+                          <span className="text-muted-foreground text-xl">-</span>
+                        </td>
+                        <td className="py-4 px-4 text-center">
+                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-4 px-6 text-sm">Support</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Email</td>
+                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Priority</td>
+                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Dedicated</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           </motion.div>

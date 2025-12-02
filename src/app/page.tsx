@@ -219,23 +219,26 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { icon: MessageSquare, title: 'Chat to map your process', desc: "Talk to our AI assistant like you're explaining to a smart intern. It builds a visual workflow map while you chat." },
-              { icon: Search, title: 'Scan for AI opportunities', desc: "We analyze each step and flag what's ripe for automation. No hype, just honest assessments of impact vs. effort." },
-              { icon: Wrench, title: "Pick tools that don't suck", desc: "Get matched with AI tools and platforms that actually solve your problem. We'll handle the AI brain, you handle the client lunch." },
-              { icon: FileText, title: 'Export a real blueprint', desc: 'Download a professional implementation document with ROI estimates, tool recommendations, and risk assessments.' }
+              { step: '01', icon: MessageSquare, title: 'Chat to map your process', desc: "Talk to our AI assistant like you're explaining to a smart intern. It builds a visual workflow map while you chat." },
+              { step: '02', icon: Search, title: 'Scan for AI opportunities', desc: "We analyze each step and flag what's ripe for automation. No hype, just honest assessments of impact vs. effort." },
+              { step: '03', icon: Wrench, title: "Pick tools that don't suck", desc: "Get matched with AI tools and platforms that actually solve your problem. We'll handle the AI brain, you handle the client lunch." },
+              { step: '04', icon: FileText, title: 'Export a real blueprint', desc: 'Download a professional implementation document with ROI estimates, tool recommendations, and risk assessments.' }
             ].map((item, i) => {
               const Icon = item.icon;
               return (
                 <motion.div key={item.title} variants={fadeIn}>
-                  <Card className="h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-1 transition-all duration-300">
+                  <Card className="h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
+                    <div className="absolute top-4 right-4 text-6xl font-bold text-muted/20">
+                      {item.step}
+                    </div>
                     <CardHeader>
-                      <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center mb-4">
+                      <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center mb-4 relative z-10">
                         <Icon className="h-6 w-6 text-brand-600" />
                       </div>
-                      <CardTitle className="text-lg">{item.title}</CardTitle>
+                      <CardTitle className="text-lg relative z-10">{item.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                      <p className="text-sm text-muted-foreground leading-relaxed relative z-10">
                         {item.desc}
                       </p>
                     </CardContent>

@@ -352,16 +352,25 @@ function AccountContent() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full max-w-md grid-cols-3">
-          <TabsTrigger value="profile">
+        <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-muted/30 p-1">
+          <TabsTrigger
+            value="profile"
+            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
+          >
             <User className="h-4 w-4 mr-2" />
             Profile
           </TabsTrigger>
-          <TabsTrigger value="security">
+          <TabsTrigger
+            value="security"
+            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
+          >
             <Lock className="h-4 w-4 mr-2" />
             Security
           </TabsTrigger>
-          <TabsTrigger value="billing">
+          <TabsTrigger
+            value="billing"
+            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
+          >
             <CreditCard className="h-4 w-4 mr-2" />
             Billing
           </TabsTrigger>
@@ -551,15 +560,19 @@ function AccountContent() {
           </Card>
 
           {/* Danger Zone in Security Tab */}
-          <Card className="rounded-2xl border-red-200 bg-card shadow-soft hover:shadow-medium transition-all">
+          <Card className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/50 to-card shadow-soft hover:shadow-medium transition-all">
             <CardHeader>
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-                <CardTitle className="text-base text-red-600">Danger Zone</CardTitle>
+              <div className="flex items-center space-x-3">
+                <div className="rounded-full bg-red-100 p-2">
+                  <AlertTriangle className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-base text-red-700 font-bold">Danger Zone</CardTitle>
+                  <CardDescription className="text-xs text-red-600 mt-1">
+                    Delete your account and personal data. This can't be undone.
+                  </CardDescription>
+                </div>
               </div>
-              <CardDescription className="text-xs">
-                Delete your account and personal data. This can't be undone.
-              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-relaxed text-muted-foreground">
