@@ -31,7 +31,6 @@ type AppShellProps = {
 };
 
 const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/dashboard', label: 'Projects', icon: FolderKanban },
   { href: '/governance', label: 'Governance', icon: Shield },
 ];
