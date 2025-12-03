@@ -102,10 +102,20 @@ function AccountContent() {
   // Billing state
   const [selectedPlan, setSelectedPlan] = useState<'starter' | 'pro' | 'enterprise'>('starter');
   const [isSavingBilling, setIsSavingBilling] = useState(false);
+  const [billingStatus, setBillingStatus] = useState<any>(null);
+  const [isLoadingBilling, setIsLoadingBilling] = useState(false);
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load billing status when billing tab is active
+  useEffect(() => {
+    if (activeTab === 'billing' && currentWorkspaceId && !billingStatus) {
+      loadBillingStatus();
+    }
+  }, [activeTab, currentWorkspaceId]);
 
   const loadData = async () => {
     try {
@@ -282,6 +292,71 @@ function AccountContent() {
         variant: 'destructive',
       });
       setIsDeletingAccount(false);
+    }
+  };
+
+  const loadBillingStatus = async () => {
+    if (!currentWorkspaceId) return;
+
+    setIsLoadingBilling(true);
+    try {
+      const response = await fetch(
+        `/api/workspaces/${currentWorkspaceId}/billing/stripe-status`
+      );
+      if (!response.ok) throw new Error('Failed to load billing status');
+
+      const result = await response.json();
+      setBillingStatus(result.data);
+    } catch (error: any) {
+      console.error('Failed to load billing status:', error);
+    } finally {
+      setIsLoadingBilling(false);
+    }
+  };
+
+  const createCheckoutSession = async (plan: 'pro' | 'enterprise') => {
+    if (!currentWorkspaceId) return;
+
+    setIsCreatingCheckout(true);
+    try {
+      const response = await fetch(
+        `/api/workspaces/${currentWorkspaceId}/billing/checkout`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ plan }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+
+        // Handle Stripe not configured gracefully
+        if (error.error?.code === 'STRIPE_NOT_CONFIGURED') {
+          toast({
+            title: 'Billing not available',
+            description: 'Stripe billing is not configured yet. Please contact support to upgrade.',
+            variant: 'default',
+          });
+          return;
+        }
+
+        throw new Error(error.error?.message || 'Failed to create checkout session');
+      }
+
+      const result = await response.json();
+
+      // Redirect to Stripe Checkout
+      if (result.data.checkoutUrl) {
+        window.location.href = result.data.checkoutUrl;
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setIsCreatingCheckout(false);
     }
   };
 
@@ -661,68 +736,157 @@ function AccountContent() {
         {/* Billing Tab */}
         <TabsContent value="billing" className="space-y-6">
           {currentWorkspaceId && (
-            <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-              <CardHeader>
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-5 w-5 text-brand-500" />
-                  <CardTitle className="text-base">Plan & Billing</CardTitle>
-                </div>
-                <CardDescription className="text-xs">
-                  You're on the {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center space-x-4">
-                  <Badge variant="outline" className="text-xs">
-                    {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
-                  </Badge>
-                  {isOnTrial && trialEndsAt && (
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        Trial ends{' '}
-                        {new Date(trialEndsAt).toLocaleDateString()}. We'll never auto-bill you without explicit setup.
-                      </span>
+            <>
+              {/* Current Plan Card */}
+              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5 text-brand-500" />
+                    <CardTitle className="text-base">Current Plan</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">
+                    You're on the {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Badge variant="outline" className="text-xs">
+                        {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
+                      </Badge>
+                      {isOnTrial && trialEndsAt && (
+                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Trial ends{' '}
+                            {new Date(trialEndsAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                      {isTrialExpired && currentWorkspacePlan === 'starter' && (
+                        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            Trial ended on {new Date(trialEndsAt!).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {isTrialExpired && currentWorkspacePlan === 'starter' && (
-                    <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        Your trial ended on {new Date(trialEndsAt!).toLocaleDateString()}. You're on Starter now, which is perfect for experiments.
-                      </span>
+                  </div>
+
+                  {/* Subscription Info (if active) */}
+                  {isLoadingBilling ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-48" />
+                      <Skeleton className="h-4 w-64" />
                     </div>
-                  )}
-                </div>
+                  ) : billingStatus?.hasActiveSubscription && billingStatus?.subscription ? (
+                    <div className="rounded-xl bg-muted/40 border border-border/60 p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">Active Subscription</span>
+                        <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                          {billingStatus.subscription.status}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground space-y-1">
+                        <p>
+                          <span className="font-medium">Current period ends:</span>{' '}
+                          {new Date(billingStatus.subscription.currentPeriodEnd).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        {billingStatus.subscription.cancelAtPeriodEnd && (
+                          <p className="text-orange-600">
+                            Your subscription will cancel at the end of the billing period.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </CardContent>
+              </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="plan" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Select Plan
-                  </Label>
-                  <Select value={selectedPlan} onValueChange={(value: any) => setSelectedPlan(value)}>
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="starter">Starter</SelectItem>
-                      <SelectItem value="pro">Pro</SelectItem>
-                      <SelectItem value="enterprise">Enterprise</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Plan changes don't bill you yet. We'll wire this to Stripe when the lawyers are done.
-                  </p>
-                </div>
+              {/* Upgrade Options (only show if not on highest plan) */}
+              {currentWorkspacePlan !== 'enterprise' && (
+                <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+                  <CardHeader>
+                    <CardTitle className="text-base">Upgrade Your Plan</CardTitle>
+                    <CardDescription className="text-xs">
+                      Scale up when you're ready. Powered by Stripe (EUR, Europe-friendly).
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {currentWorkspacePlan === 'starter' && (
+                      <>
+                        <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-base">Pro</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                For teams actually shipping automations
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => createCheckoutSession('pro')}
+                            disabled={isCreatingCheckout}
+                            className="w-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                          >
+                            {isCreatingCheckout ? 'Creating...' : 'Upgrade to Pro'}
+                          </Button>
+                        </div>
 
-                <Button
-                  onClick={saveBilling}
-                  disabled={isSavingBilling || selectedPlan === currentWorkspacePlan}
-                  className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
-                >
-                  {isSavingBilling ? 'Saving...' : 'Save Plan'}
-                </Button>
-              </CardContent>
-            </Card>
+                        <div className="rounded-xl border border-border/60 p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h4 className="font-semibold text-base">Enterprise</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Bring your lawyers, we'll wait
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => createCheckoutSession('enterprise')}
+                            disabled={isCreatingCheckout}
+                            variant="outline"
+                            className="w-full hover:-translate-y-[1px] transition-all"
+                          >
+                            {isCreatingCheckout ? 'Creating...' : 'Upgrade to Enterprise'}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+
+                    {currentWorkspacePlan === 'pro' && (
+                      <div className="rounded-xl border border-border/60 p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h4 className="font-semibold text-base">Enterprise</h4>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Bring your lawyers, we'll wait
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => createCheckoutSession('enterprise')}
+                          disabled={isCreatingCheckout}
+                          className="w-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                        >
+                          {isCreatingCheckout ? 'Creating...' : 'Upgrade to Enterprise'}
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      Billing is handled securely through Stripe. Cancel anytime.
+                      {!billingStatus?.stripeEnabled && ' (Stripe setup required - contact support for manual upgrades)'}
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>

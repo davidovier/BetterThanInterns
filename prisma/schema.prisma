@@ -65,14 +65,16 @@ model Session {
 // WORKSPACES
 // ============================================
 model Workspace {
-  id           String    @id @default(cuid())
-  name         String
-  settings     Json      @default("{}")
-  plan         String    @default("starter") // M8: "starter" | "pro" | "enterprise"
-  trialEndsAt  DateTime? // M8: null if no trial / expired
-  billingNotes String?   @db.Text // M8: internal notes for future admin use
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  name                  String
+  settings              Json      @default("{}")
+  plan                  String    @default("starter") // M8: "starter" | "pro" | "enterprise"
+  trialEndsAt           DateTime? // M8: null if no trial / expired
+  billingNotes          String?   @db.Text // M8: internal notes for future admin use
+  stripeCustomerId      String?   @unique // M11: Stripe customer ID
+  stripeSubscriptionId  String?   // M11: Stripe subscription ID
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   members    WorkspaceMember[]
   projects   Project[]
