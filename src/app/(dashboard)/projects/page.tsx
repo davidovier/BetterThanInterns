@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap } from 'lucide-react';
+import { Plus, FolderOpen, CheckCircle2, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -33,30 +33,19 @@ type Project = {
   updatedAt: string;
 };
 
-type AssistantSession = {
-  id: string;
-  title: string;
-  contextSummary: string;
-  isDemo: boolean;
-  updatedAt: string;
-  project?: {
-    id: string;
-    name: string;
-  };
-};
-
-export default function DashboardPage() {
+export default function ProjectsPage() {
   const { data: session } = useSession();
   const { toast } = useToast();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspace, setSelectedWorkspace] = useState<string | null>(
     null
   );
-  const [sessions, setSessions] = useState<AssistantSession[]>([]);
-  const [showNewSession, setShowNewSession] = useState(false);
-  const [newSessionTitle, setNewSessionTitle] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [newProjectName, setNewProjectName] = useState('');
+  const [newProjectDescription, setNewProjectDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   useEffect(() => {
     loadWorkspaces();
@@ -64,7 +53,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (selectedWorkspace) {
-      loadSessions(selectedWorkspace);
+      loadProjects(selectedWorkspace);
     }
   }, [selectedWorkspace]);
 
@@ -74,7 +63,6 @@ export default function DashboardPage() {
       if (!response.ok) throw new Error('Failed to load workspaces');
       const result = await response.json();
 
-      // Handle new API response format { ok: true, data: {...} }
       const workspacesData = result.ok && result.data ? result.data.workspaces : result.workspaces;
 
       setWorkspaces(workspacesData || []);
@@ -90,135 +78,146 @@ export default function DashboardPage() {
     }
   };
 
-  const loadSessions = async (workspaceId: string) => {
-    setIsLoadingSessions(true);
+  const loadProjects = async (workspaceId: string) => {
+    setIsLoadingProjects(true);
     try {
       const response = await fetch(
-        `/api/sessions?workspaceId=${workspaceId}`
+        `/api/workspaces/${workspaceId}/projects`
       );
-      if (!response.ok) throw new Error('Failed to load sessions');
+      if (!response.ok) throw new Error('Failed to load projects');
       const result = await response.json();
 
-      // Handle new API response format { ok: true, data: {...} }
-      const sessionsData = result.ok && result.data ? result.data.sessions : result.sessions;
+      const projectsData = result.ok && result.data ? result.data.projects : result.projects;
 
-      setSessions(sessionsData || []);
+      setProjects(projectsData || []);
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to load sessions',
+        description: 'Failed to load projects',
         variant: 'destructive',
       });
     } finally {
-      setIsLoadingSessions(false);
+      setIsLoadingProjects(false);
     }
   };
 
-  const createSession = async (e: React.FormEvent) => {
+  const createProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedWorkspace) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch('/api/sessions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: newSessionTitle,
-          workspaceId: selectedWorkspace,
-        }),
-      });
+      const response = await fetch(
+        `/api/workspaces/${selectedWorkspace}/projects`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newProjectName,
+            description: newProjectDescription,
+          }),
+        }
+      );
 
-      if (!response.ok) throw new Error('Failed to create session');
+      if (!response.ok) throw new Error('Failed to create project');
 
       const result = await response.json();
 
-      // Handle new API response format { ok: true, data: {...} }
-      const sessionData = result.ok && result.data ? result.data.session : result.session;
+      const project = result.ok && result.data ? result.data.project : result.project;
 
+      setProjects([project, ...projects]);
+      setNewProjectName('');
+      setNewProjectDescription('');
+      setShowNewProject(false);
       toast({
-        title: 'Session created',
-        description: 'Your new session is ready',
+        title: 'Project created',
+        description: 'Your new project is ready',
       });
-
-      // Redirect to the new session
-      window.location.href = `/sessions/${sessionData.id}`;
     } catch (error) {
       toast({
         title: 'Error',
-        description: 'Failed to create session',
+        description: 'Failed to create project',
         variant: 'destructive',
       });
+    } finally {
       setIsLoading(false);
     }
   };
-
 
   return (
     <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[32px] font-semibold tracking-tight">Sessions</h1>
+            <h1 className="text-[32px] font-semibold tracking-tight">Projects</h1>
             <p className="text-muted-foreground mt-2">
-              Chat with the AI to map processes, find opportunities, and build blueprints.
+              Manage your automation projects and workflows.
             </p>
           </div>
           <Button
-            onClick={() => setShowNewSession(!showNewSession)}
+            onClick={() => setShowNewProject(!showNewProject)}
             className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Session
+            New Project
           </Button>
         </div>
 
-        {/* Metrics Row - Only show when there are sessions */}
-        {!isLoadingSessions && sessions.length > 0 && (
+        {/* Metrics Row */}
+        {!isLoadingProjects && projects.length > 0 && (
           <div className="grid md:grid-cols-3 gap-6">
             <MetricCard
-              label="Total Sessions"
-              value={sessions.length}
-              icon={Sparkles}
+              label="Total Projects"
+              value={projects.length}
+              icon={FolderOpen}
               variant="default"
             />
             <MetricCard
-              label="With Projects"
-              value={sessions.filter(s => s.project).length}
-              icon={FolderOpen}
+              label="Active Projects"
+              value={projects.filter(p => p.status === 'active').length}
+              icon={Zap}
               variant="primary"
             />
             <MetricCard
-              label="Recent Sessions"
-              value={sessions.filter(s => {
-                const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-                return new Date(s.updatedAt) > dayAgo;
-              }).length}
+              label="Completed"
+              value={projects.filter(p => p.status === 'completed').length}
               icon={CheckCircle2}
               variant="success"
             />
           </div>
         )}
 
-        {/* New Session Form */}
-        {showNewSession && (
+        {/* New Project Form */}
+        {showNewProject && (
           <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Create New Session</CardTitle>
+              <CardTitle className="text-xl font-semibold">Create New Project</CardTitle>
               <CardDescription>
-                Start a conversation with the AI assistant to explore your workflows.
+                Start with something ugly. That's where the value is.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={createSession} className="space-y-4">
+              <form onSubmit={createProject} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="session-title">Session Title</Label>
+                  <Label htmlFor="project-name">Project Name</Label>
                   <Input
-                    id="session-title"
-                    value={newSessionTitle}
-                    onChange={(e) => setNewSessionTitle(e.target.value)}
-                    placeholder="e.g., Exploring Invoice Processing"
+                    id="project-name"
+                    value={newProjectName}
+                    onChange={(e) => setNewProjectName(e.target.value)}
+                    placeholder="e.g., Invoice Processing Automation"
                     required
+                    className="rounded-lg"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="project-description">
+                    Description (optional)
+                  </Label>
+                  <Input
+                    id="project-description"
+                    value={newProjectDescription}
+                    onChange={(e) => setNewProjectDescription(e.target.value)}
+                    placeholder="What's this project about?"
                     className="rounded-lg"
                   />
                 </div>
@@ -228,12 +227,12 @@ export default function DashboardPage() {
                     disabled={isLoading}
                     className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
                   >
-                    {isLoading ? 'Creating...' : 'Create Session'}
+                    {isLoading ? 'Creating...' : 'Create Project'}
                   </Button>
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => setShowNewSession(false)}
+                    onClick={() => setShowNewProject(false)}
                     className="hover:-translate-y-[1px] transition-all"
                   >
                     Cancel
@@ -244,9 +243,9 @@ export default function DashboardPage() {
           </Card>
         )}
 
-        {/* Sessions Grid */}
+        {/* Projects Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {isLoadingSessions ? (
+          {isLoadingProjects ? (
             <>
               {[1, 2, 3].map((i) => (
                 <Card key={i} className="rounded-2xl">
@@ -263,53 +262,46 @@ export default function DashboardPage() {
                 </Card>
               ))}
             </>
-          ) : sessions.length === 0 ? (
+          ) : projects.length === 0 ? (
             <div className="col-span-full">
               <EmptyState
-                icon={Sparkles}
-                title="Start your first session"
-                description="Create a new session to chat with the AI assistant. Map processes, find automation opportunities, and build implementation blueprints."
+                icon={FolderOpen}
+                title="No projects yet"
+                description="Create your first project to map processes, find automation opportunities, and generate implementation blueprints."
                 action={{
-                  label: 'Create Your First Session',
-                  onClick: () => setShowNewSession(true),
+                  label: 'Create Your First Project',
+                  onClick: () => setShowNewProject(true),
                 }}
               />
             </div>
           ) : (
-            sessions.map((sessionItem) => (
-              <Link key={sessionItem.id} href={`/sessions/${sessionItem.id}`} prefetch={true}>
+            projects.map((project) => (
+              <Link key={project.id} href={`/projects/${project.id}`} prefetch={true}>
                 <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
-                      <CardTitle className="text-xl font-semibold">{sessionItem.title}</CardTitle>
-                      {sessionItem.isDemo && (
-                        <Badge variant="outline" className="text-xs">
-                          Demo
-                        </Badge>
-                      )}
+                      <CardTitle className="text-xl font-semibold">{project.name}</CardTitle>
+                      <Badge
+                        variant="outline"
+                        className="capitalize text-xs"
+                      >
+                        {project.status}
+                      </Badge>
                     </div>
-                    {sessionItem.contextSummary && (
+                    {project.description && (
                       <CardDescription className="text-base line-clamp-2">
-                        {sessionItem.contextSummary}
+                        {project.description}
                       </CardDescription>
-                    )}
-                    {sessionItem.project && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {sessionItem.project.name}
-                        </span>
-                      </div>
                     )}
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center text-muted-foreground">
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        <span>Session</span>
+                        <FolderOpen className="h-4 w-4 mr-2" />
+                        <span>Project</span>
                       </div>
                       <span className="text-muted-foreground">
-                        {new Date(sessionItem.updatedAt).toLocaleDateString('en-US', {
+                        {new Date(project.updatedAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
                           year: 'numeric'

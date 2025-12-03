@@ -13,7 +13,8 @@ import {
   Sparkles,
   LogOut,
   User,
-  Settings
+  Settings,
+  MessageSquare
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,7 +32,8 @@ type AppShellProps = {
 };
 
 const navItems = [
-  { href: '/dashboard', label: 'Projects', icon: FolderKanban },
+  { href: '/dashboard', label: 'Sessions', icon: MessageSquare },
+  { href: '/projects', label: 'Projects', icon: FolderKanban },
   { href: '/governance', label: 'Governance', icon: Shield },
 ];
 

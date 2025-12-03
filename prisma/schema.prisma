@@ -76,10 +76,11 @@ model Workspace {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
-  members    WorkspaceMember[]
-  projects   Project[]
-  aiUseCases AiUseCase[]
-  aiPolicies AiPolicy[]
+  members            WorkspaceMember[]
+  projects           Project[]
+  aiUseCases         AiUseCase[]
+  aiPolicies         AiPolicy[]
+  assistantSessions  AssistantSession[] // M11: Session-based UX
 
   @@map("workspaces")
 }
@@ -99,6 +100,26 @@ model WorkspaceMember {
 }
 
 // ============================================
+// ASSISTANT SESSIONS (M11 - Unified Assistant)
+// ============================================
+model AssistantSession {
+  id              String   @id @default(cuid())
+  workspaceId     String
+  title           String
+  contextSummary  String   @default("") @db.Text
+  linkedProjectId String? // Optional link to a project
+  isDemo          Boolean  @default(false)
+  metadata        Json     @default("{}") // Store linked IDs: processIds, blueprintIds, aiUseCaseIds, etc.
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?  @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+
+  @@map("assistant_sessions")
+}
+
+// ============================================
 // PROJECTS
 // ============================================
 model Project {
@@ -112,10 +133,11 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  processes  Process[]
-  blueprints Blueprint[]
-  aiUseCases AiUseCase[]
+  workspace          Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  processes          Process[]
+  blueprints         Blueprint[]
+  aiUseCases         AiUseCase[]
+  assistantSessions  AssistantSession[] // M11: Sessions linked to this project
 
   @@map("projects")
 }
