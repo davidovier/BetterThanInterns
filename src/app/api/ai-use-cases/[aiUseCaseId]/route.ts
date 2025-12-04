@@ -46,6 +46,13 @@ export async function GET(
             createdAt: true,
           },
         },
+        riskAssessment: {
+          select: {
+            id: true,
+            riskLevel: true,
+            summaryText: true,
+          },
+        },
       },
     });
 
@@ -72,6 +79,7 @@ export async function GET(
       linkedProcessIds,
       linkedOpportunityIds,
       linkedToolIds,
+      riskAssessment: aiUseCase.riskAssessment || null,
       metadata: {
         processCount: metadata.processCount || linkedProcessIds.length || 0,
         opportunityCount: metadata.opportunityCount || linkedOpportunityIds.length || 0,

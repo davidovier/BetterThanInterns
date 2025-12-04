@@ -40,6 +40,12 @@ export async function GET(
             },
           },
         },
+        _count: {
+          select: {
+            steps: true,
+            opportunities: true,
+          },
+        },
         ...(includeGraph && {
           steps: {
             orderBy: { createdAt: 'asc' },

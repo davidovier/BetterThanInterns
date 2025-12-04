@@ -48,6 +48,10 @@ export default function SessionDetailPage({
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const [activeTab, setActiveTab] = useState('summary');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [processes, setProcesses] = useState<any[]>([]);
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [blueprints, setBlueprints] = useState<any[]>([]);
+  const [aiUseCases, setAiUseCases] = useState<any[]>([]);
 
   useEffect(() => {
     loadSession();
@@ -72,6 +76,9 @@ export default function SessionDetailPage({
 
       setSession(sessionData);
 
+      // Load artifact details
+      await loadArtifacts(sessionData.metadata || {});
+
       // TODO: Load chat messages from session-specific chat history
       // For now, using empty messages array
     } catch (error) {
@@ -82,6 +89,96 @@ export default function SessionDetailPage({
       });
     } finally {
       setIsLoadingSession(false);
+    }
+  };
+
+  const loadArtifacts = async (metadata: any) => {
+    try {
+      // Load processes
+      if (metadata.processIds?.length > 0) {
+        const processData = await Promise.all(
+          metadata.processIds.map(async (id: string) => {
+            try {
+              const res = await fetch(`/api/processes/${id}`);
+              if (res.ok) {
+                const result = await res.json();
+                return result.ok ? result.data.process : null;
+              }
+            } catch (err) {
+              console.error('Failed to load process:', id, err);
+            }
+            return null;
+          })
+        );
+        setProcesses(processData.filter(Boolean));
+      } else {
+        setProcesses([]);
+      }
+
+      // Load opportunities
+      if (metadata.opportunityIds?.length > 0) {
+        const oppData = await Promise.all(
+          metadata.opportunityIds.map(async (id: string) => {
+            try {
+              const res = await fetch(`/api/opportunities/${id}`);
+              if (res.ok) {
+                const result = await res.json();
+                return result.ok ? result.data.opportunity : null;
+              }
+            } catch (err) {
+              console.error('Failed to load opportunity:', id, err);
+            }
+            return null;
+          })
+        );
+        setOpportunities(oppData.filter(Boolean));
+      } else {
+        setOpportunities([]);
+      }
+
+      // Load blueprints
+      if (metadata.blueprintIds?.length > 0) {
+        const blueprintData = await Promise.all(
+          metadata.blueprintIds.map(async (id: string) => {
+            try {
+              const res = await fetch(`/api/blueprints/${id}`);
+              if (res.ok) {
+                const result = await res.json();
+                return result.ok ? result.data.blueprint : null;
+              }
+            } catch (err) {
+              console.error('Failed to load blueprint:', id, err);
+            }
+            return null;
+          })
+        );
+        setBlueprints(blueprintData.filter(Boolean));
+      } else {
+        setBlueprints([]);
+      }
+
+      // Load AI use cases
+      if (metadata.aiUseCaseIds?.length > 0) {
+        const useCaseData = await Promise.all(
+          metadata.aiUseCaseIds.map(async (id: string) => {
+            try {
+              const res = await fetch(`/api/ai-use-cases/${id}`);
+              if (res.ok) {
+                const result = await res.json();
+                return result.ok ? result.data.aiUseCase : null;
+              }
+            } catch (err) {
+              console.error('Failed to load use case:', id, err);
+            }
+            return null;
+          })
+        );
+        setAiUseCases(useCaseData.filter(Boolean));
+      } else {
+        setAiUseCases([]);
+      }
+    } catch (error) {
+      console.error('Error loading artifacts:', error);
     }
   };
 
@@ -110,12 +207,24 @@ export default function SessionDetailPage({
     setMessages((prev) => [...prev, tempUserMsg, tempAssistantMsg]);
 
     try {
-      // TODO: Implement session-specific chat API endpoint
-      // For now, simulating a response
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call orchestration endpoint
+      const response = await fetch(`/api/sessions/${params.sessionId}/orchestrate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMsg }),
+      });
 
-      const assistantResponse = "This is a placeholder response. The unified assistant API will be implemented to handle session-based conversations, process mapping, opportunity discovery, and blueprint generation.";
+      if (!response.ok) throw new Error('Failed to send message');
 
+      const result = await response.json();
+
+      if (!result.ok) {
+        throw new Error(result.error?.message || 'Failed to process message');
+      }
+
+      const { assistantMessage, artifacts, updatedMetadata } = result.data;
+
+      // Update messages with real response
       setMessages((prev) =>
         prev
           .filter((m) => m.id !== tempUserMsg.id && m.id !== tempAssistantMsg.id)
@@ -129,17 +238,58 @@ export default function SessionDetailPage({
             {
               id: 'real-assistant-' + Date.now(),
               role: 'assistant',
-              content: assistantResponse,
+              content: assistantMessage,
               createdAt: new Date(),
             },
           ])
       );
+
+      // Update session state with new metadata
+      if (session) {
+        setSession({
+          ...session,
+          metadata: updatedMetadata,
+          linkedProjectId: updatedMetadata.projectId || session.linkedProjectId,
+          contextSummary: artifacts.updatedSummary || session.contextSummary,
+        });
+      }
+
+      // Show success toast for created artifacts
+      if (artifacts.createdProcesses?.length > 0) {
+        toast({
+          title: 'Process Created',
+          description: `Created: ${artifacts.createdProcesses.map((p: any) => p.name).join(', ')}`,
+        });
+      }
+
+      if (artifacts.createdOpportunities?.length > 0) {
+        toast({
+          title: 'Opportunities Found',
+          description: `Identified ${artifacts.createdOpportunities.length} automation opportunities`,
+        });
+      }
+
+      if (artifacts.createdBlueprints?.length > 0) {
+        toast({
+          title: 'Blueprint Generated',
+          description: `Created: ${artifacts.createdBlueprints.map((b: any) => b.title).join(', ')}`,
+        });
+      }
+
+      // Refresh to update inspector panel
+      await loadSession();
     } catch (error) {
+      console.error('Send message error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to send message',
+        description: error instanceof Error ? error.message : 'Failed to send message',
         variant: 'destructive',
       });
+
+      // Remove temp messages on error
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== tempUserMsg.id && m.id !== tempAssistantMsg.id)
+      );
     } finally {
       setIsLoading(false);
     }
@@ -346,6 +496,31 @@ export default function SessionDetailPage({
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Artifact Summary */}
+                <Card className="rounded-xl border-border/60">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold">Artifacts</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Processes:</span>
+                      <span className="font-medium">{processes.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Opportunities:</span>
+                      <span className="font-medium">{opportunities.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Blueprints:</span>
+                      <span className="font-medium">{blueprints.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Use Cases:</span>
+                      <span className="font-medium">{aiUseCases.length}</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               {/* Workflow Tab */}
@@ -355,21 +530,26 @@ export default function SessionDetailPage({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
                       <GitBranch className="h-4 w-4" />
-                      Processes ({processIds.length})
+                      Processes ({processes.length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Process maps created in this session
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {processIds.length === 0 ? (
+                    {processes.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No processes yet</p>
                     ) : (
                       <div className="space-y-2">
-                        {processIds.map((id: string) => (
-                          <div key={id} className="text-xs p-2 rounded bg-muted/40">
-                            Process {id.slice(0, 8)}
-                          </div>
+                        {processes.map((process: any) => (
+                          <Link key={process.id} href={`/processes/${process.id}`}>
+                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
+                              <div className="font-medium mb-1">{process.name}</div>
+                              <div className="text-muted-foreground">
+                                {process._count?.steps || 0} steps
+                              </div>
+                            </div>
+                          </Link>
                         ))}
                       </div>
                     )}
@@ -381,20 +561,28 @@ export default function SessionDetailPage({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
                       <Target className="h-4 w-4" />
-                      Opportunities ({opportunityIds.length})
+                      Opportunities ({opportunities.length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       AI opportunities discovered
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {opportunityIds.length === 0 ? (
+                    {opportunities.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No opportunities yet</p>
                     ) : (
                       <div className="space-y-2">
-                        {opportunityIds.map((id: string) => (
-                          <div key={id} className="text-xs p-2 rounded bg-muted/40">
-                            Opportunity {id.slice(0, 8)}
+                        {opportunities.map((opp: any) => (
+                          <div key={opp.id} className="text-xs p-3 rounded bg-muted/40 border border-border/40">
+                            <div className="font-medium mb-1">{opp.title}</div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                {opp.impactLevel}
+                              </Badge>
+                              <span className="text-muted-foreground">
+                                Score: {opp.impactScore}/100
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -407,21 +595,29 @@ export default function SessionDetailPage({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
                       <FileText className="h-4 w-4" />
-                      Blueprints ({blueprintIds.length})
+                      Blueprints ({blueprints.length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Implementation blueprints generated
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {blueprintIds.length === 0 ? (
+                    {blueprints.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No blueprints yet</p>
                     ) : (
                       <div className="space-y-2">
-                        {blueprintIds.map((id: string) => (
-                          <div key={id} className="text-xs p-2 rounded bg-muted/40">
-                            Blueprint {id.slice(0, 8)}
-                          </div>
+                        {blueprints.map((blueprint: any) => (
+                          <Link key={blueprint.id} href={`/blueprints/${blueprint.id}`}>
+                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
+                              <div className="font-medium mb-1">{blueprint.title}</div>
+                              <div className="text-muted-foreground">
+                                {new Date(blueprint.createdAt).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </div>
+                            </div>
+                          </Link>
                         ))}
                       </div>
                     )}
@@ -435,21 +631,38 @@ export default function SessionDetailPage({
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-semibold flex items-center gap-2">
                       <Shield className="h-4 w-4" />
-                      AI Use Cases ({aiUseCaseIds.length})
+                      AI Use Cases ({aiUseCases.length})
                     </CardTitle>
                     <CardDescription className="text-xs">
                       Registered AI use cases for governance
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {aiUseCaseIds.length === 0 ? (
+                    {aiUseCases.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No AI use cases registered yet</p>
                     ) : (
                       <div className="space-y-2">
-                        {aiUseCaseIds.map((id: string) => (
-                          <Link key={id} href={`/governance/use-cases/${id}`}>
-                            <div className="text-xs p-2 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer">
-                              Use Case {id.slice(0, 8)}
+                        {aiUseCases.map((useCase: any) => (
+                          <Link key={useCase.id} href={`/governance/use-cases/${useCase.id}`}>
+                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
+                              <div className="font-medium mb-1">{useCase.title}</div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                  {useCase.status}
+                                </Badge>
+                                {useCase.riskAssessment && (
+                                  <Badge
+                                    variant={
+                                      useCase.riskAssessment.riskLevel === 'critical' ? 'destructive' :
+                                      useCase.riskAssessment.riskLevel === 'high' ? 'destructive' :
+                                      useCase.riskAssessment.riskLevel === 'medium' ? 'default' : 'outline'
+                                    }
+                                    className="text-[10px] px-1 py-0"
+                                  >
+                                    {useCase.riskAssessment.riskLevel}
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </Link>
                         ))}

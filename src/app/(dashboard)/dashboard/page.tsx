@@ -13,7 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
-import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap } from 'lucide-react';
+import { Plus, FolderOpen, Sparkles, CheckCircle2, Circle, FileText, Zap, GitBranch, Target, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -39,6 +39,7 @@ type AssistantSession = {
   contextSummary: string;
   isDemo: boolean;
   updatedAt: string;
+  metadata?: any;
   project?: {
     id: string;
     name: string;
@@ -276,50 +277,87 @@ export default function DashboardPage() {
               />
             </div>
           ) : (
-            sessions.map((sessionItem) => (
-              <Link key={sessionItem.id} href={`/sessions/${sessionItem.id}`} prefetch={true}>
-                <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <CardTitle className="text-xl font-semibold">{sessionItem.title}</CardTitle>
-                      {sessionItem.isDemo && (
-                        <Badge variant="outline" className="text-xs">
-                          Demo
-                        </Badge>
+            sessions.map((sessionItem) => {
+              const metadata = sessionItem.metadata || {};
+              const processCount = metadata.processIds?.length || 0;
+              const opportunityCount = metadata.opportunityIds?.length || 0;
+              const blueprintCount = metadata.blueprintIds?.length || 0;
+              const useCaseCount = metadata.aiUseCaseIds?.length || 0;
+              const totalArtifacts = processCount + opportunityCount + blueprintCount + useCaseCount;
+
+              return (
+                <Link key={sessionItem.id} href={`/sessions/${sessionItem.id}`} prefetch={true}>
+                  <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full">
+                    <CardHeader>
+                      <div className="flex items-start justify-between mb-2">
+                        <CardTitle className="text-xl font-semibold">{sessionItem.title}</CardTitle>
+                        {sessionItem.isDemo && (
+                          <Badge variant="outline" className="text-xs">
+                            Demo
+                          </Badge>
+                        )}
+                      </div>
+                      {sessionItem.contextSummary && (
+                        <CardDescription className="text-base line-clamp-2">
+                          {sessionItem.contextSummary}
+                        </CardDescription>
                       )}
-                    </div>
-                    {sessionItem.contextSummary && (
-                      <CardDescription className="text-base line-clamp-2">
-                        {sessionItem.contextSummary}
-                      </CardDescription>
-                    )}
-                    {sessionItem.project && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">
-                          {sessionItem.project.name}
+                      {sessionItem.project && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <FolderOpen className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            {sessionItem.project.name}
+                          </span>
+                        </div>
+                      )}
+                    </CardHeader>
+                    <CardContent>
+                      {totalArtifacts > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {processCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <GitBranch className="h-3 w-3 mr-1" />
+                              {processCount} {processCount === 1 ? 'Process' : 'Processes'}
+                            </Badge>
+                          )}
+                          {opportunityCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Target className="h-3 w-3 mr-1" />
+                              {opportunityCount}
+                            </Badge>
+                          )}
+                          {blueprintCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <FileText className="h-3 w-3 mr-1" />
+                              {blueprintCount}
+                            </Badge>
+                          )}
+                          {useCaseCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Shield className="h-3 w-3 mr-1" />
+                              {useCaseCount}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center text-muted-foreground">
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          <span>Session</span>
+                        </div>
+                        <span className="text-muted-foreground">
+                          {new Date(sessionItem.updatedAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
                         </span>
                       </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center text-muted-foreground">
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        <span>Session</span>
-                      </div>
-                      <span className="text-muted-foreground">
-                        {new Date(sessionItem.updatedAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })
           )}
         </div>
       </div>
