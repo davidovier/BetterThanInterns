@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { UnifiedWorkspaceView } from '@/components/UnifiedWorkspaceView'; // M15
 
 type AssistantSession = {
   id: string;
@@ -57,6 +58,8 @@ export default function SessionDetailPage({
     label: string;
     actionType: string;
   } | null>(null);
+  // M15: Highlight ID for scroll/animation
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSession();

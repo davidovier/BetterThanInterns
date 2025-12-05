@@ -104,6 +104,7 @@ export type NextStepSuggestion = {
 /**
  * Result of executing orchestration actions
  * M14: Enhanced with clarification and next step suggestions
+ * M15: Added UI hints for scroll and highlight behavior
  */
 export type OrchestrationResult = {
   success: boolean;
@@ -125,6 +126,10 @@ export type OrchestrationResult = {
   };
   clarification?: ClarificationRequest; // M14: When assistant needs more info
   nextStepSuggestion?: NextStepSuggestion; // M14: Suggested next action
+  ui?: { // M15: UI hints for workspace view
+    scrollTo?: 'processes' | 'opportunities' | 'blueprints' | 'governance' | 'summary';
+    highlightId?: string;
+  };
   error?: string;
 };
 
