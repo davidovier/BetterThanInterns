@@ -2,6 +2,7 @@
  * Orchestration Router
  *
  * Main orchestration engine that analyzes user messages and routes to appropriate actions.
+ * M14: Enhanced with context-aware intent classification, clarification logic, and next-step suggestions.
  */
 
 import { openai } from '@/lib/llm';
@@ -16,19 +17,27 @@ import { scanOpportunities } from './actions/opportunity-scan';
 import { generateBlueprint } from './actions/generate-blueprint';
 import { createAiUseCase } from './actions/governance-flow';
 import { generateSessionSummary } from './actions/session-summary';
+import {
+  CONFIDENCE_MIN_FOR_ACTION,
+  computeNextStepSuggestion,
+  generateClarificationQuestion,
+  fetchArtifactNamesForContext,
+  maybeUpdateSessionTitle,
+} from './m14-helpers';
 
 /**
  * Main orchestration function
+ * M14: Enhanced with clarification checks and next-step suggestions
  */
 export async function orchestrate(
   context: OrchestrationContext,
   userMessage: string
 ): Promise<OrchestrationResult> {
   try {
-    // Step 1: Get orchestration decision from LLM
+    // M14: Step 1 - Get orchestration decision from LLM (with confidence)
     const decision = await getOrchestrationDecision(context, userMessage);
 
-    // Step 2: Initialize result tracking
+    // M14: Step 2 - Initialize result tracking
     const result: OrchestrationResult = {
       success: true,
       assistantMessage: decision.explanation,
@@ -36,7 +45,34 @@ export async function orchestrate(
       updatedMetadata: { ...context.currentMetadata },
     };
 
-    // Step 3: Execute actions based on decision
+    // M14: Step 3 - Check if clarification is needed (low confidence or ambiguous)
+    const needsClarification = shouldRequestClarification(decision, context);
+
+    if (needsClarification) {
+      // Generate clarification question instead of executing actions
+      const sessionContextStr = buildSessionContext(context);
+      const clarificationMessage = await generateClarificationQuestion(
+        userMessage,
+        sessionContextStr,
+        needsClarification.reason
+      );
+
+      result.assistantMessage = clarificationMessage;
+      result.clarification = {
+        message: clarificationMessage,
+        reason: needsClarification.reason,
+      };
+
+      // Don't execute actions, but still compute next step suggestion
+      const nextStep = computeNextStepFromMetadata(context.currentMetadata);
+      if (nextStep) {
+        result.nextStepSuggestion = nextStep;
+      }
+
+      return result;
+    }
+
+    // M14: Step 4 - Execute actions based on decision (original behavior)
     for (const action of decision.actions) {
       try {
         await executeAction(action, decision, context, result);
@@ -45,6 +81,17 @@ export async function orchestrate(
         // Continue with other actions even if one fails
       }
     }
+
+    // M14: Step 5 - Compute next step suggestion after actions complete
+    const nextStep = computeNextStepFromMetadata(result.updatedMetadata);
+    if (nextStep) {
+      result.nextStepSuggestion = nextStep;
+    }
+
+    // M14: Step 6 - Maybe auto-update session title (async, don't wait)
+    maybeAutoUpdateSessionTitle(context, userMessage, result).catch((err) => {
+      console.error('Failed to auto-update session title:', err);
+    });
 
     return result;
   } catch (error) {
@@ -61,26 +108,36 @@ export async function orchestrate(
 
 /**
  * Get orchestration decision from LLM
+ * M14: Enhanced with artifact context and confidence scoring
  */
 async function getOrchestrationDecision(
   context: OrchestrationContext,
   userMessage: string
 ): Promise<OrchestrationDecision> {
+  // M14: Fetch artifact names for context-aware classification
+  const artifacts = await fetchArtifactNamesForContext(
+    context.workspaceId,
+    context.currentMetadata
+  );
+
   const systemPrompt = `You are an intelligent orchestration engine for a business process automation platform.
 
 Your role is to:
-1. Classify user intent
+1. Classify user intent with confidence scoring
 2. Determine which actions to take
 3. Extract structured data from the conversation
-4. Provide a natural language response
+4. Identify references to existing artifacts
+5. Provide a natural language response
 
 INTENTS:
-- process_description: User is describing a business process with steps
-- process_update: User wants to modify an existing process
+- process_description: User is describing a NEW business process with steps
+- refine_process: User is clarifying/updating an EXISTING process
+- reference_existing_artifact: User refers to "that process", "the last blueprint", etc.
 - opportunity_request: User asks to scan for automation opportunities
 - blueprint_request: User wants to generate an implementation blueprint
 - governance_request: User wants to register an AI use case for governance
 - session_summary_request: User asks for a summary of the session
+- clarification_needed: You cannot confidently extract enough information (use this when unsure)
 - general_question: User is asking questions or having a general conversation
 
 ACTIONS:
@@ -91,18 +148,40 @@ ACTIONS:
 - generate_summary: Generate a session summary
 - respond_only: Just provide a conversational response
 
+CONFIDENCE SCORING:
+- Return a confidence score (0.0-1.0) for your intent classification
+- High confidence (0.8-1.0): Clear, detailed user message with all needed info
+- Medium confidence (0.5-0.8): User intent is clear but some details missing
+- Low confidence (0.0-0.5): Ambiguous, vague, or incomplete information
+- If confidence < 0.65, consider using "clarification_needed" intent
+
+CONTEXT-AWARE BEHAVIOR:
+- If user says "that process" / "the last one" / etc., use reference_existing_artifact intent
+- Match user references to these existing artifacts:
+  Processes: ${artifacts.processes.map((p) => `"${p.name}" (ID: ${p.id})`).join(', ') || 'none'}
+  Opportunities: ${artifacts.opportunities.map((o) => `"${o.title}" (ID: ${o.id})`).join(', ') || 'none'}
+  Blueprints: ${artifacts.blueprints.map((b) => `"${b.title}" (ID: ${b.id})`).join(', ') || 'none'}
+- If multiple matches exist and user is ambiguous, use clarification_needed
+
 GUIDELINES:
-- If user describes a multi-step process, extract it (use extract_process)
+- If user describes a multi-step process with clear steps, extract it (use extract_process)
 - If user mentions "opportunities" or "automation", scan for opportunities
 - If user says "blueprint" or "implementation plan", generate blueprint
 - If user mentions "governance" or "AI use case", create use case
 - If user asks for "summary", generate summary
+- If user is vague or incomplete, use clarification_needed with low confidence
 - For general questions, use respond_only
 
 Return ONLY valid JSON in this exact format:
 {
   "intent": "intent_type",
   "actions": ["action1", "action2"],
+  "confidence": 0.85,
+  "targetIds": {
+    "processId": "optional_if_user_referenced_existing",
+    "opportunityId": "optional",
+    "blueprintId": "optional"
+  },
   "explanation": "Natural language response to the user",
   "data": {
     "processName": "optional",
@@ -418,4 +497,119 @@ async function handleGenerateSummary(
   });
 
   result.artifacts.updatedSummary = summary;
+}
+
+/**
+ * M14: Check if clarification is needed based on decision confidence
+ */
+function shouldRequestClarification(
+  decision: OrchestrationDecision,
+  context: OrchestrationContext
+): { reason: 'low_intent_confidence' | 'low_extraction_confidence' | 'ambiguous_reference' } | null {
+  // Intent explicitly says clarification needed
+  if (decision.intent === 'clarification_needed') {
+    return { reason: 'low_intent_confidence' };
+  }
+
+  // Low confidence score for actionable intents
+  const actionableIntents = [
+    'process_description',
+    'refine_process',
+    'opportunity_request',
+    'blueprint_request',
+    'governance_request',
+  ];
+
+  if (
+    actionableIntents.includes(decision.intent) &&
+    decision.confidence !== undefined &&
+    decision.confidence < CONFIDENCE_MIN_FOR_ACTION
+  ) {
+    return { reason: 'low_intent_confidence' };
+  }
+
+  // Reference existing artifact but unclear which one
+  if (decision.intent === 'reference_existing_artifact') {
+    // Check if targetIds are ambiguous or missing
+    const hasTarget =
+      decision.targetIds?.processId ||
+      decision.targetIds?.opportunityId ||
+      decision.targetIds?.blueprintId;
+
+    if (!hasTarget) {
+      return { reason: 'ambiguous_reference' };
+    }
+  }
+
+  // Process extraction with missing critical data
+  if (
+    decision.intent === 'process_description' &&
+    (!decision.data?.processName || !decision.data?.steps || decision.data.steps.length < 2)
+  ) {
+    return { reason: 'low_extraction_confidence' };
+  }
+
+  return null;
+}
+
+/**
+ * M14: Compute next step suggestion from metadata counts (heuristic, non-LLM)
+ */
+function computeNextStepFromMetadata(metadata: {
+  processIds?: string[];
+  opportunityIds?: string[];
+  blueprintIds?: string[];
+  aiUseCaseIds?: string[];
+}) {
+  return computeNextStepSuggestion({
+    processCount: metadata.processIds?.length || 0,
+    opportunityCount: metadata.opportunityIds?.length || 0,
+    blueprintCount: metadata.blueprintIds?.length || 0,
+    aiUseCaseCount: metadata.aiUseCaseIds?.length || 0,
+  });
+}
+
+/**
+ * M14: Auto-update session title if appropriate (async, non-blocking)
+ */
+async function maybeAutoUpdateSessionTitle(
+  context: OrchestrationContext,
+  userMessage: string,
+  result: OrchestrationResult
+): Promise<void> {
+  try {
+    // Fetch current session to check title
+    const session = await db.assistantSession.findUnique({
+      where: { id: context.sessionId },
+      select: { title: true },
+    });
+
+    if (!session) {
+      return;
+    }
+
+    // Get first few user messages from history (simplified - in production would be from DB)
+    const firstMessages = context.conversationHistory
+      .filter((m) => m.role === 'user')
+      .map((m) => m.content)
+      .slice(0, 3);
+
+    // Add current message
+    firstMessages.push(userMessage);
+
+    // Get process names from newly created processes
+    const processNames =
+      result.artifacts.createdProcesses?.map((p) => p.name) || [];
+
+    // Try to update title
+    await maybeUpdateSessionTitle(
+      context.sessionId,
+      session.title,
+      firstMessages,
+      processNames
+    );
+  } catch (error) {
+    console.error('Error in auto-update session title:', error);
+    // Don't throw - this is non-critical
+  }
 }

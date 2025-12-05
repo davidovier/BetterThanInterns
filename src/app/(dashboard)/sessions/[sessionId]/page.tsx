@@ -52,6 +52,11 @@ export default function SessionDetailPage({
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [blueprints, setBlueprints] = useState<any[]>([]);
   const [aiUseCases, setAiUseCases] = useState<any[]>([]);
+  // M14: Next step suggestion state
+  const [nextStepSuggestion, setNextStepSuggestion] = useState<{
+    label: string;
+    actionType: string;
+  } | null>(null);
 
   useEffect(() => {
     loadSession();
@@ -222,7 +227,7 @@ export default function SessionDetailPage({
         throw new Error(result.error?.message || 'Failed to process message');
       }
 
-      const { assistantMessage, artifacts, updatedMetadata } = result.data;
+      const { assistantMessage, artifacts, updatedMetadata, clarification, nextStepSuggestion } = result.data;
 
       // Update messages with real response
       setMessages((prev) =>
@@ -243,6 +248,13 @@ export default function SessionDetailPage({
             },
           ])
       );
+
+      // M14: Update next step suggestion
+      if (nextStepSuggestion) {
+        setNextStepSuggestion(nextStepSuggestion);
+      } else {
+        setNextStepSuggestion(null);
+      }
 
       // Update session state with new metadata
       if (session) {
@@ -401,6 +413,33 @@ export default function SessionDetailPage({
                 </div>
               </div>
             ))}
+
+            {/* M14: Next Step Suggestion */}
+            {nextStepSuggestion && messages.length > 0 && (
+              <div className="flex justify-center mt-4 animate-in fade-in slide-in-from-bottom-2">
+                <button
+                  onClick={() => {
+                    // Pre-fill the input based on action type
+                    const actionMessages: Record<string, string> = {
+                      describe_process: "Let me describe a process for you to map.",
+                      scan_opportunities: "Scan this session for AI opportunities",
+                      generate_blueprint: "Generate a blueprint for this project",
+                      create_governance: "Create governance tracking for this AI use case",
+                    };
+                    const message = actionMessages[nextStepSuggestion.actionType] || nextStepSuggestion.label;
+                    setInputMessage(message);
+                  }}
+                  className="group px-4 py-2 rounded-full bg-brand-50 hover:bg-brand-100 border border-brand-200 hover:border-brand-300 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md"
+                >
+                  <div className="flex items-center gap-2 text-sm text-brand-700">
+                    <Sparkles className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Suggested:</span>
+                    <span>{nextStepSuggestion.label}</span>
+                  </div>
+                </button>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 

@@ -95,10 +95,13 @@ export async function POST(
       },
     });
 
+    // M14: Include clarification and nextStepSuggestion if present
     return ok({
       assistantMessage: result.assistantMessage,
       artifacts: result.artifacts,
       updatedMetadata: result.updatedMetadata,
+      clarification: result.clarification, // M14: Clarification request
+      nextStepSuggestion: result.nextStepSuggestion, // M14: Next step hint
     });
   } catch (err: any) {
     logError('Orchestrate session', err, { sessionId: params.sessionId });

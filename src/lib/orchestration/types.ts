@@ -8,15 +8,19 @@
 
 /**
  * Intent categories for classifying user messages
+ * M14: Enhanced with context-aware and clarification intents
  */
 export type OrchestrationIntent =
   | 'process_description'
   | 'process_update'
+  | 'refine_process' // M14: User is clarifying/updating an existing process
+  | 'reference_existing_artifact' // M14: User refers to "that process" / "the last blueprint"
   | 'opportunity_request'
   | 'blueprint_request'
   | 'governance_request'
   | 'general_question'
   | 'session_summary_request'
+  | 'clarification_needed' // M14: Internal - LLM can't confidently extract structure
   | 'unknown';
 
 /**
@@ -35,11 +39,19 @@ export type OrchestrationAction =
 
 /**
  * LLM response format for orchestration decisions
+ * M14: Enhanced with confidence scoring and target IDs
  */
 export type OrchestrationDecision = {
   intent: OrchestrationIntent;
   actions: OrchestrationAction[];
   explanation: string; // Natural language explanation for the user
+  confidence?: number; // M14: 0-1 confidence score for intent classification
+  targetIds?: { // M14: Referenced artifact IDs when user mentions existing items
+    processId?: string;
+    opportunityId?: string;
+    blueprintId?: string;
+    aiUseCaseId?: string;
+  };
   data?: {
     // For process extraction
     processName?: string;
@@ -74,7 +86,24 @@ export type OrchestrationDecision = {
 };
 
 /**
+ * M14: Clarification request when LLM needs more info
+ */
+export type ClarificationRequest = {
+  message: string;
+  reason: 'low_intent_confidence' | 'low_extraction_confidence' | 'ambiguous_reference';
+};
+
+/**
+ * M14: Next step suggestion (heuristic, non-LLM)
+ */
+export type NextStepSuggestion = {
+  label: string;
+  actionType: 'describe_process' | 'scan_opportunities' | 'generate_blueprint' | 'create_governance';
+};
+
+/**
  * Result of executing orchestration actions
+ * M14: Enhanced with clarification and next step suggestions
  */
 export type OrchestrationResult = {
   success: boolean;
@@ -94,6 +123,8 @@ export type OrchestrationResult = {
     blueprintIds?: string[];
     aiUseCaseIds?: string[];
   };
+  clarification?: ClarificationRequest; // M14: When assistant needs more info
+  nextStepSuggestion?: NextStepSuggestion; // M14: Suggested next action
   error?: string;
 };
 
