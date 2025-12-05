@@ -294,8 +294,8 @@ export default function SessionDetailPage({
         });
       }
 
-      // Refresh to update inspector panel
-      await loadSession();
+      // Refresh artifacts in the background without affecting chat messages
+      await loadArtifacts(updatedMetadata);
     } catch (error) {
       console.error('Send message error:', error);
       toast({
