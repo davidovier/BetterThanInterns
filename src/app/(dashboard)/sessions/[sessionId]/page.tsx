@@ -5,9 +5,8 @@ import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, FolderOpen, Target, FileText, Shield, GitBranch } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, FolderOpen } from 'lucide-react';
 import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { UnifiedWorkspaceView } from '@/components/UnifiedWorkspaceView'; // M15
@@ -47,7 +46,6 @@ export default function SessionDetailPage({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
-  const [activeTab, setActiveTab] = useState('summary');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [processes, setProcesses] = useState<any[]>([]);
   const [opportunities, setOpportunities] = useState<any[]>([]);
@@ -487,240 +485,26 @@ export default function SessionDetailPage({
           </div>
         </div>
 
-        {/* Inspector Panel - Right (30%) */}
-        <div className="col-span-3 flex flex-col bg-gradient-to-b from-card to-muted/20 overflow-hidden">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
-            <div className="border-b px-4 py-3 bg-card/80 backdrop-blur-sm">
-              <TabsList className="grid w-full grid-cols-3 h-9">
-                <TabsTrigger value="summary" className="text-xs">Summary</TabsTrigger>
-                <TabsTrigger value="workflow" className="text-xs">Workflow</TabsTrigger>
-                <TabsTrigger value="governance" className="text-xs">Governance</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <div className="flex-1 overflow-y-auto">
-              {/* Summary Tab */}
-              <TabsContent value="summary" className="mt-0 p-4 space-y-4">
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">Session Overview</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-xs">
-                    <div>
-                      <p className="text-muted-foreground mb-1">Context</p>
-                      <p className="text-foreground">
-                        {session.contextSummary || 'No context summary yet'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground mb-1">Created</p>
-                      <p className="text-foreground">
-                        {new Date(session.createdAt).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {session.project && (
-                  <Card className="rounded-xl border-border/60">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                        <FolderOpen className="h-4 w-4" />
-                        Linked Project
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Link href={`/projects/${session.project.id}`}>
-                        <Button variant="outline" size="sm" className="w-full text-xs">
-                          View {session.project.name}
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Artifact Summary */}
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold">Artifacts</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Processes:</span>
-                      <span className="font-medium">{processes.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Opportunities:</span>
-                      <span className="font-medium">{opportunities.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Blueprints:</span>
-                      <span className="font-medium">{blueprints.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Use Cases:</span>
-                      <span className="font-medium">{aiUseCases.length}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Workflow Tab */}
-              <TabsContent value="workflow" className="mt-0 p-4 space-y-4">
-                {/* Processes */}
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <GitBranch className="h-4 w-4" />
-                      Processes ({processes.length})
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Process maps created in this session
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {processes.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No processes yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {processes.map((process: any) => (
-                          <Link key={process.id} href={`/processes/${process.id}`}>
-                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
-                              <div className="font-medium mb-1">{process.name}</div>
-                              <div className="text-muted-foreground">
-                                {process._count?.steps || 0} steps
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Opportunities */}
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <Target className="h-4 w-4" />
-                      Opportunities ({opportunities.length})
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      AI opportunities discovered
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {opportunities.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No opportunities yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {opportunities.map((opp: any) => (
-                          <div key={opp.id} className="text-xs p-3 rounded bg-muted/40 border border-border/40">
-                            <div className="font-medium mb-1">{opp.title}</div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                {opp.impactLevel}
-                              </Badge>
-                              <span className="text-muted-foreground">
-                                Score: {opp.impactScore}/100
-                              </span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* Blueprints */}
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Blueprints ({blueprints.length})
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Implementation blueprints generated
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {blueprints.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No blueprints yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {blueprints.map((blueprint: any) => (
-                          <Link key={blueprint.id} href={`/blueprints/${blueprint.id}`}>
-                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
-                              <div className="font-medium mb-1">{blueprint.title}</div>
-                              <div className="text-muted-foreground">
-                                {new Date(blueprint.createdAt).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric'
-                                })}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Governance Tab */}
-              <TabsContent value="governance" className="mt-0 p-4 space-y-4">
-                <Card className="rounded-xl border-border/60">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                      <Shield className="h-4 w-4" />
-                      AI Use Cases ({aiUseCases.length})
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      Registered AI use cases for governance
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {aiUseCases.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">No AI use cases registered yet</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {aiUseCases.map((useCase: any) => (
-                          <Link key={useCase.id} href={`/governance/use-cases/${useCase.id}`}>
-                            <div className="text-xs p-3 rounded bg-muted/40 hover:bg-muted/60 transition-colors cursor-pointer border border-border/40">
-                              <div className="font-medium mb-1">{useCase.title}</div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                  {useCase.status}
-                                </Badge>
-                                {useCase.riskAssessment && (
-                                  <Badge
-                                    variant={
-                                      useCase.riskAssessment.riskLevel === 'critical' ? 'destructive' :
-                                      useCase.riskAssessment.riskLevel === 'high' ? 'destructive' :
-                                      useCase.riskAssessment.riskLevel === 'medium' ? 'default' : 'outline'
-                                    }
-                                    className="text-[10px] px-1 py-0"
-                                  >
-                                    {useCase.riskAssessment.riskLevel}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </div>
-          </Tabs>
+        {/* M15: Unified Workspace View - Right (30%) */}
+        <div className="col-span-3 flex flex-col bg-gradient-to-b from-card to-muted/20 overflow-auto">
+          <UnifiedWorkspaceView
+            processes={processes}
+            opportunities={opportunities}
+            blueprints={blueprints}
+            aiUseCases={aiUseCases}
+            nextStepSuggestion={nextStepSuggestion}
+            sessionSummary={session?.contextSummary || null}
+            highlightId={highlightId}
+            onExplainOpportunity={(opp) => {
+              setInputMessage(`Can you explain this opportunity: "${opp.title}"?`);
+            }}
+            onUseOpportunityInBlueprint={(opp) => {
+              setInputMessage(`Use this opportunity in a blueprint: "${opp.title}"`);
+            }}
+            onRegenerateBlueprint={() => {
+              setInputMessage('Regenerate the blueprint');
+            }}
+          />
         </div>
       </div>
     </div>
