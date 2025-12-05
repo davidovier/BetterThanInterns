@@ -128,7 +128,8 @@ export default function SessionDetailPage({
         const processData = await Promise.all(
           metadata.processIds.map(async (id: string) => {
             try {
-              const res = await fetch(`/api/processes/${id}`);
+              // M15.1: Include graph data (steps and links) for mini-map rendering
+              const res = await fetch(`/api/processes/${id}?includeGraph=true`);
               if (res.ok) {
                 const result = await res.json();
                 return result.ok ? result.data.process : null;

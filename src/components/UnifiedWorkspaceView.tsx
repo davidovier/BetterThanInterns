@@ -140,7 +140,7 @@ export function UnifiedWorkspaceView({
     sessionSummary;
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-6 p-4 h-full">
       {/* Section 1: Next Step Suggestion - Only shown if there's no other content yet */}
       {nextStepSuggestion && !hasContent && (
         <motion.div
@@ -150,13 +150,13 @@ export function UnifiedWorkspaceView({
           transition={{ duration: 0.3 }}
           className="flex justify-center"
         >
-          <Card className="max-w-md w-full shadow-soft border-brand-200">
+          <Card className="w-full shadow-soft border-brand-200">
             <CardContent className="py-6 text-center space-y-3">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 Start your session by describing a process or asking a question.
               </p>
               {nextStepSuggestion && (
-                <p className="text-sm font-medium text-brand-700">
+                <p className="text-xs font-medium text-brand-700">
                   💡 {nextStepSuggestion.label}
                 </p>
               )}
@@ -173,8 +173,8 @@ export function UnifiedWorkspaceView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">Mapped Processes</h2>
-          <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Mapped Processes</h2>
+          <div className="grid gap-4">
             {processes.map((process) => (
               <ProcessCard
                 key={process.id}
@@ -194,8 +194,8 @@ export function UnifiedWorkspaceView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.1 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">AI Opportunities</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">AI Opportunities</h2>
+          <div className="grid gap-3">
             {opportunities.map((opp) => (
               <OpportunityCard
                 key={opp.id}
@@ -216,8 +216,8 @@ export function UnifiedWorkspaceView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">Transformation Blueprint</h2>
-          <div className="grid gap-6">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Transformation Blueprint</h2>
+          <div className="grid gap-4">
             {blueprints.map((blueprint) => (
               <BlueprintPreview
                 key={blueprint.id}
@@ -237,8 +237,8 @@ export function UnifiedWorkspaceView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.3 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">AI Governance</h2>
-          <div className="grid gap-4 md:grid-cols-2">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">AI Governance</h2>
+          <div className="grid gap-3">
             {aiUseCases.map((useCase) => (
               <GovernanceCard key={useCase.id} aiUseCase={useCase} />
             ))}
@@ -254,9 +254,9 @@ export function UnifiedWorkspaceView({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.4 }}
         >
-          <h2 className="text-2xl font-semibold mb-4 text-foreground">Session Summary</h2>
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Session Summary</h2>
           <Card className="shadow-soft">
-            <CardContent className="prose prose-sm max-w-none py-6">
+            <CardContent className="prose prose-sm max-w-none py-4">
               <ReactMarkdown>{sessionSummary}</ReactMarkdown>
             </CardContent>
           </Card>
