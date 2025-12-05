@@ -14,7 +14,11 @@ import {
   LogOut,
   User,
   Settings,
-  MessageSquare
+  MessageSquare,
+  Library,
+  GitBranch,
+  Target,
+  FileText
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,10 +35,27 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const navItems = [
-  { href: '/dashboard', label: 'Sessions', icon: MessageSquare },
-  { href: '/projects', label: 'Projects', icon: FolderKanban },
-  { href: '/governance', label: 'Governance', icon: Shield },
+const navSections = [
+  {
+    items: [
+      { href: '/dashboard', label: 'Sessions', icon: MessageSquare },
+    ]
+  },
+  {
+    label: 'Library',
+    items: [
+      { href: '/library/processes', label: 'Processes', icon: GitBranch },
+      { href: '/library/opportunities', label: 'Opportunities', icon: Target },
+      { href: '/library/blueprints', label: 'Blueprints', icon: FileText },
+      { href: '/library/governance', label: 'Governance', icon: Shield },
+    ]
+  },
+  {
+    label: 'Organize',
+    items: [
+      { href: '/projects', label: 'Projects', icon: FolderKanban },
+    ]
+  },
 ];
 
 export function AppShell({ children }: AppShellProps) {
@@ -93,26 +114,37 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-3 py-4">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+          <nav className="flex-1 space-y-6 px-3 py-4">
+            {navSections.map((section, sectionIdx) => (
+              <div key={sectionIdx}>
+                {section.label && (
+                  <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    {section.label}
+                  </h3>
+                )}
+                <div className="space-y-1">
+                  {section.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-brand-50 to-brand-50/50 text-brand-700 shadow-soft border border-brand-100'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:-translate-y-[1px] hover:shadow-soft'
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-brand-600' : 'group-hover:text-foreground'}`} />
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`group flex items-center space-x-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gradient-to-r from-brand-50 to-brand-50/50 text-brand-700 shadow-soft border border-brand-100'
+                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:-translate-y-[1px] hover:shadow-soft'
+                        }`}
+                      >
+                        <Icon className={`h-5 w-5 transition-colors ${isActive ? 'text-brand-600' : 'group-hover:text-foreground'}`} />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
           {/* User section */}

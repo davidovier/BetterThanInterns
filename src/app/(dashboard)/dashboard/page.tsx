@@ -162,7 +162,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-[32px] font-semibold tracking-tight">Sessions</h1>
             <p className="text-muted-foreground mt-2">
-              Chat with the AI to map processes, find opportunities, and build blueprints.
+              Start a conversation. The AI extracts processes, identifies opportunities, and generates blueprints automatically.
             </p>
           </div>
           <Button

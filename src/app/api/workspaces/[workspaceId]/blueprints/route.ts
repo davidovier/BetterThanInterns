@@ -1,0 +1,72 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { ok, CommonErrors } from '@/lib/api-response';
+import { logError } from '@/lib/logging';
+import { verifyWorkspaceAccess } from '@/lib/access-control';
+
+/**
+ * GET /api/workspaces/[workspaceId]/blueprints
+ * List all blueprints in a workspace (across all projects)
+ */
+export async function GET(
+  req: Request,
+  { params }: { params: { workspaceId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return CommonErrors.unauthorized();
+    }
+
+    // Verify workspace access
+    const hasAccess = await verifyWorkspaceAccess(params.workspaceId, session.user.id);
+    if (!hasAccess) {
+      return CommonErrors.forbidden('You do not have access to this workspace');
+    }
+
+    // Fetch all blueprints for this workspace (via projects)
+    const blueprints = await db.blueprint.findMany({
+      where: {
+        project: {
+          workspaceId: params.workspaceId,
+        },
+      },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    // Format response
+    const formattedBlueprints = blueprints.map((blueprint) => {
+      // Extract preview from markdown (first 200 chars)
+      const preview = blueprint.renderedMarkdown
+        ? blueprint.renderedMarkdown.substring(0, 200).replace(/[#*`]/g, '').trim()
+        : '';
+
+      return {
+        id: blueprint.id,
+        title: blueprint.title,
+        preview,
+        version: blueprint.version,
+        projectId: blueprint.projectId,
+        projectName: blueprint.project.name,
+        createdAt: blueprint.createdAt,
+        updatedAt: blueprint.updatedAt,
+      };
+    });
+
+    return ok({ blueprints: formattedBlueprints });
+  } catch (error) {
+    logError('List blueprints', error, { workspaceId: params.workspaceId });
+    return CommonErrors.internalError('Failed to load blueprints');
+  }
+}
