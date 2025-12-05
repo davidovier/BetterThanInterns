@@ -86,6 +86,22 @@ export async function POST(
       );
     }
 
+    // M14: Save chat messages to database
+    await db.sessionMessage.createMany({
+      data: [
+        {
+          sessionId,
+          role: 'user',
+          content: message,
+        },
+        {
+          sessionId,
+          role: 'assistant',
+          content: result.assistantMessage,
+        },
+      ],
+    });
+
     // Update session metadata with new artifact IDs
     await db.assistantSession.update({
       where: { id: sessionId },

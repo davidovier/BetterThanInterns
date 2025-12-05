@@ -84,8 +84,8 @@ export default function SessionDetailPage({
       // Load artifact details
       await loadArtifacts(sessionData.metadata || {});
 
-      // TODO: Load chat messages from session-specific chat history
-      // For now, using empty messages array
+      // M14: Load chat message history from database
+      await loadMessages();
     } catch (error) {
       toast({
         title: 'Error',
@@ -94,6 +94,29 @@ export default function SessionDetailPage({
       });
     } finally {
       setIsLoadingSession(false);
+    }
+  };
+
+  const loadMessages = async () => {
+    try {
+      const response = await fetch(`/api/sessions/${params.sessionId}/messages`);
+      if (!response.ok) {
+        console.error('Failed to load messages');
+        return;
+      }
+
+      const result = await response.json();
+      if (result.ok && result.data?.messages) {
+        const loadedMessages = result.data.messages.map((msg: any) => ({
+          id: msg.id,
+          role: msg.role as 'user' | 'assistant' | 'system',
+          content: msg.content,
+          createdAt: new Date(msg.createdAt),
+        }));
+        setMessages(loadedMessages);
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error);
     }
   };
 
@@ -229,25 +252,8 @@ export default function SessionDetailPage({
 
       const { assistantMessage, artifacts, updatedMetadata, clarification, nextStepSuggestion } = result.data;
 
-      // Update messages with real response
-      setMessages((prev) =>
-        prev
-          .filter((m) => m.id !== tempUserMsg.id && m.id !== tempAssistantMsg.id)
-          .concat([
-            {
-              id: 'real-user-' + Date.now(),
-              role: 'user',
-              content: userMsg,
-              createdAt: new Date(),
-            },
-            {
-              id: 'real-assistant-' + Date.now(),
-              role: 'assistant',
-              content: assistantMessage,
-              createdAt: new Date(),
-            },
-          ])
-      );
+      // M14: Reload messages from database to get persistent IDs
+      await loadMessages();
 
       // M14: Update next step suggestion
       if (nextStepSuggestion) {

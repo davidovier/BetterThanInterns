@@ -113,10 +113,27 @@ model AssistantSession {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project   Project?  @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+  workspace Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project   Project?         @relation(fields: [linkedProjectId], references: [id], onDelete: SetNull)
+  messages  SessionMessage[] // M14: Chat message history
 
   @@map("assistant_sessions")
+}
+
+// ============================================
+// SESSION MESSAGES (M14 - Chat History)
+// ============================================
+model SessionMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      String   // 'user' | 'assistant' | 'system'
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  session AssistantSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@map("session_messages")
 }
 
 // ============================================
