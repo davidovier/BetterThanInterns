@@ -12,8 +12,14 @@ export async function extractProcessFromChat(
 ): Promise<{
   process: any;
   steps: any[];
+  links: any[];
 }> {
   try {
+    // M15.1: Validate that we have at least 2 steps
+    if (!params.steps || params.steps.length < 2) {
+      throw new Error('Process extraction requires at least 2 steps');
+    }
+
     // Determine project ID
     let projectId = params.projectId;
 
@@ -62,9 +68,28 @@ export async function extractProcessFromChat(
       createdSteps.push(step);
     }
 
+    // M15.1: Create sequential links between steps (CRITICAL FIX)
+    const createdLinks = [];
+    for (let i = 0; i < createdSteps.length - 1; i++) {
+      const fromStep = createdSteps[i];
+      const toStep = createdSteps[i + 1];
+
+      const link = await db.processLink.create({
+        data: {
+          processId: process.id,
+          fromStepId: fromStep.id,
+          toStepId: toStep.id,
+          label: null, // No label for sequential flow
+        },
+      });
+
+      createdLinks.push(link);
+    }
+
     return {
       process,
       steps: createdSteps,
+      links: createdLinks,
     };
   } catch (error) {
     console.error('Error extracting process from chat:', error);

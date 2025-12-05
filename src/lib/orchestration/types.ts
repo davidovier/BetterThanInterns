@@ -95,22 +95,30 @@ export type ClarificationRequest = {
 
 /**
  * M14: Next step suggestion (heuristic, non-LLM)
+ * M15.1: Added 'extract_steps' action type for processes with 0 steps
  */
 export type NextStepSuggestion = {
   label: string;
-  actionType: 'describe_process' | 'scan_opportunities' | 'generate_blueprint' | 'create_governance';
+  actionType: 'describe_process' | 'extract_steps' | 'scan_opportunities' | 'generate_blueprint' | 'create_governance';
 };
 
 /**
  * Result of executing orchestration actions
  * M14: Enhanced with clarification and next step suggestions
  * M15: Added UI hints for scroll and highlight behavior
+ * M15.1: Enhanced createdProcesses to include stepCount, steps, and links
  */
 export type OrchestrationResult = {
   success: boolean;
   assistantMessage: string;
   artifacts: {
-    createdProcesses?: Array<{ id: string; name: string }>;
+    createdProcesses?: Array<{
+      id: string;
+      name: string;
+      stepCount?: number; // M15.1: Added for UI display
+      steps?: any[];       // M15.1: Added for mini-map rendering
+      links?: any[];       // M15.1: Added for mini-map rendering
+    }>;
     createdSteps?: Array<{ id: string; title: string; processId: string }>;
     createdOpportunities?: Array<{ id: string; title: string }>;
     createdBlueprints?: Array<{ id: string; title: string }>;

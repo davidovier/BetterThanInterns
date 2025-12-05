@@ -64,7 +64,7 @@ export async function orchestrate(
       };
 
       // Don't execute actions, but still compute next step suggestion
-      const nextStep = computeNextStepFromMetadata(context.currentMetadata);
+      const nextStep = await computeNextStepFromMetadata(context.currentMetadata);
       if (nextStep) {
         result.nextStepSuggestion = nextStep;
       }
@@ -83,7 +83,7 @@ export async function orchestrate(
     }
 
     // M14: Step 5 - Compute next step suggestion after actions complete
-    const nextStep = computeNextStepFromMetadata(result.updatedMetadata);
+    const nextStep = await computeNextStepFromMetadata(result.updatedMetadata);
     if (nextStep) {
       result.nextStepSuggestion = nextStep;
     }
@@ -305,6 +305,7 @@ async function executeAction(
 
 /**
  * Handle process extraction
+ * M15.1: Now returns full process data with steps and links for UI rendering
  */
 async function handleExtractProcess(
   decision: OrchestrationDecision,
@@ -315,7 +316,12 @@ async function handleExtractProcess(
     throw new Error('Missing process data');
   }
 
-  const { process, steps } = await extractProcessFromChat({
+  // M15.1: Validate we have at least 2 steps before attempting extraction
+  if (decision.data.steps.length < 2) {
+    throw new Error('Process must have at least 2 steps');
+  }
+
+  const { process, steps, links } = await extractProcessFromChat({
     processName: decision.data.processName,
     processDescription: decision.data.processDescription,
     steps: decision.data.steps,
@@ -323,16 +329,60 @@ async function handleExtractProcess(
     workspaceId: context.workspaceId,
   });
 
-  // Update result
+  // M15.1: Fetch full process data with steps and links for frontend
+  const fullProcess = await db.process.findUnique({
+    where: { id: process.id },
+    include: {
+      steps: {
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          owner: true,
+          positionX: true,
+          positionY: true,
+          frequency: true,
+          duration: true,
+          inputs: true,
+          outputs: true,
+        },
+      },
+      links: {
+        select: {
+          id: true,
+          fromStepId: true,
+          toStepId: true,
+          label: true,
+        },
+      },
+      _count: {
+        select: { steps: true },
+      },
+    },
+  });
+
+  // Update result with full structured process data
   result.artifacts.createdProcesses = [
     ...(result.artifacts.createdProcesses || []),
-    { id: process.id, name: process.name },
+    {
+      id: process.id,
+      name: process.name,
+      stepCount: fullProcess?._count?.steps || steps.length,
+      steps: fullProcess?.steps || steps,
+      links: fullProcess?.links || links,
+    },
   ];
 
   result.artifacts.createdSteps = [
     ...(result.artifacts.createdSteps || []),
     ...steps.map((s) => ({ id: s.id, title: s.title, processId: process.id })),
   ];
+
+  // M15.1: Add UI hint to scroll to the newly created process
+  result.ui = {
+    scrollTo: 'processes',
+    highlightId: process.id,
+  };
 
   // Update metadata
   if (!result.updatedMetadata.projectId) {
@@ -554,15 +604,41 @@ function shouldRequestClarification(
 
 /**
  * M14: Compute next step suggestion from metadata counts (heuristic, non-LLM)
+ * M15.1: Enhanced to fetch actual step counts from database
  */
-function computeNextStepFromMetadata(metadata: {
+async function computeNextStepFromMetadata(metadata: {
   processIds?: string[];
   opportunityIds?: string[];
   blueprintIds?: string[];
   aiUseCaseIds?: string[];
 }) {
+  // M15.1: If we have processes, query database to get actual step counts
+  let totalStepCount = undefined;
+
+  if (metadata.processIds && metadata.processIds.length > 0) {
+    try {
+      const processes = await db.process.findMany({
+        where: {
+          id: { in: metadata.processIds },
+        },
+        include: {
+          _count: {
+            select: { steps: true },
+          },
+        },
+      });
+
+      // Sum up all step counts across all processes
+      totalStepCount = processes.reduce((sum, p) => sum + (p._count?.steps || 0), 0);
+    } catch (error) {
+      console.error('Error fetching step counts:', error);
+      // If query fails, leave totalStepCount as undefined
+    }
+  }
+
   return computeNextStepSuggestion({
     processCount: metadata.processIds?.length || 0,
+    totalStepCount,
     opportunityCount: metadata.opportunityIds?.length || 0,
     blueprintCount: metadata.blueprintIds?.length || 0,
     aiUseCaseCount: metadata.aiUseCaseIds?.length || 0,

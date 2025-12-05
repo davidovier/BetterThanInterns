@@ -21,14 +21,16 @@ export const CONFIDENCE_MIN_FOR_ACTION = 0.65;
 /**
  * Compute next step suggestion based on session state (heuristic, no LLM)
  * M14: Provides proactive guidance based on what exists in the session
+ * M15.1: Enhanced to check if processes have actual steps before suggesting opportunities
  */
 export function computeNextStepSuggestion(sessionContext: {
   processCount: number;
+  totalStepCount?: number; // M15.1: Added to check if processes have steps
   opportunityCount: number;
   blueprintCount: number;
   aiUseCaseCount: number;
 }): NextStepSuggestion | null {
-  const { processCount, opportunityCount, blueprintCount, aiUseCaseCount } = sessionContext;
+  const { processCount, totalStepCount, opportunityCount, blueprintCount, aiUseCaseCount } = sessionContext;
 
   if (processCount === 0) {
     return {
@@ -37,7 +39,16 @@ export function computeNextStepSuggestion(sessionContext: {
     };
   }
 
-  if (processCount > 0 && opportunityCount === 0) {
+  // M15.1: Check if process exists but has no steps
+  if (processCount > 0 && (totalStepCount === undefined || totalStepCount === 0)) {
+    return {
+      label: "Want me to extract the steps from this process?",
+      actionType: 'extract_steps',
+    };
+  }
+
+  // M15.1: Only suggest scanning opportunities if process has steps
+  if (processCount > 0 && totalStepCount && totalStepCount > 0 && opportunityCount === 0) {
     return {
       label: "We can scan your mapped processes for AI opportunities next.",
       actionType: 'scan_opportunities',
