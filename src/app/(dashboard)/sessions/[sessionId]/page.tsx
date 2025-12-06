@@ -1,15 +1,26 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import ReactFlow, {
+  Node,
+  Edge,
+  Background,
+  Controls,
+  MiniMap,
+  useNodesState,
+  useEdgesState,
+  NodeMouseHandler,
+} from 'reactflow';
+import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, FolderOpen } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { StepDetailsDialog } from '@/components/step-details-dialog';
 import { Badge } from '@/components/ui/badge';
-import { UnifiedWorkspaceView } from '@/components/UnifiedWorkspaceView'; // M15
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ProcessStep } from '@/types/process';
 
 type AssistantSession = {
   id: string;
@@ -34,12 +45,71 @@ type ChatMessage = {
   createdAt: Date;
 };
 
+type Process = {
+  id: string;
+  name: string;
+  description?: string | null;
+  projectId: string;
+  steps: Array<{
+    id: string;
+    title: string;
+    owner?: string | null;
+    positionX: number;
+    positionY: number;
+  }>;
+  links: Array<{
+    id: string;
+    fromStepId: string;
+    toStepId: string;
+    label?: string | null;
+  }>;
+  updatedAt?: string;
+};
+
+type Opportunity = {
+  id: string;
+  processId?: string;
+  stepId: string | null;
+  title: string;
+  description: string;
+  opportunityType: string;
+  impactLevel: 'low' | 'medium' | 'high';
+  effortLevel: 'low' | 'medium' | 'high';
+  impactScore: number;
+  feasibilityScore: number;
+  rationaleText: string;
+  step?: {
+    id: string;
+    title: string;
+  } | null;
+};
+
+type Blueprint = {
+  id: string;
+  projectId?: string;
+  title: string;
+  renderedMarkdown: string;
+  contentJson: any;
+  metadataJson?: any;
+  createdAt: string;
+  updatedAt: string;
+};
+
+type AiUseCase = {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  owner?: string | null;
+  linkedProcessIds?: any;
+  linkedOpportunityIds?: any;
+};
+
 export default function SessionDetailPage({
   params,
 }: {
   params: { sessionId: string };
 }) {
-  const { data: authSession } = useSession();
   const { toast } = useToast();
   const [session, setSession] = useState<AssistantSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -47,17 +117,23 @@ export default function SessionDetailPage({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [processes, setProcesses] = useState<any[]>([]);
-  const [opportunities, setOpportunities] = useState<any[]>([]);
-  const [blueprints, setBlueprints] = useState<any[]>([]);
-  const [aiUseCases, setAiUseCases] = useState<any[]>([]);
-  // M14: Next step suggestion state
-  const [nextStepSuggestion, setNextStepSuggestion] = useState<{
-    label: string;
-    actionType: string;
-  } | null>(null);
-  // M15: Highlight ID for scroll/animation
-  const [highlightId, setHighlightId] = useState<string | null>(null);
+
+  // Process graph state
+  const [processes, setProcesses] = useState<Process[]>([]);
+  const [selectedProcessIndex, setSelectedProcessIndex] = useState(0);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
+  const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
+
+  // Workspace artifacts state
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
+  const [aiUseCases, setAiUseCases] = useState<AiUseCase[]>([]);
+  const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+
+  const selectedProcess = processes[selectedProcessIndex] || null;
 
   useEffect(() => {
     loadSession();
@@ -66,6 +142,13 @@ export default function SessionDetailPage({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    // Update graph when selected process changes
+    if (selectedProcess) {
+      updateGraphFromProcess(selectedProcess);
+    }
+  }, [selectedProcess, opportunities, highlightedStepId]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -85,7 +168,7 @@ export default function SessionDetailPage({
       // Load artifact details
       await loadArtifacts(sessionData.metadata || {});
 
-      // M14: Load chat message history from database
+      // Load chat message history from database
       await loadMessages();
     } catch (error) {
       toast({
@@ -128,7 +211,6 @@ export default function SessionDetailPage({
         const processData = await Promise.all(
           metadata.processIds.map(async (id: string) => {
             try {
-              // M15.1: Include graph data (steps and links) for mini-map rendering
               const res = await fetch(`/api/processes/${id}?includeGraph=true`);
               if (res.ok) {
                 const result = await res.json();
@@ -140,7 +222,13 @@ export default function SessionDetailPage({
             return null;
           })
         );
-        setProcesses(processData.filter(Boolean));
+        const loadedProcesses = processData.filter(Boolean);
+        setProcesses(loadedProcesses);
+
+        // Select first process by default
+        if (loadedProcesses.length > 0 && selectedProcessIndex === 0) {
+          updateGraphFromProcess(loadedProcesses[0]);
+        }
       } else {
         setProcesses([]);
       }
@@ -212,6 +300,77 @@ export default function SessionDetailPage({
     }
   };
 
+  const updateGraphFromProcess = (process: Process) => {
+    if (!process.steps) return;
+
+    // Convert steps to React Flow nodes
+    const flowNodes: Node[] = process.steps.map((step: any) => {
+      // Check if this step has an opportunity
+      const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
+      const impactLevel = stepOpportunity?.impactLevel;
+
+      // Apply heatmap styling based on impact level
+      let nodeStyle: any = {};
+      if (impactLevel === 'high') {
+        nodeStyle = {
+          borderColor: '#ef4444',
+          borderWidth: '3px',
+          backgroundColor: '#fee2e2',
+          borderStyle: 'solid',
+        };
+      } else if (impactLevel === 'medium') {
+        nodeStyle = {
+          borderColor: '#f59e0b',
+          borderWidth: '2px',
+          backgroundColor: '#fef3c7',
+          borderStyle: 'solid',
+        };
+      } else if (impactLevel === 'low') {
+        nodeStyle = {
+          borderColor: '#3b82f6',
+          borderWidth: '2px',
+          backgroundColor: '#dbeafe',
+          borderStyle: 'solid',
+        };
+      }
+
+      // Add highlight if this step is selected
+      if (highlightedStepId === step.id) {
+        nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
+      }
+
+      return {
+        id: step.id,
+        type: 'default',
+        data: {
+          label: (
+            <div className="text-center">
+              <div className="font-medium">{step.title}</div>
+              {step.owner && (
+                <div className="text-xs text-muted-foreground">{step.owner}</div>
+              )}
+            </div>
+          ),
+        },
+        position: { x: step.positionX, y: step.positionY },
+        style: nodeStyle,
+      };
+    });
+    setNodes(flowNodes);
+
+    // Convert links to React Flow edges
+    if (process.links) {
+      const flowEdges: Edge[] = process.links.map((link: any) => ({
+        id: link.id,
+        source: link.fromStepId,
+        target: link.toStepId,
+        label: link.label,
+        animated: true,
+      }));
+      setEdges(flowEdges);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -252,17 +411,10 @@ export default function SessionDetailPage({
         throw new Error(result.error?.message || 'Failed to process message');
       }
 
-      const { assistantMessage, artifacts, updatedMetadata, clarification, nextStepSuggestion } = result.data;
+      const { assistantMessage, artifacts, updatedMetadata } = result.data;
 
-      // M14: Reload messages from database to get persistent IDs
+      // Reload messages from database to get persistent IDs
       await loadMessages();
-
-      // M14: Update next step suggestion
-      if (nextStepSuggestion) {
-        setNextStepSuggestion(nextStepSuggestion);
-      } else {
-        setNextStepSuggestion(null);
-      }
 
       // Update session state with new metadata
       if (session) {
@@ -296,52 +448,127 @@ export default function SessionDetailPage({
         });
       }
 
-      // Refresh artifacts in the background without affecting chat messages
+      // Refresh artifacts in the background
       await loadArtifacts(updatedMetadata);
     } catch (error) {
-      console.error('Send message error:', error);
       toast({
         title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send message',
+        description: 'Failed to send message',
         variant: 'destructive',
       });
-
-      // Remove temp messages on error
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== tempUserMsg.id && m.id !== tempAssistantMsg.id)
-      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Extract linked IDs from metadata
-  const linkedIds = session?.metadata || {};
-  const processIds = linkedIds.processIds || [];
-  const blueprintIds = linkedIds.blueprintIds || [];
-  const aiUseCaseIds = linkedIds.aiUseCaseIds || [];
-  const opportunityIds = linkedIds.opportunityIds || [];
+  const handleNodeClick: NodeMouseHandler = useCallback(
+    async (event, node) => {
+      if (!selectedProcess) return;
+
+      // Load step details
+      try {
+        const response = await fetch(
+          `/api/processes/${selectedProcess.id}?includeGraph=true`
+        );
+        if (!response.ok) throw new Error('Failed to load step');
+
+        const result = await response.json();
+        const processData = result.ok && result.data ? result.data.process : result.process;
+
+        const step = processData.steps.find((s: any) => s.id === node.id);
+        if (step) {
+          setSelectedStep({
+            id: step.id,
+            title: step.title,
+            description: step.description || undefined,
+            owner: step.owner || undefined,
+            inputs: step.inputs || [],
+            outputs: step.outputs || [],
+            frequency: step.frequency || undefined,
+            duration: step.duration || undefined,
+            positionX: step.positionX,
+            positionY: step.positionY,
+          });
+          setIsStepDialogOpen(true);
+        }
+      } catch (error) {
+        console.error('Error loading step:', error);
+      }
+    },
+    [selectedProcess]
+  );
+
+  const handleUpdateStep = async (stepId: string, updates: any) => {
+    if (!selectedProcess) return;
+
+    try {
+      const response = await fetch(
+        `/api/processes/${selectedProcess.id}/steps/${stepId}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to update step');
+
+      toast({
+        title: 'Step updated',
+        description: 'Changes saved successfully',
+      });
+
+      // Reload artifacts
+      await loadArtifacts(session?.metadata || {});
+      setIsStepDialogOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update step',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const scanForOpportunities = async () => {
+    if (!selectedProcess) return;
+
+    setIsScanning(true);
+    try {
+      const response = await fetch(
+        `/api/processes/${selectedProcess.id}/scan-opportunities`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to scan for opportunities');
+
+      const result = await response.json();
+      const count = result.ok && result.data ? result.data.count : result.count;
+
+      toast({
+        title: 'Scan complete!',
+        description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
+      });
+
+      // Reload artifacts
+      await loadArtifacts(session?.metadata || {});
+    } catch (error) {
+      toast({
+        title: 'Scan failed',
+        description: 'Could not analyze process for opportunities',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
 
   if (isLoadingSession) {
     return (
-      <div className="h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold mb-2">Session not found</h2>
-          <p className="text-muted-foreground mb-4">
-            The session you're looking for doesn't exist.
-          </p>
-          <Link href="/dashboard">
-            <Button>Back to Dashboard</Button>
-          </Link>
-        </div>
+      <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -351,7 +578,7 @@ export default function SessionDetailPage({
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4 border-b bg-card/50 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
-          <Link href="/dashboard">
+          <Link href="/sessions">
             <Button variant="ghost" size="sm" className="hover:-translate-y-[1px] transition-all">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -359,31 +586,48 @@ export default function SessionDetailPage({
           </Link>
           <div className="h-6 w-px bg-border" />
           <div>
-            <h1 className="text-lg font-semibold">{session.title}</h1>
-            {session.project && (
+            <h1 className="text-lg font-semibold">{session?.title}</h1>
+            {session?.project && (
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <FolderOpen className="h-3 w-3" />
                 {session.project.name}
               </p>
             )}
           </div>
-          {session.isDemo && (
+          {session?.isDemo && (
             <Badge variant="outline" className="text-xs">
               Demo
             </Badge>
           )}
         </div>
+        <Button
+          onClick={scanForOpportunities}
+          disabled={isScanning || !selectedProcess || nodes.length === 0}
+          className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+        >
+          {isScanning ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              Scanning...
+            </>
+          ) : (
+            <>
+              <Sparkles className="h-4 w-4 mr-2" />
+              Scan for Opportunities
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Two-panel layout: Chat (70%) | Inspector (30%) */}
-      <div className="flex-1 grid grid-cols-10 gap-0 min-h-0">
-        {/* Chat Panel - Left (70%) */}
-        <div className="col-span-7 flex flex-col border-r bg-gradient-to-b from-card to-muted/20">
+      {/* Three-panel layout: Chat (30%) | Graph (45%) | Workspace (25%) */}
+      <div className="flex-1 grid grid-cols-12 gap-0 min-h-0">
+        {/* Chat Panel - Left (30%) */}
+        <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20">
           {/* Chat Header */}
           <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
             <h2 className="font-semibold text-base mb-1">Unified Assistant</h2>
             <p className="text-xs text-muted-foreground">
-              Map processes, discover opportunities, and generate blueprints in one conversation
+              Map processes, discover opportunities, and generate blueprints
             </p>
           </div>
 
@@ -397,7 +641,6 @@ export default function SessionDetailPage({
                 <p className="font-medium mb-2">Ready to start exploring</p>
                 <p className="text-xs max-w-md mx-auto">
                   Describe your workflows, ask questions, or explore automation opportunities.
-                  I'll help you map processes, identify AI use cases, and generate implementation blueprints.
                 </p>
               </div>
             )}
@@ -421,32 +664,6 @@ export default function SessionDetailPage({
                 </div>
               </div>
             ))}
-
-            {/* M14: Next Step Suggestion */}
-            {nextStepSuggestion && messages.length > 0 && (
-              <div className="flex justify-center mt-4 animate-in fade-in slide-in-from-bottom-2">
-                <button
-                  onClick={() => {
-                    // Pre-fill the input based on action type
-                    const actionMessages: Record<string, string> = {
-                      describe_process: "Let me describe a process for you to map.",
-                      scan_opportunities: "Scan this session for AI opportunities",
-                      generate_blueprint: "Generate a blueprint for this project",
-                      create_governance: "Create governance tracking for this AI use case",
-                    };
-                    const message = actionMessages[nextStepSuggestion.actionType] || nextStepSuggestion.label;
-                    setInputMessage(message);
-                  }}
-                  className="group px-4 py-2 rounded-full bg-brand-50 hover:bg-brand-100 border border-brand-200 hover:border-brand-300 transition-all duration-200 hover:-translate-y-[1px] hover:shadow-md"
-                >
-                  <div className="flex items-center gap-2 text-sm text-brand-700">
-                    <Sparkles className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
-                    <span className="font-medium">Suggested:</span>
-                    <span>{nextStepSuggestion.label}</span>
-                  </div>
-                </button>
-              </div>
-            )}
 
             <div ref={messagesEndRef} />
           </div>
@@ -486,28 +703,215 @@ export default function SessionDetailPage({
           </div>
         </div>
 
-        {/* M15: Unified Workspace View - Right (30%) */}
-        <div className="col-span-3 flex flex-col bg-gradient-to-b from-card to-muted/20 overflow-auto">
-          <UnifiedWorkspaceView
-            processes={processes}
-            opportunities={opportunities}
-            blueprints={blueprints}
-            aiUseCases={aiUseCases}
-            nextStepSuggestion={nextStepSuggestion}
-            sessionSummary={session?.contextSummary || null}
-            highlightId={highlightId}
-            onExplainOpportunity={(opp) => {
-              setInputMessage(`Can you explain this opportunity: "${opp.title}"?`);
-            }}
-            onUseOpportunityInBlueprint={(opp) => {
-              setInputMessage(`Use this opportunity in a blueprint: "${opp.title}"`);
-            }}
-            onRegenerateBlueprint={() => {
-              setInputMessage('Regenerate the blueprint');
-            }}
-          />
+        {/* Graph Panel - Center (45%) */}
+        <div className="col-span-5 relative bg-muted/20">
+          {processes.length > 0 ? (
+            <>
+              {/* Process Tabs */}
+              {processes.length > 1 && (
+                <div className="absolute top-4 left-4 right-4 z-10">
+                  <Tabs value={selectedProcessIndex.toString()} onValueChange={(val) => setSelectedProcessIndex(parseInt(val))}>
+                    <TabsList className="bg-card/95 backdrop-blur-sm">
+                      {processes.map((proc, idx) => (
+                        <TabsTrigger key={proc.id} value={idx.toString()} className="text-xs">
+                          {proc.name}
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </Tabs>
+                </div>
+              )}
+
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodeClick={handleNodeClick}
+                fitView
+              >
+                <Background />
+                <Controls />
+                <MiniMap />
+              </ReactFlow>
+
+              {/* Process info overlay */}
+              <div className={`absolute ${processes.length > 1 ? 'top-20' : 'top-4'} left-4 bg-card/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-medium border border-border/60 flex items-center space-x-3`}>
+                <div className="text-sm font-medium">{selectedProcess?.name || 'Process'}</div>
+                <div className="h-4 w-px bg-border" />
+                <div className="text-xs text-muted-foreground">
+                  {nodes.length} {nodes.length === 1 ? 'step' : 'steps'}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 rounded-full hover:bg-muted"
+                  title="Click steps to edit details"
+                >
+                  <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                </Button>
+              </div>
+
+              {/* Heatmap Legend */}
+              {opportunities.some(opp => opp.processId === selectedProcess?.id) && (
+                <div className="absolute bottom-4 right-4 bg-card/95 backdrop-blur-sm rounded-2xl p-4 shadow-medium border border-border/60">
+                  <div className="text-xs font-semibold mb-3">Impact Level</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-red-500 bg-red-100 rounded-sm"></div>
+                      <span className="text-xs">High impact</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-amber-500 bg-amber-100 rounded-sm"></div>
+                      <span className="text-xs">Medium impact</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-blue-500 bg-blue-100 rounded-sm"></div>
+                      <span className="text-xs">Low impact</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center p-8">
+              <div className="text-center">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center mx-auto mb-4 shadow-soft">
+                  <Sparkles className="h-10 w-10 text-muted-foreground/40" />
+                </div>
+                <p className="font-medium text-sm mb-2">No process mapped yet</p>
+                <p className="text-xs text-muted-foreground max-w-xs">
+                  Start by describing a process in the chat, and watch it appear here in real-time
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Workspace Panel - Right (25%) */}
+        <div className="col-span-3 flex flex-col border-l bg-gradient-to-b from-card to-muted/20">
+          {/* Workspace Header */}
+          <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
+            <h2 className="font-semibold text-base flex items-center gap-2 mb-1">
+              <div className="rounded-full bg-brand-100 p-1.5">
+                <Target className="h-4 w-4 text-brand-600" />
+              </div>
+              Workspace
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Opportunities, blueprints & governance
+            </p>
+          </div>
+
+          {/* Workspace Content - Scrollable */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Opportunities */}
+            {opportunities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold mb-3">AI Opportunities ({opportunities.length})</h3>
+                <div className="space-y-2">
+                  {opportunities.map((opp) => (
+                    <div
+                      key={opp.id}
+                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
+                      onClick={() => {
+                        if (opp.stepId) {
+                          setHighlightedStepId(opp.stepId);
+                        }
+                      }}
+                      onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
+                      onMouseLeave={() => setHighlightedStepId(null)}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h4 className="font-medium text-xs flex-1 leading-tight">{opp.title}</h4>
+                        <Badge
+                          variant={
+                            opp.impactLevel === 'high'
+                              ? 'destructive'
+                              : opp.impactLevel === 'medium'
+                              ? 'default'
+                              : 'secondary'
+                          }
+                          className="text-xs shrink-0"
+                        >
+                          {opp.impactLevel}
+                        </Badge>
+                      </div>
+                      {opp.step && (
+                        <div className="text-xs text-muted-foreground mb-2">
+                          Step: {opp.step.title}
+                        </div>
+                      )}
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {opp.rationaleText}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Blueprints */}
+            {blueprints.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold mb-3">Blueprints ({blueprints.length})</h3>
+                <div className="space-y-2">
+                  {blueprints.map((blueprint) => (
+                    <div
+                      key={blueprint.id}
+                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft"
+                    >
+                      <h4 className="font-medium text-xs mb-1">{blueprint.title}</h4>
+                      <p className="text-xs text-muted-foreground">
+                        Created {new Date(blueprint.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Use Cases */}
+            {aiUseCases.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold mb-3">AI Governance ({aiUseCases.length})</h3>
+                <div className="space-y-2">
+                  {aiUseCases.map((useCase) => (
+                    <div
+                      key={useCase.id}
+                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft"
+                    >
+                      <h4 className="font-medium text-xs mb-1">{useCase.title}</h4>
+                      <Badge variant="outline" className="text-xs">
+                        {useCase.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {opportunities.length === 0 && blueprints.length === 0 && aiUseCases.length === 0 && (
+              <div className="text-center text-muted-foreground text-xs py-12 px-4">
+                <p className="font-medium mb-2">No artifacts yet</p>
+                <p>
+                  Map a process and scan for opportunities to get started.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Step Details Dialog */}
+      {selectedStep && (
+        <StepDetailsDialog
+          step={selectedStep}
+          isOpen={isStepDialogOpen}
+          onClose={() => setIsStepDialogOpen(false)}
+          onUpdate={handleUpdateStep}
+        />
+      )}
     </div>
   );
 }
