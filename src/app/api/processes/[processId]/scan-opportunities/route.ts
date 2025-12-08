@@ -53,9 +53,50 @@ export async function POST(
     // Run the scan
     const opportunities = await scanProcess(processId);
 
+    // Extract opportunityIds
+    const opportunityIds = opportunities.map(opp => opp.id);
+
+    // If sessionId is provided in query, update session metadata
+    const url = new URL(req.url);
+    const sessionId = url.searchParams.get('sessionId');
+
+    if (sessionId) {
+      // Verify session exists and user has access
+      const assistantSession = await db.assistantSession.findFirst({
+        where: {
+          id: sessionId,
+          workspace: {
+            members: {
+              some: { userId: session.user.id },
+            },
+          },
+        },
+      });
+
+      if (assistantSession) {
+        // Update session metadata with opportunity IDs
+        const currentMetadata = (assistantSession.metadata as any) || {};
+        const updatedOpportunityIds = [
+          ...(currentMetadata.opportunityIds || []),
+          ...opportunityIds,
+        ];
+
+        await db.assistantSession.update({
+          where: { id: sessionId },
+          data: {
+            metadata: {
+              ...currentMetadata,
+              opportunityIds: updatedOpportunityIds,
+            },
+          },
+        });
+      }
+    }
+
     return ok({
       count: opportunities.length,
       opportunities,
+      opportunityIds, // Return IDs for client-side metadata updates
     });
   } catch (err: any) {
     logError('Opportunity scan', err, { processId: params.processId });

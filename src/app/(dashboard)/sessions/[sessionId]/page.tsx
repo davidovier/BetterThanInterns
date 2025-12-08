@@ -234,7 +234,6 @@ export default function SessionDetailPage({
       }
 
       // Load opportunities
-      console.log('[loadArtifacts] opportunityIds:', metadata.opportunityIds);
       if (metadata.opportunityIds?.length > 0) {
         const oppData = await Promise.all(
           metadata.opportunityIds.map(async (id: string) => {
@@ -242,7 +241,6 @@ export default function SessionDetailPage({
               const res = await fetch(`/api/opportunities/${id}`);
               if (res.ok) {
                 const result = await res.json();
-                console.log('[loadArtifacts] Loaded opportunity:', result.data?.opportunity);
                 return result.ok ? result.data.opportunity : null;
               }
             } catch (err) {
@@ -251,11 +249,8 @@ export default function SessionDetailPage({
             return null;
           })
         );
-        const loadedOpps = oppData.filter(Boolean);
-        console.log('[loadArtifacts] Setting opportunities:', loadedOpps);
-        setOpportunities(loadedOpps);
+        setOpportunities(oppData.filter(Boolean));
       } else {
-        console.log('[loadArtifacts] No opportunityIds, clearing opportunities');
         setOpportunities([]);
       }
 
@@ -417,10 +412,6 @@ export default function SessionDetailPage({
       }
 
       const { assistantMessage, artifacts, updatedMetadata } = result.data;
-
-      console.log('[Session] Full orchestration result:', result.data);
-      console.log('[Session] Artifacts:', artifacts);
-      console.log('[Session] Updated metadata:', updatedMetadata);
 
       // Reload messages from database to get persistent IDs
       await loadMessages();
