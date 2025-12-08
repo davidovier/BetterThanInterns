@@ -5,9 +5,8 @@ import { ProcessMiniMap } from './ProcessMiniMap';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ExternalLink, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import Link from 'next/link';
 
 type Process = {
   id: string;
@@ -51,23 +50,13 @@ export function ProcessCard({ process, opportunities = [] }: ProcessCardProps) {
     <>
       <Card className="shadow-soft hover:shadow-medium transition-all duration-200">
         <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-lg">{process.name}</CardTitle>
-              {process.description && (
-                <CardDescription className="line-clamp-2">
-                  {process.description}
-                </CardDescription>
-              )}
-            </div>
-            <Link
-              href={`/projects/${process.projectId}/processes/${process.id}`}
-              className="flex-shrink-0"
-            >
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <ExternalLink className="h-4 w-4" />
-              </Button>
-            </Link>
+          <div className="space-y-1">
+            <CardTitle className="text-lg">{process.name}</CardTitle>
+            {process.description && (
+              <CardDescription className="line-clamp-2">
+                {process.description}
+              </CardDescription>
+            )}
           </div>
           <div className="flex items-center gap-2 pt-2">
             <Badge variant="outline" className="text-xs">
@@ -133,13 +122,10 @@ export function ProcessCard({ process, opportunities = [] }: ProcessCardProps) {
               </div>
             )}
           </div>
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+          <div className="flex justify-end pt-4 border-t">
+            <Button onClick={() => setIsModalOpen(false)}>
               Close
             </Button>
-            <Link href={`/projects/${process.projectId}/processes/${process.id}`}>
-              <Button>Edit in Full Page</Button>
-            </Link>
           </div>
         </DialogContent>
       </Dialog>

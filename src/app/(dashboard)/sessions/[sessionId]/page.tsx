@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
-import { StepDetailsDialog } from '@/components/step-details-dialog';
+import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProcessStep } from '@/types/process';

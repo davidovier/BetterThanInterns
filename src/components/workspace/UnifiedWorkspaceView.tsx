@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { ProcessCard } from './process/ProcessCard';
-import { OpportunityCard } from './opportunity/OpportunityCard';
-import { BlueprintPreview } from './blueprint/BlueprintPreview';
-import { GovernanceCard } from './governance/GovernanceCard';
-import { Card, CardContent } from './ui/card';
+import { ProcessCard } from '@/components/process/ProcessCard';
+import { OpportunityCard } from '@/components/opportunity/OpportunityCard';
+import { BlueprintPreview } from '@/components/blueprint/BlueprintPreview';
+import { GovernanceCard } from '@/components/governance/GovernanceCard';
+import { Card, CardContent } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 
