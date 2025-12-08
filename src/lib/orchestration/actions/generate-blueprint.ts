@@ -4,7 +4,7 @@
  * Generates implementation blueprints using existing blueprint generator.
  */
 
-import { generateBlueprintForProject } from '@/lib/blueprint-generator';
+import { generateBlueprintForWorkspace } from '@/lib/blueprint-generator';
 import { GenerateBlueprintParams } from '../types';
 
 export async function generateBlueprint(
@@ -12,7 +12,10 @@ export async function generateBlueprint(
 ): Promise<string> {
   try {
     // Use existing blueprint generator
-    const { blueprint } = await generateBlueprintForProject(params.projectId);
+    const { blueprint } = await generateBlueprintForWorkspace(
+      params.workspaceId,
+      params.processIds
+    );
 
     // Return blueprint ID
     return blueprint.id;

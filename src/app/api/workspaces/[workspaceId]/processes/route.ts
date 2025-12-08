@@ -25,20 +25,12 @@ export async function GET(
       return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
-    // Fetch all processes for this workspace (via projects)
+    // Fetch all processes for this workspace
     const processes = await db.process.findMany({
       where: {
-        project: {
-          workspaceId: params.workspaceId,
-        },
+        workspaceId: params.workspaceId,
       },
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         _count: {
           select: {
             steps: true,
@@ -56,8 +48,6 @@ export async function GET(
       name: process.name,
       description: process.description,
       owner: process.owner,
-      projectId: process.projectId,
-      projectName: process.project.name,
       stepCount: process._count.steps,
       createdAt: process.createdAt,
       updatedAt: process.updatedAt,

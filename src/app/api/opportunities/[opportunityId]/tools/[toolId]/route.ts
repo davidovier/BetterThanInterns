@@ -36,14 +36,10 @@ export async function PATCH(
       include: {
         process: {
           include: {
-            project: {
+            workspace: {
               include: {
-                workspace: {
-                  include: {
-                    members: {
-                      where: { userId: session.user.id },
-                    },
-                  },
+                members: {
+                  where: { userId: session.user.id },
                 },
               },
             },
@@ -60,7 +56,7 @@ export async function PATCH(
     }
 
     // Check workspace access
-    if (opportunity.process.project.workspace.members.length === 0) {
+    if (opportunity.process.workspace.members.length === 0) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

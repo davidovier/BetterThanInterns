@@ -20,7 +20,7 @@ export async function POST(
       return CommonErrors.unauthorized();
     }
 
-    // Fetch AI use case with context (project, blueprint if exists)
+    // Fetch AI use case with context (blueprint if exists)
     const aiUseCase = await db.aiUseCase.findFirst({
       where: {
         id: params.aiUseCaseId,
@@ -33,15 +33,6 @@ export async function POST(
         },
       },
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            industry: true,
-            clientName: true,
-          },
-        },
         blueprint: {
           select: {
             id: true,
@@ -74,14 +65,6 @@ Return ONLY valid JSON with no additional text or markdown formatting.`;
       `Status: ${aiUseCase.status}`,
       `Source: ${aiUseCase.source}`,
     ];
-
-    if (aiUseCase.project.industry) {
-      userPromptParts.push(`Industry: ${aiUseCase.project.industry}`);
-    }
-
-    if (aiUseCase.project.description) {
-      userPromptParts.push(`Project Context: ${aiUseCase.project.description}`);
-    }
 
     const linkedProcessCount = (aiUseCase.linkedProcessIds as string[]).length || 0;
     const linkedOppCount = (aiUseCase.linkedOpportunityIds as string[]).length || 0;

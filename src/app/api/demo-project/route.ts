@@ -70,6 +70,7 @@ export async function POST(req: Request) {
     // Create demo process
     const process = await db.process.create({
       data: {
+        workspaceId: data.workspaceId,
         projectId: project.id,
         name: 'Invoice Processing Workflow',
         description: 'How we currently handle incoming invoices from receipt to payment',

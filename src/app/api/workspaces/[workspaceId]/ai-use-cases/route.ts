@@ -27,17 +27,12 @@ export async function GET(
 
     // Parse query params
     const { searchParams } = new URL(req.url);
-    const projectId = searchParams.get('projectId');
     const status = searchParams.get('status');
 
     // Build where clause
     const where: any = {
       workspaceId: params.workspaceId,
     };
-
-    if (projectId) {
-      where.projectId = projectId;
-    }
 
     if (status) {
       where.status = status;
@@ -47,12 +42,6 @@ export async function GET(
     const aiUseCases = await db.aiUseCase.findMany({
       where,
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
         blueprint: {
           select: {
             id: true,
@@ -79,8 +68,6 @@ export async function GET(
         status: uc.status,
         owner: uc.owner,
         source: uc.source,
-        projectId: uc.projectId,
-        projectName: uc.project.name,
         blueprintId: uc.blueprintId,
         blueprintTitle: uc.blueprint?.title,
         createdAt: uc.createdAt,

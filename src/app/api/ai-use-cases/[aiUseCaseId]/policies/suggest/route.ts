@@ -41,13 +41,6 @@ export async function POST(
             summaryText: true,
           },
         },
-        project: {
-          select: {
-            name: true,
-            description: true,
-            industry: true,
-          },
-        },
       },
     });
 
@@ -93,10 +86,6 @@ Return ONLY valid JSON with no additional text or markdown formatting.`;
       `Status: ${aiUseCase.status}`,
       `Source: ${aiUseCase.source}`,
     ];
-
-    if (aiUseCase.project.industry) {
-      userPromptParts.push(`Industry: ${aiUseCase.project.industry}`);
-    }
 
     if (aiUseCase.riskAssessment) {
       userPromptParts.push(

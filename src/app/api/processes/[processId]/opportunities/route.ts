@@ -25,14 +25,10 @@ export async function GET(
     const process = await db.process.findUnique({
       where: { id: processId },
       include: {
-        project: {
+        workspace: {
           include: {
-            workspace: {
-              include: {
-                members: {
-                  where: { userId: session.user.id },
-                },
-              },
+            members: {
+              where: { userId: session.user.id },
             },
           },
         },
@@ -44,7 +40,7 @@ export async function GET(
     }
 
     // Check workspace access
-    if (process.project.workspace.members.length === 0) {
+    if (process.workspace.members.length === 0) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

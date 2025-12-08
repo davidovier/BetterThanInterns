@@ -27,14 +27,10 @@ export async function POST(
     const process = await db.process.findUnique({
       where: { id: processId },
       include: {
-        project: {
+        workspace: {
           include: {
-            workspace: {
-              include: {
-                members: {
-                  where: { userId: session.user.id },
-                },
-              },
+            members: {
+              where: { userId: session.user.id },
             },
           },
         },
@@ -46,7 +42,7 @@ export async function POST(
     }
 
     // Check workspace access
-    if (process.project.workspace.members.length === 0) {
+    if (process.workspace.members.length === 0) {
       return CommonErrors.forbidden('You do not have access to this process');
     }
 

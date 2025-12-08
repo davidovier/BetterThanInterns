@@ -22,14 +22,10 @@ async function verifyStepAccess(stepId: string, userId: string) {
     include: {
       process: {
         include: {
-          project: {
+          workspace: {
             include: {
-              workspace: {
-                include: {
-                  members: {
-                    where: { userId },
-                  },
-                },
+              members: {
+                where: { userId },
               },
             },
           },
@@ -38,7 +34,7 @@ async function verifyStepAccess(stepId: string, userId: string) {
     },
   });
 
-  return step && step.process.project.workspace.members.length > 0;
+  return step && step.process.workspace.members.length > 0;
 }
 
 export async function PATCH(

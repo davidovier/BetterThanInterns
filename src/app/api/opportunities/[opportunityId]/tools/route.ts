@@ -32,14 +32,10 @@ export async function GET(
       include: {
         process: {
           include: {
-            project: {
+            workspace: {
               include: {
-                workspace: {
-                  include: {
-                    members: {
-                      where: { userId: session.user.id },
-                    },
-                  },
+                members: {
+                  where: { userId: session.user.id },
                 },
               },
             },
@@ -53,7 +49,7 @@ export async function GET(
     }
 
     // Check workspace access
-    if (opportunity.process.project.workspace.members.length === 0) {
+    if (opportunity.process.workspace.members.length === 0) {
       return CommonErrors.forbidden('You do not have access to this opportunity');
     }
 

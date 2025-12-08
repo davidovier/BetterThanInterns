@@ -29,14 +29,10 @@ export async function GET(
     const process = await db.process.findUnique({
       where: { id: params.processId },
       include: {
-        project: {
+        workspace: {
           include: {
-            workspace: {
-              include: {
-                members: {
-                  where: { userId: session.user.id },
-                },
-              },
+            members: {
+              where: { userId: session.user.id },
             },
           },
         },
@@ -57,7 +53,7 @@ export async function GET(
       },
     });
 
-    if (!process || process.project.workspace.members.length === 0) {
+    if (!process || process.workspace.members.length === 0) {
       return CommonErrors.notFound('Process');
     }
 
@@ -83,14 +79,10 @@ export async function PATCH(
     const existingProcess = await db.process.findUnique({
       where: { id: params.processId },
       include: {
-        project: {
+        workspace: {
           include: {
-            workspace: {
-              include: {
-                members: {
-                  where: { userId: session.user.id },
-                },
-              },
+            members: {
+              where: { userId: session.user.id },
             },
           },
         },
@@ -99,7 +91,7 @@ export async function PATCH(
 
     if (
       !existingProcess ||
-      existingProcess.project.workspace.members.length === 0
+      existingProcess.workspace.members.length === 0
     ) {
       return CommonErrors.forbidden('You do not have access to this process');
     }

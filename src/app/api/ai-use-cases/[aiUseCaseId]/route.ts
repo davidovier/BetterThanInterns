@@ -31,13 +31,6 @@ export async function GET(
         },
       },
       include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-            description: true,
-          },
-        },
         blueprint: {
           select: {
             id: true,
@@ -89,7 +82,6 @@ export async function GET(
 
     return ok({
       aiUseCase: formattedUseCase,
-      project: aiUseCase.project,
       blueprint: aiUseCase.blueprint || null,
     });
   } catch (error) {

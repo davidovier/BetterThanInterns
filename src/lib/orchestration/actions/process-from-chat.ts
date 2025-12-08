@@ -20,26 +20,10 @@ export async function extractProcessFromChat(
       throw new Error('Process extraction requires at least 2 steps');
     }
 
-    // Determine project ID
-    let projectId = params.projectId;
-
-    // If no projectId provided, create a new project
-    if (!projectId) {
-      const newProject = await db.project.create({
-        data: {
-          workspaceId: params.workspaceId,
-          name: params.processName,
-          description: params.processDescription || `Project for ${params.processName}`,
-          status: 'draft',
-        },
-      });
-      projectId = newProject.id;
-    }
-
-    // Create the process
+    // Create the process directly in the workspace (no project needed)
     const process = await db.process.create({
       data: {
-        projectId: projectId,
+        workspaceId: params.workspaceId,
         name: params.processName,
         description: params.processDescription || '',
       },

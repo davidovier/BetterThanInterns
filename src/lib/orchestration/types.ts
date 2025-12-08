@@ -81,7 +81,6 @@ export type OrchestrationDecision = {
 
     // Target IDs for operations
     processId?: string;
-    projectId?: string;
   };
 };
 
@@ -126,7 +125,6 @@ export type OrchestrationResult = {
     updatedSummary?: string;
   };
   updatedMetadata: {
-    projectId?: string;
     processIds?: string[];
     opportunityIds?: string[];
     blueprintIds?: string[];
@@ -149,7 +147,6 @@ export type OrchestrationContext = {
   workspaceId: string;
   userId: string;
   currentMetadata: {
-    projectId?: string;
     processIds?: string[];
     opportunityIds?: string[];
     blueprintIds?: string[];
@@ -177,7 +174,6 @@ export type ExtractProcessParams = {
     frequency?: string;
     duration?: string;
   }>;
-  projectId?: string; // If null, create new project
   workspaceId: string;
 };
 
@@ -193,8 +189,8 @@ export type ScanOpportunitiesParams = {
  * Parameters for blueprint generation
  */
 export type GenerateBlueprintParams = {
-  projectId: string;
   workspaceId: string;
+  processIds?: string[]; // Optional: specific processes to include in blueprint
   title?: string;
 };
 
@@ -203,7 +199,6 @@ export type GenerateBlueprintParams = {
  */
 export type CreateUseCaseParams = {
   workspaceId: string;
-  projectId: string;
   title: string;
   description: string;
   linkedProcessIds?: string[];

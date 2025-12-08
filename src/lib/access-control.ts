@@ -50,12 +50,10 @@ export async function verifyProcessAccess(
   const process = await db.process.findFirst({
     where: {
       id: processId,
-      project: {
-        workspace: {
-          members: {
-            some: {
-              userId,
-            },
+      workspace: {
+        members: {
+          some: {
+            userId,
           },
         },
       },
@@ -74,12 +72,10 @@ export async function verifyOpportunityAccess(
     where: {
       id: opportunityId,
       process: {
-        project: {
-          workspace: {
-            members: {
-              some: {
-                userId,
-              },
+        workspace: {
+          members: {
+            some: {
+              userId,
             },
           },
         },
@@ -98,12 +94,10 @@ export async function verifyBlueprintAccess(
   const blueprint = await db.blueprint.findFirst({
     where: {
       id: blueprintId,
-      project: {
-        workspace: {
-          members: {
-            some: {
-              userId,
-            },
+      workspace: {
+        members: {
+          some: {
+            userId,
           },
         },
       },

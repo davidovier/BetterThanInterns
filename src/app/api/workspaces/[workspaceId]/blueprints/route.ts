@@ -25,20 +25,10 @@ export async function GET(
       return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
-    // Fetch all blueprints for this workspace (via projects)
+    // Fetch all blueprints for this workspace
     const blueprints = await db.blueprint.findMany({
       where: {
-        project: {
-          workspaceId: params.workspaceId,
-        },
-      },
-      include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        workspaceId: params.workspaceId,
       },
       orderBy: {
         createdAt: 'desc',
@@ -57,8 +47,6 @@ export async function GET(
         title: blueprint.title,
         preview,
         version: blueprint.version,
-        projectId: blueprint.projectId,
-        projectName: blueprint.project.name,
         createdAt: blueprint.createdAt,
         updatedAt: blueprint.updatedAt,
       };

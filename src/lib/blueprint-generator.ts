@@ -93,17 +93,19 @@ You MUST return ONLY valid JSON in this exact structure:
 Be specific, actionable, and realistic. Use actual tool names and process details provided.`;
 
 /**
- * Generate blueprint for a project
+ * Generate blueprint for a workspace
  */
-export async function generateBlueprintForProject(
-  projectId: string
+export async function generateBlueprintForWorkspace(
+  workspaceId: string,
+  processIds?: string[]
 ): Promise<{ blueprint: any; contentJson: BlueprintContent; renderedMarkdown: string }> {
   try {
-    // Load all project context
-    const project = await db.project.findUnique({
-      where: { id: projectId },
+    // Load workspace with processes
+    const workspace = await db.workspace.findUnique({
+      where: { id: workspaceId },
       include: {
         processes: {
+          where: processIds ? { id: { in: processIds } } : undefined,
           include: {
             steps: true,
             opportunities: {
@@ -122,12 +124,16 @@ export async function generateBlueprintForProject(
       },
     });
 
-    if (!project) {
-      throw new Error(`Project ${projectId} not found`);
+    if (!workspace) {
+      throw new Error(`Workspace ${workspaceId} not found`);
+    }
+
+    if (workspace.processes.length === 0) {
+      throw new Error(`No processes found in workspace ${workspaceId}`);
     }
 
     // Build compact LLM input
-    const contextSummary = buildContextSummary(project);
+    const contextSummary = buildContextSummary(workspace);
 
     // Call LLM
     const response = await openai.chat.completions.create({
@@ -166,18 +172,18 @@ export async function generateBlueprintForProject(
     // Create Blueprint record
     const blueprint = await db.blueprint.create({
       data: {
-        projectId: projectId,
+        workspaceId: workspaceId,
         title: contentJson.title,
         contentJson: contentJson as any,
         renderedMarkdown: renderedMarkdown,
         version: 1,
         metadataJson: {
-          processCount: project.processes.length,
-          opportunityCount: project.processes.reduce(
+          processCount: workspace.processes.length,
+          opportunityCount: workspace.processes.reduce(
             (sum, p) => sum + p.opportunities.length,
             0
           ),
-          selectedToolCount: project.processes.reduce(
+          selectedToolCount: workspace.processes.reduce(
             (sum, p) =>
               sum +
               p.opportunities.reduce(
@@ -200,16 +206,13 @@ export async function generateBlueprintForProject(
 /**
  * Build compact context summary for LLM
  */
-function buildContextSummary(project: any): string {
-  let summary = `PROJECT OVERVIEW:\n`;
-  summary += `- Name: ${project.name}\n`;
-  if (project.description) summary += `- Description: ${project.description}\n`;
-  if (project.clientName) summary += `- Client: ${project.clientName}\n`;
-  if (project.industry) summary += `- Industry: ${project.industry}\n`;
+function buildContextSummary(workspace: any): string {
+  let summary = `WORKSPACE OVERVIEW:\n`;
+  summary += `- Name: ${workspace.name}\n`;
   summary += `\n`;
 
-  summary += `PROCESSES (${project.processes.length}):\n`;
-  for (const process of project.processes) {
+  summary += `PROCESSES (${workspace.processes.length}):\n`;
+  for (const process of workspace.processes) {
     summary += `\n${process.name}:\n`;
     if (process.description) summary += `  Description: ${process.description}\n`;
     summary += `  Steps: ${process.steps.length}\n`;
@@ -219,7 +222,7 @@ function buildContextSummary(project: any): string {
 
   summary += `OPPORTUNITIES WITH SELECTED TOOLS:\n`;
   let oppCount = 0;
-  for (const process of project.processes) {
+  for (const process of workspace.processes) {
     for (const opp of process.opportunities) {
       const selectedTools = opp.opportunityTools.filter((ot: any) => ot.userSelected);
       if (selectedTools.length > 0) {

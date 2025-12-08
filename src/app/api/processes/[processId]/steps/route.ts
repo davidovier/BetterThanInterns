@@ -22,21 +22,17 @@ async function verifyProcessAccess(processId: string, userId: string) {
   const process = await db.process.findUnique({
     where: { id: processId },
     include: {
-      project: {
+      workspace: {
         include: {
-          workspace: {
-            include: {
-              members: {
-                where: { userId },
-              },
-            },
+          members: {
+            where: { userId },
           },
         },
       },
     },
   });
 
-  return process && process.project.workspace.members.length > 0;
+  return process && process.workspace.members.length > 0;
 }
 
 export async function POST(

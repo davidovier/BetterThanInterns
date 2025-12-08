@@ -237,10 +237,6 @@ Return ONLY valid JSON in this exact format:
 function buildSessionContext(context: OrchestrationContext): string {
   const parts: string[] = ['CURRENT SESSION STATE:'];
 
-  if (context.currentMetadata.projectId) {
-    parts.push(`- Linked to Project ID: ${context.currentMetadata.projectId}`);
-  }
-
   if (context.currentMetadata.processIds && context.currentMetadata.processIds.length > 0) {
     parts.push(`- ${context.currentMetadata.processIds.length} process(es) created`);
   }
@@ -325,7 +321,6 @@ async function handleExtractProcess(
     processName: decision.data.processName,
     processDescription: decision.data.processDescription,
     steps: decision.data.steps,
-    projectId: context.currentMetadata.projectId,
     workspaceId: context.workspaceId,
   });
 
@@ -385,10 +380,6 @@ async function handleExtractProcess(
   };
 
   // Update metadata
-  if (!result.updatedMetadata.projectId) {
-    result.updatedMetadata.projectId = process.projectId;
-  }
-
   result.updatedMetadata.processIds = [
     ...(result.updatedMetadata.processIds || []),
     process.id,
@@ -451,16 +442,16 @@ async function handleGenerateBlueprint(
   context: OrchestrationContext,
   result: OrchestrationResult
 ): Promise<void> {
-  // Determine which project to generate blueprint for
-  let projectId = decision.data?.projectId || result.updatedMetadata.projectId;
+  // Use workspaceId and optionally filter by specific processes
+  const processIds = result.updatedMetadata.processIds || context.currentMetadata.processIds;
 
-  if (!projectId) {
-    throw new Error('No project available to generate blueprint');
+  if (!processIds || processIds.length === 0) {
+    throw new Error('No processes available to generate blueprint');
   }
 
   const blueprintId = await generateBlueprint({
-    projectId,
     workspaceId: context.workspaceId,
+    processIds: processIds as string[],
     title: decision.data?.processName,
   });
 
@@ -495,16 +486,9 @@ async function handleCreateUseCase(
     throw new Error('Missing use case data');
   }
 
-  let projectId = result.updatedMetadata.projectId;
-
-  if (!projectId) {
-    throw new Error('No project available to create use case');
-  }
-
   const { useCaseId } = await createAiUseCase(
     {
       workspaceId: context.workspaceId,
-      projectId,
       title: decision.data.useCaseTitle,
       description: decision.data.useCaseDescription,
       linkedProcessIds: result.updatedMetadata.processIds,

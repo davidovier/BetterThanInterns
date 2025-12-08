@@ -78,6 +78,8 @@ model Workspace {
 
   members            WorkspaceMember[]
   projects           Project[]
+  processes          Process[]
+  blueprints         Blueprint[]
   aiUseCases         AiUseCase[]
   aiPolicies         AiPolicy[]
   assistantSessions  AssistantSession[] // M11: Session-based UX
@@ -164,14 +166,16 @@ model Project {
 // ============================================
 model Process {
   id          String   @id @default(cuid())
-  projectId   String
+  workspaceId String
+  projectId   String?
   name        String
   description String?
   owner       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  project       Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   steps         ProcessStep[]
   links         ProcessLink[]
   chatSessions  ChatSession[]
@@ -315,7 +319,8 @@ model OpportunityTool {
 // ============================================
 model Blueprint {
   id               String   @id @default(cuid())
-  projectId        String
+  workspaceId      String
+  projectId        String?
   title            String
   contentJson      Json // Full structured blueprint content
   renderedMarkdown String   @db.Text
@@ -324,7 +329,8 @@ model Blueprint {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  workspace  Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  project    Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
   aiUseCases AiUseCase[]
 
   @@map("blueprints")
@@ -336,7 +342,7 @@ model Blueprint {
 model AiUseCase {
   id          String   @id @default(cuid())
   workspaceId String
-  projectId   String
+  projectId   String?
   blueprintId String?
 
   title       String
@@ -355,7 +361,7 @@ model AiUseCase {
 
   // Relations
   workspace      Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  project        Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project        Project?           @relation(fields: [projectId], references: [id], onDelete: SetNull)
   blueprint      Blueprint?         @relation(fields: [blueprintId], references: [id], onDelete: SetNull)
   riskAssessment AiRiskAssessment?
   policyMappings AiPolicyMapping[]

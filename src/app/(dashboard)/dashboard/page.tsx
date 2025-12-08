@@ -25,14 +25,6 @@ type Workspace = {
   name: string;
 };
 
-type Project = {
-  id: string;
-  name: string;
-  description?: string;
-  status: string;
-  updatedAt: string;
-};
-
 type AssistantSession = {
   id: string;
   title: string;
@@ -40,10 +32,6 @@ type AssistantSession = {
   isDemo: boolean;
   updatedAt: string;
   metadata?: any;
-  project?: {
-    id: string;
-    name: string;
-  };
 };
 
 export default function DashboardPage() {
@@ -184,12 +172,6 @@ export default function DashboardPage() {
               variant="default"
             />
             <MetricCard
-              label="With Projects"
-              value={sessions.filter(s => s.project).length}
-              icon={FolderOpen}
-              variant="primary"
-            />
-            <MetricCard
               label="Recent Sessions"
               value={sessions.filter(s => {
                 const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -197,6 +179,12 @@ export default function DashboardPage() {
               }).length}
               icon={CheckCircle2}
               variant="success"
+            />
+            <MetricCard
+              label="Demo Sessions"
+              value={sessions.filter(s => s.isDemo).length}
+              icon={FolderOpen}
+              variant="primary"
             />
           </div>
         )}
@@ -301,14 +289,6 @@ export default function DashboardPage() {
                         <CardDescription className="text-base line-clamp-2">
                           {sessionItem.contextSummary}
                         </CardDescription>
-                      )}
-                      {sessionItem.project && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <FolderOpen className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">
-                            {sessionItem.project.name}
-                          </span>
-                        </div>
                       )}
                     </CardHeader>
                     <CardContent>

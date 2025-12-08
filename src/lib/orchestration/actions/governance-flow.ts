@@ -23,7 +23,6 @@ export async function createAiUseCase(
     const aiUseCase = await db.aiUseCase.create({
       data: {
         workspaceId: params.workspaceId,
-        projectId: params.projectId,
         title: params.title,
         description: params.description,
         source: 'assistant_session',

@@ -17,19 +17,15 @@ export async function GET(
     const { searchParams } = new URL(req.url);
     const format = searchParams.get('format') || 'markdown';
 
-    // Fetch blueprint with project and workspace to verify access
+    // Fetch blueprint with workspace to verify access
     const blueprint = await db.blueprint.findUnique({
       where: { id: blueprintId },
       include: {
-        project: {
+        workspace: {
           include: {
-            workspace: {
-              include: {
-                members: {
-                  where: {
-                    user: { email: session.user.email },
-                  },
-                },
+            members: {
+              where: {
+                user: { email: session.user.email },
               },
             },
           },
@@ -37,7 +33,7 @@ export async function GET(
       },
     });
 
-    if (!blueprint || blueprint.project.workspace.members.length === 0) {
+    if (!blueprint || blueprint.workspace.members.length === 0) {
       return NextResponse.json({ error: 'Blueprint not found or access denied' }, { status: 404 });
     }
 

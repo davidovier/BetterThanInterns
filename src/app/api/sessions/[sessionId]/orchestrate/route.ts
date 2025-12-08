@@ -107,7 +107,6 @@ export async function POST(
       where: { id: sessionId },
       data: {
         metadata: result.updatedMetadata,
-        linkedProjectId: result.updatedMetadata.projectId || assistantSession.linkedProjectId,
       },
     });
 
