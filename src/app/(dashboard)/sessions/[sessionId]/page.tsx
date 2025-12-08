@@ -537,7 +537,7 @@ export default function SessionDetailPage({
     setIsScanning(true);
     try {
       const response = await fetch(
-        `/api/processes/${selectedProcess.id}/scan-opportunities`,
+        `/api/processes/${selectedProcess.id}/scan-opportunities?sessionId=${params.sessionId}`,
         {
           method: 'POST',
         }

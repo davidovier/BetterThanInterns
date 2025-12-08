@@ -52,14 +52,17 @@ type Opportunity = {
 
 export default function ProcessMappingPage({
   params,
+  searchParams,
 }: {
   params: { projectId: string; processId: string };
+  searchParams?: { assistantSessionId?: string };
 }) {
   const { toast } = useToast();
   const [process, setProcess] = useState<Process | null>(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
+  const [assistantSessionId] = useState<string | null>(searchParams?.assistantSessionId || null);
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -225,12 +228,17 @@ export default function ProcessMappingPage({
   const scanForOpportunities = async () => {
     setIsScanning(true);
     try {
-      const response = await fetch(
-        `/api/processes/${params.processId}/scan-opportunities`,
-        {
-          method: 'POST',
-        }
-      );
+      // Prefer assistantSessionId from URL, fallback to chatSessionId
+      let scanUrl = `/api/processes/${params.processId}/scan-opportunities`;
+      if (assistantSessionId) {
+        scanUrl += `?sessionId=${assistantSessionId}`;
+      } else if (chatSessionId) {
+        scanUrl += `?sessionId=${chatSessionId}`;
+      }
+
+      const response = await fetch(scanUrl, {
+        method: 'POST',
+      });
 
       if (!response.ok) throw new Error('Failed to scan for opportunities');
 
