@@ -418,7 +418,9 @@ export default function SessionDetailPage({
 
       const { assistantMessage, artifacts, updatedMetadata } = result.data;
 
-      console.log('[Session] Orchestration result:', { artifacts, updatedMetadata });
+      console.log('[Session] Full orchestration result:', result.data);
+      console.log('[Session] Artifacts:', artifacts);
+      console.log('[Session] Updated metadata:', updatedMetadata);
 
       // Reload messages from database to get persistent IDs
       await loadMessages();

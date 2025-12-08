@@ -441,6 +441,10 @@ async function handleScanOpportunities(
     ...(result.updatedMetadata.opportunityIds || []),
     ...opportunityIds,
   ];
+
+  console.log('[handleScanOpportunities] Created opportunities:', opportunities.length);
+  console.log('[handleScanOpportunities] opportunityIds added to metadata:', opportunityIds);
+  console.log('[handleScanOpportunities] result.updatedMetadata.opportunityIds:', result.updatedMetadata.opportunityIds);
 }
 
 /**
