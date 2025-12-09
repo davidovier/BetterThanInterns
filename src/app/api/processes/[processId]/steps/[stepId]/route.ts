@@ -37,6 +37,54 @@ async function verifyStepAccess(stepId: string, userId: string) {
   return step && step.process.workspace.members.length > 0;
 }
 
+export async function GET(
+  req: Request,
+  { params }: { params: { processId: string; stepId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const step = await db.processStep.findUnique({
+      where: { id: params.stepId },
+      include: {
+        process: {
+          include: {
+            workspace: {
+              include: {
+                members: {
+                  where: { userId: session.user.id },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!step || step.process.workspace.members.length === 0) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    }
+
+    // Return step without full process details to reduce payload
+    const { process, ...stepData } = step;
+
+    return NextResponse.json({
+      ok: true,
+      data: { step: stepData }
+    });
+  } catch (error) {
+    console.error('Get step error:', error);
+    return NextResponse.json(
+      { error: 'Something went wrong' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: { processId: string; stepId: string } }

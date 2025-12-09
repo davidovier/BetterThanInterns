@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import ReactFlow, {
   Node,
   Edge,
@@ -27,15 +27,10 @@ type AssistantSession = {
   title: string;
   contextSummary: string;
   workspaceId: string;
-  linkedProjectId?: string | null;
   metadata: any;
   isDemo: boolean;
   createdAt: string;
   updatedAt: string;
-  project?: {
-    id: string;
-    name: string;
-  };
 };
 
 type ChatMessage = {
@@ -49,7 +44,6 @@ type Process = {
   id: string;
   name: string;
   description?: string | null;
-  projectId: string;
   steps: Array<{
     id: string;
     title: string;
@@ -86,11 +80,7 @@ type Opportunity = {
 
 type Blueprint = {
   id: string;
-  projectId?: string;
   title: string;
-  renderedMarkdown: string;
-  contentJson: any;
-  metadataJson?: any;
   createdAt: string;
   updatedAt: string;
 };
@@ -135,6 +125,12 @@ export default function SessionDetailPage({
 
   const selectedProcess = processes[selectedProcessIndex] || null;
 
+  // Memoize process steps by ID for quick lookup
+  const processStepsById = useMemo(() => {
+    if (!selectedProcess?.steps) return new Map();
+    return new Map(selectedProcess.steps.map(step => [step.id, step]));
+  }, [selectedProcess]);
+
   useEffect(() => {
     loadSession();
   }, [params.sessionId]);
@@ -157,19 +153,49 @@ export default function SessionDetailPage({
   const loadSession = async () => {
     setIsLoadingSession(true);
     try {
-      const response = await fetch(`/api/sessions/${params.sessionId}`);
-      if (!response.ok) throw new Error('Failed to load session');
+      // Load session and artifacts in parallel
+      const [sessionRes, messagesRes, artifactsRes] = await Promise.all([
+        fetch(`/api/sessions/${params.sessionId}`),
+        fetch(`/api/sessions/${params.sessionId}/messages`),
+        fetch(`/api/sessions/${params.sessionId}/artifacts`),
+      ]);
 
-      const result = await response.json();
-      const sessionData = result.ok && result.data ? result.data.session : result.session;
+      if (!sessionRes.ok) throw new Error('Failed to load session');
 
+      const sessionResult = await sessionRes.json();
+      const sessionData = sessionResult.ok && sessionResult.data ? sessionResult.data.session : sessionResult.session;
       setSession(sessionData);
 
-      // Load artifact details
-      await loadArtifacts(sessionData.metadata || {});
+      // Load messages
+      if (messagesRes.ok) {
+        const messagesResult = await messagesRes.json();
+        if (messagesResult.ok && messagesResult.data?.messages) {
+          const loadedMessages = messagesResult.data.messages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content,
+            createdAt: new Date(msg.createdAt),
+          }));
+          setMessages(loadedMessages);
+        }
+      }
 
-      // Load chat message history from database
-      await loadMessages();
+      // Load artifacts (all in one request!)
+      if (artifactsRes.ok) {
+        const artifactsResult = await artifactsRes.json();
+        if (artifactsResult.ok && artifactsResult.data) {
+          const { processes, opportunities, blueprints, aiUseCases } = artifactsResult.data;
+          setProcesses(processes || []);
+          setOpportunities(opportunities || []);
+          setBlueprints(blueprints || []);
+          setAiUseCases(aiUseCases || []);
+
+          // Select first process by default
+          if (processes?.length > 0) {
+            updateGraphFromProcess(processes[0]);
+          }
+        }
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -181,126 +207,25 @@ export default function SessionDetailPage({
     }
   };
 
-  const loadMessages = async () => {
+  const loadArtifacts = async () => {
     try {
-      const response = await fetch(`/api/sessions/${params.sessionId}/messages`);
-      if (!response.ok) {
-        console.error('Failed to load messages');
-        return;
-      }
+      const response = await fetch(`/api/sessions/${params.sessionId}/artifacts`);
+      if (!response.ok) return;
 
       const result = await response.json();
-      if (result.ok && result.data?.messages) {
-        const loadedMessages = result.data.messages.map((msg: any) => ({
-          id: msg.id,
-          role: msg.role as 'user' | 'assistant' | 'system',
-          content: msg.content,
-          createdAt: new Date(msg.createdAt),
-        }));
-        setMessages(loadedMessages);
-      }
-    } catch (error) {
-      console.error('Error loading messages:', error);
-    }
-  };
-
-  const loadArtifacts = async (metadata: any) => {
-    try {
-      // Load processes
-      if (metadata.processIds?.length > 0) {
-        const processData = await Promise.all(
-          metadata.processIds.map(async (id: string) => {
-            try {
-              const res = await fetch(`/api/processes/${id}?includeGraph=true`);
-              if (res.ok) {
-                const result = await res.json();
-                return result.ok ? result.data.process : null;
-              }
-            } catch (err) {
-              console.error('Failed to load process:', id, err);
-            }
-            return null;
-          })
-        );
-        const loadedProcesses = processData.filter(Boolean);
-        setProcesses(loadedProcesses);
-
-        // Select first process by default
-        if (loadedProcesses.length > 0 && selectedProcessIndex === 0) {
-          updateGraphFromProcess(loadedProcesses[0]);
-        }
-      } else {
-        setProcesses([]);
-      }
-
-      // Load opportunities
-      if (metadata.opportunityIds?.length > 0) {
-        const oppData = await Promise.all(
-          metadata.opportunityIds.map(async (id: string) => {
-            try {
-              const res = await fetch(`/api/opportunities/${id}`);
-              if (res.ok) {
-                const result = await res.json();
-                return result.ok ? result.data.opportunity : null;
-              }
-            } catch (err) {
-              console.error('Failed to load opportunity:', id, err);
-            }
-            return null;
-          })
-        );
-        setOpportunities(oppData.filter(Boolean));
-      } else {
-        setOpportunities([]);
-      }
-
-      // Load blueprints
-      if (metadata.blueprintIds?.length > 0) {
-        const blueprintData = await Promise.all(
-          metadata.blueprintIds.map(async (id: string) => {
-            try {
-              const res = await fetch(`/api/blueprints/${id}`);
-              if (res.ok) {
-                const result = await res.json();
-                return result.ok ? result.data.blueprint : null;
-              }
-            } catch (err) {
-              console.error('Failed to load blueprint:', id, err);
-            }
-            return null;
-          })
-        );
-        setBlueprints(blueprintData.filter(Boolean));
-      } else {
-        setBlueprints([]);
-      }
-
-      // Load AI use cases
-      if (metadata.aiUseCaseIds?.length > 0) {
-        const useCaseData = await Promise.all(
-          metadata.aiUseCaseIds.map(async (id: string) => {
-            try {
-              const res = await fetch(`/api/ai-use-cases/${id}`);
-              if (res.ok) {
-                const result = await res.json();
-                return result.ok ? result.data.aiUseCase : null;
-              }
-            } catch (err) {
-              console.error('Failed to load use case:', id, err);
-            }
-            return null;
-          })
-        );
-        setAiUseCases(useCaseData.filter(Boolean));
-      } else {
-        setAiUseCases([]);
+      if (result.ok && result.data) {
+        const { processes, opportunities, blueprints, aiUseCases } = result.data;
+        setProcesses(processes || []);
+        setOpportunities(opportunities || []);
+        setBlueprints(blueprints || []);
+        setAiUseCases(aiUseCases || []);
       }
     } catch (error) {
       console.error('Error loading artifacts:', error);
     }
   };
 
-  const updateGraphFromProcess = (process: Process) => {
+  const updateGraphFromProcess = useCallback((process: Process) => {
     if (!process.steps) return;
 
     // Convert steps to React Flow nodes
@@ -369,7 +294,7 @@ export default function SessionDetailPage({
       }));
       setEdges(flowEdges);
     }
-  };
+  }, [opportunities, highlightedStepId, setNodes, setEdges]);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -413,15 +338,26 @@ export default function SessionDetailPage({
 
       const { assistantMessage, artifacts, updatedMetadata } = result.data;
 
-      // Reload messages from database to get persistent IDs
-      await loadMessages();
+      // Load messages from database
+      const messagesRes = await fetch(`/api/sessions/${params.sessionId}/messages`);
+      if (messagesRes.ok) {
+        const messagesResult = await messagesRes.json();
+        if (messagesResult.ok && messagesResult.data?.messages) {
+          const loadedMessages = messagesResult.data.messages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content,
+            createdAt: new Date(msg.createdAt),
+          }));
+          setMessages(loadedMessages);
+        }
+      }
 
       // Update session state with new metadata
       if (session) {
         setSession({
           ...session,
           metadata: updatedMetadata,
-          linkedProjectId: updatedMetadata.projectId || session.linkedProjectId,
           contextSummary: artifacts.updatedSummary || session.contextSummary,
         });
       }
@@ -448,15 +384,16 @@ export default function SessionDetailPage({
         });
       }
 
-      // Refresh artifacts in the background
-      console.log('[Session] Loading artifacts with metadata:', updatedMetadata);
-      await loadArtifacts(updatedMetadata);
+      // Refresh artifacts
+      await loadArtifacts();
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to send message',
         variant: 'destructive',
       });
+      // Revert optimistic update on error
+      setMessages((prev) => prev.slice(0, -2));
     } finally {
       setIsLoading(false);
     }
@@ -464,31 +401,32 @@ export default function SessionDetailPage({
 
   const handleNodeClick: NodeMouseHandler = useCallback(
     async (event, node) => {
-      if (!selectedProcess) return;
+      if (!selectedProcess || !processStepsById.has(node.id)) return;
 
-      // Load step details
+      const step = processStepsById.get(node.id)!;
+
+      // Fetch full step details if needed
       try {
         const response = await fetch(
-          `/api/processes/${selectedProcess.id}?includeGraph=true`
+          `/api/processes/${selectedProcess.id}/steps/${step.id}`
         );
-        if (!response.ok) throw new Error('Failed to load step');
+        if (!response.ok) return;
 
         const result = await response.json();
-        const processData = result.ok && result.data ? result.data.process : result.process;
+        const stepData = result.ok ? result.data.step : null;
 
-        const step = processData.steps.find((s: any) => s.id === node.id);
-        if (step) {
+        if (stepData) {
           setSelectedStep({
-            id: step.id,
-            title: step.title,
-            description: step.description || undefined,
-            owner: step.owner || undefined,
-            inputs: step.inputs || [],
-            outputs: step.outputs || [],
-            frequency: step.frequency || undefined,
-            duration: step.duration || undefined,
-            positionX: step.positionX,
-            positionY: step.positionY,
+            id: stepData.id,
+            title: stepData.title,
+            description: stepData.description || undefined,
+            owner: stepData.owner || undefined,
+            inputs: stepData.inputs || [],
+            outputs: stepData.outputs || [],
+            frequency: stepData.frequency || undefined,
+            duration: stepData.duration || undefined,
+            positionX: stepData.positionX,
+            positionY: stepData.positionY,
           });
           setIsStepDialogOpen(true);
         }
@@ -496,7 +434,7 @@ export default function SessionDetailPage({
         console.error('Error loading step:', error);
       }
     },
-    [selectedProcess]
+    [selectedProcess, processStepsById]
   );
 
   const handleUpdateStep = async (stepId: string, updates: any) => {
@@ -520,7 +458,7 @@ export default function SessionDetailPage({
       });
 
       // Reload artifacts
-      await loadArtifacts(session?.metadata || {});
+      await loadArtifacts();
       setIsStepDialogOpen(false);
     } catch (error) {
       toast({
@@ -554,7 +492,7 @@ export default function SessionDetailPage({
       });
 
       // Reload artifacts
-      await loadArtifacts(session?.metadata || {});
+      await loadArtifacts();
     } catch (error) {
       toast({
         title: 'Scan failed',
@@ -569,7 +507,10 @@ export default function SessionDetailPage({
   if (isLoadingSession) {
     return (
       <div className="h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground mx-auto mb-4" />
+          <p className="text-sm text-muted-foreground">Loading session...</p>
+        </div>
       </div>
     );
   }
@@ -579,7 +520,7 @@ export default function SessionDetailPage({
       {/* Header */}
       <div className="flex items-center justify-between px-8 py-4 border-b bg-card/50 backdrop-blur-sm">
         <div className="flex items-center space-x-4">
-          <Link href="/sessions">
+          <Link href="/dashboard">
             <Button variant="ghost" size="sm" className="hover:-translate-y-[1px] transition-all">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
@@ -588,12 +529,6 @@ export default function SessionDetailPage({
           <div className="h-6 w-px bg-border" />
           <div>
             <h1 className="text-lg font-semibold">{session?.title}</h1>
-            {session?.project && (
-              <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                <FolderOpen className="h-3 w-3" />
-                {session.project.name}
-              </p>
-            )}
           </div>
           {session?.isDemo && (
             <Badge variant="outline" className="text-xs">
@@ -649,10 +584,9 @@ export default function SessionDetailPage({
             {messages.map((msg, index) => (
               <div
                 key={msg.id}
-                className={`flex animate-in fade-in slide-in-from-bottom-2 duration-300 ${
+                className={`flex ${
                   msg.role === 'user' ? 'justify-end' : 'justify-start'
                 }`}
-                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div
                   className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-soft ${
