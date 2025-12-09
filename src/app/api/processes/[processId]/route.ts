@@ -114,3 +114,46 @@ export async function PATCH(
     return CommonErrors.internalError('Failed to update process');
   }
 }
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { processId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user) {
+      return CommonErrors.unauthorized();
+    }
+
+    // Verify access
+    const existingProcess = await db.process.findUnique({
+      where: { id: params.processId },
+      include: {
+        workspace: {
+          include: {
+            members: {
+              where: { userId: session.user.id },
+            },
+          },
+        },
+      },
+    });
+
+    if (
+      !existingProcess ||
+      existingProcess.workspace.members.length === 0
+    ) {
+      return CommonErrors.forbidden('You do not have access to this process');
+    }
+
+    await db.process.delete({
+      where: { id: params.processId },
+    });
+
+    return ok({ success: true });
+  } catch (error) {
+    logError('Delete process', error, { processId: params.processId });
+    return CommonErrors.internalError('Failed to delete process');
+  }
+}
