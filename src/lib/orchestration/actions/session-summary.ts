@@ -12,20 +12,13 @@ export async function generateSessionSummary(
   params: GenerateSummaryParams
 ): Promise<string> {
   try {
-    // Fetch session with all linked artifacts
+    // Fetch session with workspace
     const session = await db.assistantSession.findUnique({
       where: { id: params.sessionId },
       include: {
-        project: {
-          include: {
-            processes: {
-              include: {
-                steps: true,
-                opportunities: true,
-              },
-            },
-            blueprints: true,
-            aiUseCases: true,
+        workspace: {
+          select: {
+            name: true,
           },
         },
       },
@@ -35,36 +28,39 @@ export async function generateSessionSummary(
       throw new Error('Session not found');
     }
 
-    // Build context from session artifacts
+    // Build context from session metadata
     const contextParts: string[] = [];
-
     contextParts.push(`Session Title: ${session.title}`);
-
-    if (session.project) {
-      contextParts.push(`\nProject: ${session.project.name}`);
-
-      if (session.project.processes.length > 0) {
-        contextParts.push(`\nProcesses (${session.project.processes.length}):`);
-        for (const process of session.project.processes) {
-          contextParts.push(`- ${process.name}: ${process.steps.length} steps, ${process.opportunities.length} opportunities`);
-        }
-      }
-
-      if (session.project.blueprints.length > 0) {
-        contextParts.push(`\nBlueprints: ${session.project.blueprints.length} generated`);
-      }
-
-      if (session.project.aiUseCases.length > 0) {
-        contextParts.push(`\nAI Use Cases: ${session.project.aiUseCases.length} registered for governance`);
-      }
-    }
+    contextParts.push(`Workspace: ${session.workspace.name}`);
 
     const metadata = session.metadata as any;
+
+    // Fetch linked artifacts from metadata
     if (metadata.processIds?.length > 0) {
-      contextParts.push(`\nLinked Processes: ${metadata.processIds.length}`);
+      const processes = await db.process.findMany({
+        where: { id: { in: metadata.processIds } },
+        include: {
+          steps: true,
+          opportunities: true,
+        },
+      });
+
+      contextParts.push(`\nProcesses (${processes.length}):`);
+      for (const process of processes) {
+        contextParts.push(`- ${process.name}: ${process.steps.length} steps, ${process.opportunities.length} opportunities`);
+      }
     }
+
+    if (metadata.blueprintIds?.length > 0) {
+      contextParts.push(`\nBlueprints: ${metadata.blueprintIds.length} generated`);
+    }
+
+    if (metadata.aiUseCaseIds?.length > 0) {
+      contextParts.push(`\nAI Use Cases: ${metadata.aiUseCaseIds.length} registered for governance`);
+    }
+
     if (metadata.opportunityIds?.length > 0) {
-      contextParts.push(`Linked Opportunities: ${metadata.opportunityIds.length}`);
+      contextParts.push(`\nLinked Opportunities: ${metadata.opportunityIds.length}`);
     }
 
     const context = contextParts.join('\n');

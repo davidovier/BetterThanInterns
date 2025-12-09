@@ -10,7 +10,6 @@ import { initializeSessionMetadata } from '@/lib/sessions';
 const createSessionSchema = z.object({
   title: z.string().min(1),
   workspaceId: z.string().min(1),
-  linkedProjectId: z.string().optional(),
 });
 
 /**
@@ -49,14 +48,6 @@ export async function GET(req: Request) {
     const sessions = await db.assistantSession.findMany({
       where: {
         workspaceId: workspaceId,
-      },
-      include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
       orderBy: {
         updatedAt: 'desc',
@@ -99,28 +90,14 @@ export async function POST(req: Request) {
       return CommonErrors.forbidden('You do not have access to this workspace');
     }
 
-    // If linkedProjectId is provided, verify it exists and belongs to the workspace
-    if (data.linkedProjectId) {
-      const project = await db.project.findUnique({
-        where: {
-          id: data.linkedProjectId,
-        },
-      });
-
-      if (!project || project.workspaceId !== data.workspaceId) {
-        return CommonErrors.invalidInput('Invalid project ID');
-      }
-    }
-
     const assistantSession = await db.assistantSession.create({
       data: {
         title: data.title,
         workspaceId: data.workspaceId,
-        linkedProjectId: data.linkedProjectId,
         metadata: initializeSessionMetadata(),
       },
       include: {
-        project: {
+        workspace: {
           select: {
             id: true,
             name: true,

@@ -32,9 +32,7 @@ export async function GET(
     // Build where clause
     const where: any = {
       process: {
-        project: {
-          workspaceId: params.workspaceId,
-        },
+        workspaceId: params.workspaceId,
       },
     };
 
@@ -50,7 +48,6 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            projectId: true,
           },
         },
       },
@@ -71,7 +68,6 @@ export async function GET(
       feasibilityScore: opp.feasibilityScore,
       processId: opp.processId,
       processName: opp.process.name,
-      projectId: opp.process.projectId,
       createdAt: opp.createdAt,
       updatedAt: opp.updatedAt,
     }));

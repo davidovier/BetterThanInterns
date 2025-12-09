@@ -9,7 +9,6 @@ import { logError } from '@/lib/logging';
 const updateSessionSchema = z.object({
   title: z.string().min(1).optional(),
   contextSummary: z.string().optional(),
-  linkedProjectId: z.string().optional().nullable(),
   metadata: z.any().optional(),
 });
 
@@ -42,10 +41,9 @@ export async function GET(
             },
           },
         },
-        project: {
+        _count: {
           select: {
-            id: true,
-            name: true,
+            messages: true,
           },
         },
       },
@@ -102,19 +100,6 @@ export async function PATCH(
     const body = await req.json();
     const data = updateSessionSchema.parse(body);
 
-    // If linkedProjectId is provided, verify it exists and belongs to the workspace
-    if (data.linkedProjectId !== undefined && data.linkedProjectId !== null) {
-      const project = await db.project.findUnique({
-        where: {
-          id: data.linkedProjectId,
-        },
-      });
-
-      if (!project || project.workspaceId !== existingSession.workspaceId) {
-        return CommonErrors.invalidInput('Invalid project ID');
-      }
-    }
-
     const updatedSession = await db.assistantSession.update({
       where: {
         id: params.sessionId,
@@ -122,16 +107,7 @@ export async function PATCH(
       data: {
         ...(data.title && { title: data.title }),
         ...(data.contextSummary !== undefined && { contextSummary: data.contextSummary }),
-        ...(data.linkedProjectId !== undefined && { linkedProjectId: data.linkedProjectId }),
         ...(data.metadata && { metadata: data.metadata }),
-      },
-      include: {
-        project: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
       },
     });
 

@@ -20,12 +20,10 @@ export async function GET(
       where: {
         id: params.opportunityId,
         process: {
-          project: {
-            workspace: {
-              members: {
-                some: {
-                  userId: session.user.id,
-                },
+          workspace: {
+            members: {
+              some: {
+                userId: session.user.id,
               },
             },
           },

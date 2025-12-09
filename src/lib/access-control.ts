@@ -22,27 +22,6 @@ export async function verifyWorkspaceAccess(
   return !!member;
 }
 
-export async function verifyProjectAccess(
-  projectId: string,
-  userId: string
-): Promise<boolean> {
-  const project = await db.project.findFirst({
-    where: {
-      id: projectId,
-      workspace: {
-        members: {
-          some: {
-            userId,
-          },
-        },
-      },
-    },
-    select: { id: true },
-  });
-
-  return !!project;
-}
-
 export async function verifyProcessAccess(
   processId: string,
   userId: string
