@@ -792,6 +792,7 @@ export default function SessionDetailPage({
                     border: '2px solid rgba(147, 51, 234, 0.2)',
                     borderRadius: '12px',
                   }}
+                  className="[&_.react-flow__minimap-description]:hidden"
                 />
               </ReactFlow>
 
