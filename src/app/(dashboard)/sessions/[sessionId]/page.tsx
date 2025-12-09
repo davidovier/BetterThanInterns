@@ -243,36 +243,36 @@ export default function SessionDetailPage({
       const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
       const impactLevel = stepOpportunity?.impactLevel;
 
-      // Enhanced node styling with gradients and shadows
-      let nodeStyle: any = {
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white',
-        border: '2px solid rgba(255,255,255,0.3)',
-        borderRadius: '12px',
-        padding: '16px 24px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        minWidth: '200px',
-      };
+      // Simple node styling
+      let nodeStyle: any = {};
 
       // Apply heatmap styling based on impact level
       if (impactLevel === 'high') {
-        nodeStyle.background = 'linear-gradient(135deg, #f87171 0%, #dc2626 100%)';
-        nodeStyle.border = '2px solid rgba(239, 68, 68, 0.5)';
-        nodeStyle.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+        nodeStyle = {
+          borderColor: '#ef4444',
+          borderWidth: '3px',
+          backgroundColor: '#fee2e2',
+          borderStyle: 'solid',
+        };
       } else if (impactLevel === 'medium') {
-        nodeStyle.background = 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)';
-        nodeStyle.border = '2px solid rgba(234, 88, 12, 0.5)';
-        nodeStyle.boxShadow = '0 4px 12px rgba(234, 88, 12, 0.3)';
+        nodeStyle = {
+          borderColor: '#ea580c',
+          borderWidth: '2px',
+          backgroundColor: '#ffedd5',
+          borderStyle: 'solid',
+        };
       } else if (impactLevel === 'low') {
-        nodeStyle.background = 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)';
-        nodeStyle.border = '2px solid rgba(59, 130, 246, 0.5)';
-        nodeStyle.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+        nodeStyle = {
+          borderColor: '#3b82f6',
+          borderWidth: '2px',
+          backgroundColor: '#dbeafe',
+          borderStyle: 'solid',
+        };
       }
 
       // Add highlight if this step is selected
       if (highlightedStepId === step.id) {
-        nodeStyle.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.6), 0 4px 12px rgba(0,0,0,0.15)';
-        nodeStyle.transform = 'scale(1.05)';
+        nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
       }
 
       return {
@@ -281,9 +281,9 @@ export default function SessionDetailPage({
         data: {
           label: (
             <div className="text-center">
-              <div className="font-semibold text-sm">{step.title}</div>
+              <div className="font-medium">{step.title}</div>
               {step.owner && (
-                <div className="text-xs opacity-90 mt-1">{step.owner}</div>
+                <div className="text-xs text-muted-foreground">{step.owner}</div>
               )}
             </div>
           ),
@@ -689,11 +689,11 @@ export default function SessionDetailPage({
                 <Controls />
                 <MiniMap
                   nodeColor={(node) => {
-                    // Color nodes in minimap based on their gradient
+                    // Color nodes in minimap based on border color
                     const style = node.style as any;
-                    if (style?.background?.includes('f87171')) return '#ef4444'; // High impact - red
-                    if (style?.background?.includes('fb923c')) return '#ea580c'; // Medium impact - orange
-                    if (style?.background?.includes('60a5fa')) return '#3b82f6'; // Low impact - blue
+                    if (style?.borderColor === '#ef4444') return '#ef4444'; // High impact - red
+                    if (style?.borderColor === '#ea580c') return '#ea580c'; // Medium impact - orange
+                    if (style?.borderColor === '#3b82f6') return '#3b82f6'; // Low impact - blue
                     return '#9333ea'; // Default - purple
                   }}
                   maskColor="rgba(0, 0, 0, 0.1)"
