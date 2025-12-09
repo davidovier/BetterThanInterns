@@ -568,7 +568,7 @@ export default function SessionDetailPage({
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-12 px-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center mx-auto mb-4 shadow-soft">
@@ -589,10 +589,10 @@ export default function SessionDetailPage({
                 }`}
               >
                 <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-soft ${
+                  className={`w-full rounded-2xl px-5 py-4 shadow-sm ${
                     msg.role === 'user'
-                      ? 'bg-gradient-to-br from-brand-500 to-brand-600 text-white'
-                      : 'bg-card border border-border/60'
+                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                      : 'bg-white border-2 border-slate-100'
                   }`}
                 >
                   <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
@@ -739,16 +739,54 @@ export default function SessionDetailPage({
           </div>
 
           {/* Workspace Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Opportunities */}
-            {opportunities.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">AI Opportunities ({opportunities.length})</h3>
+          <div className="flex-1 overflow-y-auto p-4 space-y-6 min-h-0">
+            {/* Process Overview - Always visible */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                Process Overview
+              </h3>
+              {selectedProcess ? (
+                <div className="rounded-xl border-2 border-indigo-100 bg-gradient-to-br from-indigo-50 to-purple-50 p-4">
+                  <h4 className="font-semibold text-sm text-indigo-900 mb-2">{selectedProcess.name}</h4>
+                  {selectedProcess.description && (
+                    <p className="text-xs text-indigo-700 mb-3">{selectedProcess.description}</p>
+                  )}
+                  <div className="flex items-center gap-4 text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div>
+                      <span className="font-semibold text-indigo-900">{nodes.length}</span>
+                      <span className="text-indigo-600">Steps</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
+                      <span className="font-semibold text-purple-900">{edges.length}</span>
+                      <span className="text-purple-600">Links</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                  <Sparkles className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 font-medium">No process yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Describe a workflow in chat</p>
+                </div>
+              )}
+            </div>
+
+            {/* AI Opportunities - Always visible */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                AI Opportunities
+                <span className="text-xs font-normal text-muted-foreground">({opportunities.length})</span>
+              </h3>
+              {opportunities.length > 0 ? (
                 <div className="space-y-2">
                   {opportunities.map((opp) => (
                     <div
                       key={opp.id}
-                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[1px] transition-all cursor-pointer"
+                      className="rounded-xl border-2 border-emerald-100 bg-gradient-to-br from-emerald-50 to-teal-50 p-3 hover:shadow-lg hover:border-emerald-200 hover:-translate-y-0.5 transition-all cursor-pointer"
                       onClick={() => {
                         if (opp.stepId) {
                           setHighlightedStepId(opp.stepId);
@@ -758,82 +796,98 @@ export default function SessionDetailPage({
                       onMouseLeave={() => setHighlightedStepId(null)}
                     >
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-medium text-xs flex-1 leading-tight">{opp.title}</h4>
+                        <h4 className="font-semibold text-xs flex-1 leading-tight text-emerald-900">{opp.title}</h4>
                         <Badge
-                          variant={
+                          className={`text-xs shrink-0 ${
                             opp.impactLevel === 'high'
-                              ? 'destructive'
+                              ? 'bg-red-100 text-red-700 border-red-200'
                               : opp.impactLevel === 'medium'
-                              ? 'default'
-                              : 'secondary'
-                          }
-                          className="text-xs shrink-0"
+                              ? 'bg-amber-100 text-amber-700 border-amber-200'
+                              : 'bg-blue-100 text-blue-700 border-blue-200'
+                          }`}
                         >
                           {opp.impactLevel}
                         </Badge>
                       </div>
                       {opp.step && (
-                        <div className="text-xs text-muted-foreground mb-2">
-                          Step: {opp.step.title}
+                        <div className="text-xs text-emerald-600 mb-2 font-medium">
+                          → {opp.step.title}
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground line-clamp-2">
+                      <p className="text-xs text-emerald-700 line-clamp-2">
                         {opp.rationaleText}
                       </p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                  <Target className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 font-medium">No opportunities yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Click "Scan" to find automation ideas</p>
+                </div>
+              )}
+            </div>
 
-            {/* Blueprints */}
-            {blueprints.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Blueprints ({blueprints.length})</h3>
+            {/* Blueprints - Always visible */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                Blueprints
+                <span className="text-xs font-normal text-muted-foreground">({blueprints.length})</span>
+              </h3>
+              {blueprints.length > 0 ? (
                 <div className="space-y-2">
                   {blueprints.map((blueprint) => (
                     <div
                       key={blueprint.id}
-                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft"
+                      className="rounded-xl border-2 border-amber-100 bg-gradient-to-br from-amber-50 to-yellow-50 p-3"
                     >
-                      <h4 className="font-medium text-xs mb-1">{blueprint.title}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        Created {new Date(blueprint.createdAt).toLocaleDateString()}
+                      <h4 className="font-semibold text-xs text-amber-900 mb-1">{blueprint.title}</h4>
+                      <p className="text-xs text-amber-600">
+                        {new Date(blueprint.createdAt).toLocaleDateString()}
                       </p>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                  <FileText className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 font-medium">No blueprints yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Ask AI to create implementation plans</p>
+                </div>
+              )}
+            </div>
 
-            {/* AI Use Cases */}
-            {aiUseCases.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">AI Governance ({aiUseCases.length})</h3>
+            {/* AI Governance - Always visible */}
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                AI Governance
+                <span className="text-xs font-normal text-muted-foreground">({aiUseCases.length})</span>
+              </h3>
+              {aiUseCases.length > 0 ? (
                 <div className="space-y-2">
                   {aiUseCases.map((useCase) => (
                     <div
                       key={useCase.id}
-                      className="rounded-lg border border-border/60 bg-card p-3 shadow-soft"
+                      className="rounded-xl border-2 border-purple-100 bg-gradient-to-br from-purple-50 to-pink-50 p-3"
                     >
-                      <h4 className="font-medium text-xs mb-1">{useCase.title}</h4>
-                      <Badge variant="outline" className="text-xs">
+                      <h4 className="font-semibold text-xs text-purple-900 mb-1">{useCase.title}</h4>
+                      <Badge className="text-xs bg-purple-100 text-purple-700 border-purple-200">
                         {useCase.status}
                       </Badge>
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-
-            {opportunities.length === 0 && blueprints.length === 0 && aiUseCases.length === 0 && (
-              <div className="text-center text-muted-foreground text-xs py-12 px-4">
-                <p className="font-medium mb-2">No artifacts yet</p>
-                <p>
-                  Map a process and scan for opportunities to get started.
-                </p>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center">
+                  <FolderOpen className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs text-slate-500 font-medium">No use cases yet</p>
+                  <p className="text-xs text-slate-400 mt-1">Governance tracking will appear here</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
