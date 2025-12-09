@@ -16,7 +16,7 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle, FileText, ChevronDown, ChevronRight, GitBranch, Lightbulb, Map, Shield, Clock } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle, FileText, ChevronDown, ChevronRight, GitBranch, Lightbulb, Map as MapIcon, Shield, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -999,7 +999,7 @@ export default function SessionDetailPage({
                       className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex items-center gap-2">
-                        <Map className="h-4 w-4 text-blue-600" />
+                        <MapIcon className="h-4 w-4 text-blue-600" />
                         <span className="font-semibold text-sm">Blueprints</span>
                         <Badge variant="secondary" className="text-xs">
                           {blueprints.length}
