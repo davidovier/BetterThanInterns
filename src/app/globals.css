@@ -57,3 +57,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide React Flow MiniMap position description */
+.react-flow__minimap-description {
+  display: none !important;
+}

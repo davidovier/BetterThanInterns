@@ -787,12 +787,13 @@ export default function SessionDetailPage({
                     return '#9333ea'; // Default - purple
                   }}
                   maskColor="rgba(0, 0, 0, 0.1)"
+                  pannable
+                  zoomable
                   style={{
                     backgroundColor: 'rgba(255, 255, 255, 0.9)',
                     border: '2px solid rgba(147, 51, 234, 0.2)',
                     borderRadius: '12px',
                   }}
-                  className="[&_.react-flow__minimap-description]:hidden"
                 />
               </ReactFlow>
 
