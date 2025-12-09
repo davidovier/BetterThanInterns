@@ -431,7 +431,18 @@ export default function SessionDetailPage({
         throw new Error(result.error?.message || 'Failed to process message');
       }
 
-      const { assistantMessage, artifacts, updatedMetadata } = result.data;
+      const { assistantMessage, artifacts, updatedMetadata, ui } = result.data;
+
+      // Handle UI hints (e.g., expand all sections for overview)
+      if (ui?.highlightId === 'all') {
+        // Expand all categories in timeline
+        setCollapsedCategories({
+          processes: false,
+          opportunities: false,
+          blueprints: false,
+          governance: false,
+        });
+      }
 
       // Load messages from database
       const messagesRes = await fetch(`/api/sessions/${params.sessionId}/messages`);

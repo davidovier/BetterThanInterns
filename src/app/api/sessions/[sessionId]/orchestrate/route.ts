@@ -134,6 +134,7 @@ export async function POST(
       updatedMetadata: result.updatedMetadata,
       clarification: result.clarification, // M14: Clarification request
       nextStepSuggestion: result.nextStepSuggestion, // M14: Next step hint
+      ui: result.ui, // UI hints for client (e.g., expand all sections)
     });
   } catch (err: any) {
     logError('Orchestrate session', err, { sessionId: params.sessionId });

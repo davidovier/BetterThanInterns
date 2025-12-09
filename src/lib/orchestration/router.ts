@@ -18,6 +18,7 @@ import { scanOpportunities } from './actions/opportunity-scan';
 import { generateBlueprint } from './actions/generate-blueprint';
 import { createAiUseCase } from './actions/governance-flow';
 import { generateSessionSummary } from './actions/session-summary';
+import { generateSessionOverview } from './actions/session-overview';
 import {
   CONFIDENCE_THRESHOLDS,
   computeNextStepSuggestion,
@@ -138,6 +139,7 @@ INTENTS:
 - blueprint_request: User wants to generate an implementation blueprint
 - governance_request: User wants to register an AI use case for governance
 - session_summary_request: User asks for a summary of the session
+- session_overview_request: User asks for an overview of all artifacts (processes, opportunities, blueprints, governance)
 - clarification_needed: You cannot confidently extract enough information (use this when unsure)
 - general_question: User is asking questions or having a general conversation
 
@@ -148,6 +150,7 @@ ACTIONS:
 - generate_blueprint: Create an implementation blueprint for a project
 - create_use_case: Register an AI use case for governance tracking
 - generate_summary: Generate a session summary
+- generate_overview: Generate a structured overview of all session artifacts with counts and details
 - respond_only: Just provide a conversational response
 
 CONFIDENCE SCORING (M14 Enhanced - Separate Intent vs Extraction):
@@ -184,6 +187,7 @@ GUIDELINES:
 - If user says "blueprint" or "implementation plan" → generate_blueprint
 - If user mentions "governance" or "AI use case" → create_use_case
 - If user asks for "summary" → generate_summary
+- If user asks for "overview" or "what have we created" or "show me everything" → generate_overview
 - If user is vague or incomplete → clarification_needed with low confidence
 - For general questions → respond_only
 
@@ -348,6 +352,10 @@ async function executeAction(
 
     case 'generate_summary':
       await handleGenerateSummary(context, result);
+      break;
+
+    case 'generate_overview':
+      await handleGenerateOverview(context, result);
       break;
 
     case 'respond_only':
@@ -673,6 +681,62 @@ async function handleGenerateSummary(
   });
 
   result.artifacts.updatedSummary = summary;
+}
+
+/**
+ * Handle session overview generation
+ * Returns structured overview with all artifacts and sets UI to highlight all sections
+ */
+async function handleGenerateOverview(
+  context: OrchestrationContext,
+  result: OrchestrationResult
+): Promise<void> {
+  const overview = await generateSessionOverview({
+    sessionId: context.sessionId,
+    workspaceId: context.workspaceId,
+  });
+
+  // Build formatted response message
+  const messageParts: string[] = [overview.overview];
+
+  if (overview.processes.length > 0) {
+    messageParts.push('\n### Processes:');
+    overview.processes.forEach((p) => {
+      messageParts.push(`- **${p.name}**: ${p.stepCount} steps, ${p.linkCount} connections`);
+    });
+  }
+
+  if (overview.opportunities.length > 0) {
+    messageParts.push('\n### AI Opportunities:');
+    overview.opportunities.forEach((o) => {
+      messageParts.push(
+        `- **${o.title}** (${o.impactLevel} impact) - Impact: ${o.impactScore}, Feasibility: ${o.feasibilityScore}`
+      );
+    });
+  }
+
+  if (overview.blueprints.length > 0) {
+    messageParts.push('\n### Blueprints:');
+    overview.blueprints.forEach((b) => {
+      messageParts.push(`- **${b.title}**`);
+    });
+  }
+
+  if (overview.aiUseCases.length > 0) {
+    messageParts.push('\n### AI Governance:');
+    overview.aiUseCases.forEach((u) => {
+      messageParts.push(`- **${u.title}** (${u.status})`);
+    });
+  }
+
+  // Update result with formatted message
+  result.assistantMessage = messageParts.join('\n');
+
+  // Set UI hint to expand all sections (handled by client)
+  result.ui = {
+    scrollTo: 'processes', // Scroll to top of workspace
+    highlightId: 'all', // Special value to expand all categories
+  };
 }
 
 /**

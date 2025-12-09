@@ -20,6 +20,7 @@ export type OrchestrationIntent =
   | 'governance_request'
   | 'general_question'
   | 'session_summary_request'
+  | 'session_overview_request' // Request structured overview of all session artifacts
   | 'clarification_needed' // M14: Internal - LLM can't confidently extract structure
   | 'unknown';
 
@@ -36,6 +37,7 @@ export type OrchestrationAction =
   | 'draft_risk_assessment'
   | 'suggest_policies'
   | 'generate_summary'
+  | 'generate_overview' // Generate structured overview of all session artifacts
   | 'respond_only';
 
 /**
