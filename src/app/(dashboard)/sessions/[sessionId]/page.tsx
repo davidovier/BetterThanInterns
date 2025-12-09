@@ -16,7 +16,7 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle, FileText } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle, FileText, ChevronDown, ChevronRight, GitBranch, Lightbulb, Map, Shield, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { Badge } from '@/components/ui/badge';
@@ -124,6 +124,14 @@ export default function SessionDetailPage({
   const [highlightedStepId, setHighlightedStepId] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
+  // Timeline collapse state
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({
+    processes: false,
+    opportunities: false,
+    blueprints: false,
+    governance: false,
+  });
+
   const selectedProcess = processes[selectedProcessIndex] || null;
 
   // Memoize process steps by ID for quick lookup
@@ -157,6 +165,73 @@ export default function SessionDetailPage({
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Create unified timeline from all artifacts
+  const timelineItems = useMemo(() => {
+    type TimelineItem = {
+      id: string;
+      type: 'process' | 'opportunity' | 'blueprint' | 'governance';
+      title: string;
+      createdAt: Date;
+      data: any;
+    };
+
+    const items: TimelineItem[] = [];
+
+    // Add processes
+    processes.forEach((process) => {
+      items.push({
+        id: process.id,
+        type: 'process',
+        title: process.name,
+        createdAt: new Date(process.updatedAt || Date.now()),
+        data: process,
+      });
+    });
+
+    // Add opportunities
+    opportunities.forEach((opp) => {
+      items.push({
+        id: opp.id,
+        type: 'opportunity',
+        title: opp.title,
+        createdAt: new Date(), // Opportunities don't have createdAt in type, use current
+        data: opp,
+      });
+    });
+
+    // Add blueprints
+    blueprints.forEach((blueprint) => {
+      items.push({
+        id: blueprint.id,
+        type: 'blueprint',
+        title: blueprint.title,
+        createdAt: new Date(blueprint.createdAt),
+        data: blueprint,
+      });
+    });
+
+    // Add AI use cases (governance)
+    aiUseCases.forEach((useCase) => {
+      items.push({
+        id: useCase.id,
+        type: 'governance',
+        title: useCase.title,
+        createdAt: new Date(), // Use cases don't have createdAt in type, use current
+        data: useCase,
+      });
+    });
+
+    // Sort by creation time (newest first)
+    return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }, [processes, opportunities, blueprints, aiUseCases]);
+
+  const toggleCategory = (category: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [category]: !prev[category],
+    }));
   };
 
   const loadSession = async () => {
@@ -777,102 +852,240 @@ export default function SessionDetailPage({
             </p>
           </div>
 
-          {/* Workspace Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* AI Opportunities */}
-            {opportunities.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">AI Opportunities ({opportunities.length})</h3>
-                <div className="space-y-2">
-                  {opportunities.map((opp) => (
-                    <div
-                      key={opp.id}
-                      className="rounded-lg border p-3 hover:shadow-md hover:border-brand-200 transition-all cursor-pointer bg-card"
-                      onClick={() => {
-                        if (opp.stepId) {
-                          setHighlightedStepId(opp.stepId);
-                        }
-                      }}
-                      onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
-                      onMouseLeave={() => setHighlightedStepId(null)}
-                    >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h4 className="font-semibold text-xs flex-1 leading-tight">{opp.title}</h4>
-                        <Badge
-                          variant="outline"
-                          className={`text-xs shrink-0 ${
-                            opp.impactLevel === 'high'
-                              ? 'bg-red-50 text-red-700 border-red-200'
-                              : opp.impactLevel === 'medium'
-                              ? 'bg-orange-50 text-orange-700 border-orange-200'
-                              : 'bg-blue-50 text-blue-700 border-blue-200'
-                          }`}
-                        >
-                          {opp.impactLevel}
-                        </Badge>
-                      </div>
-                      {opp.step && (
-                        <div className="text-xs text-muted-foreground mb-2">
-                          → {opp.step.title}
-                        </div>
-                      )}
-                      <p className="text-xs text-muted-foreground line-clamp-2">
-                        {opp.rationaleText}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Blueprints */}
-            {blueprints.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">Blueprints ({blueprints.length})</h3>
-                <div className="space-y-2">
-                  {blueprints.map((blueprint) => (
-                    <div
-                      key={blueprint.id}
-                      className="rounded-lg border p-3 bg-card"
-                    >
-                      <h4 className="font-semibold text-xs mb-1">{blueprint.title}</h4>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(blueprint.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* AI Governance */}
-            {aiUseCases.length > 0 && (
-              <div>
-                <h3 className="text-sm font-semibold mb-3">AI Governance ({aiUseCases.length})</h3>
-                <div className="space-y-2">
-                  {aiUseCases.map((useCase) => (
-                    <div
-                      key={useCase.id}
-                      className="rounded-lg border p-3 bg-card"
-                    >
-                      <h4 className="font-semibold text-xs mb-1">{useCase.title}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {useCase.status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empty state when no artifacts */}
-            {opportunities.length === 0 && blueprints.length === 0 && aiUseCases.length === 0 && (
+          {/* Workspace Content - Timeline View */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {timelineItems.length === 0 ? (
               <div className="flex items-center justify-center h-full py-12">
                 <div className="text-center text-muted-foreground">
-                  <Target className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <Clock className="h-12 w-12 mx-auto mb-3 opacity-20" />
                   <p className="text-sm font-medium">No artifacts yet</p>
-                  <p className="text-xs mt-1">Opportunities and blueprints will appear here</p>
+                  <p className="text-xs mt-1">Your session timeline will appear here</p>
                 </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {/* Processes Section */}
+                {processes.length > 0 && (
+                  <div className="border rounded-lg bg-card overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory('processes')}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <GitBranch className="h-4 w-4 text-purple-600" />
+                        <span className="font-semibold text-sm">Processes</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {processes.length}
+                        </Badge>
+                      </div>
+                      {collapsedCategories.processes ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {!collapsedCategories.processes && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {timelineItems
+                          .filter((item) => item.type === 'process')
+                          .map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-purple-200"
+                              onClick={() => {
+                                const idx = processes.findIndex((p) => p.id === item.id);
+                                if (idx !== -1) setSelectedProcessIndex(idx);
+                              }}
+                            >
+                              <div className="flex-shrink-0 w-1 h-full bg-purple-600 rounded-full mt-1" />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-xs leading-tight mb-1">
+                                  {item.title}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{item.createdAt.toLocaleTimeString()}</span>
+                                  <span className="text-xs">
+                                    {item.data.steps?.length || 0} steps
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Opportunities Section */}
+                {opportunities.length > 0 && (
+                  <div className="border rounded-lg bg-card overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory('opportunities')}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Lightbulb className="h-4 w-4 text-amber-600" />
+                        <span className="font-semibold text-sm">AI Opportunities</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {opportunities.length}
+                        </Badge>
+                      </div>
+                      {collapsedCategories.opportunities ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {!collapsedCategories.opportunities && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {timelineItems
+                          .filter((item) => item.type === 'opportunity')
+                          .map((item) => {
+                            const opp = item.data as Opportunity;
+                            return (
+                              <div
+                                key={item.id}
+                                className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-amber-200"
+                                onClick={() => {
+                                  if (opp.stepId) {
+                                    setHighlightedStepId(opp.stepId);
+                                  }
+                                }}
+                                onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
+                                onMouseLeave={() => setHighlightedStepId(null)}
+                              >
+                                <div className="flex-shrink-0 w-1 h-full bg-amber-600 rounded-full mt-1" />
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2 mb-1">
+                                    <h4 className="font-medium text-xs leading-tight flex-1">
+                                      {item.title}
+                                    </h4>
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs shrink-0 ${
+                                        opp.impactLevel === 'high'
+                                          ? 'bg-red-50 text-red-700 border-red-200'
+                                          : opp.impactLevel === 'medium'
+                                          ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                          : 'bg-blue-50 text-blue-700 border-blue-200'
+                                      }`}
+                                    >
+                                      {opp.impactLevel}
+                                    </Badge>
+                                  </div>
+                                  {opp.step && (
+                                    <div className="text-xs text-muted-foreground mb-1">
+                                      → {opp.step.title}
+                                    </div>
+                                  )}
+                                  <p className="text-xs text-muted-foreground line-clamp-2">
+                                    {opp.rationaleText}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Blueprints Section */}
+                {blueprints.length > 0 && (
+                  <div className="border rounded-lg bg-card overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory('blueprints')}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Map className="h-4 w-4 text-blue-600" />
+                        <span className="font-semibold text-sm">Blueprints</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {blueprints.length}
+                        </Badge>
+                      </div>
+                      {collapsedCategories.blueprints ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {!collapsedCategories.blueprints && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {timelineItems
+                          .filter((item) => item.type === 'blueprint')
+                          .map((item) => (
+                            <div
+                              key={item.id}
+                              className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors border border-transparent hover:border-blue-200"
+                            >
+                              <div className="flex-shrink-0 w-1 h-full bg-blue-600 rounded-full mt-1" />
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-medium text-xs leading-tight mb-1">
+                                  {item.title}
+                                </h4>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{item.createdAt.toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* AI Governance Section */}
+                {aiUseCases.length > 0 && (
+                  <div className="border rounded-lg bg-card overflow-hidden">
+                    <button
+                      onClick={() => toggleCategory('governance')}
+                      className="w-full flex items-center justify-between p-3 hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-4 w-4 text-green-600" />
+                        <span className="font-semibold text-sm">AI Governance</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {aiUseCases.length}
+                        </Badge>
+                      </div>
+                      {collapsedCategories.governance ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </button>
+                    {!collapsedCategories.governance && (
+                      <div className="px-3 pb-3 space-y-2">
+                        {timelineItems
+                          .filter((item) => item.type === 'governance')
+                          .map((item) => {
+                            const useCase = item.data as AiUseCase;
+                            return (
+                              <div
+                                key={item.id}
+                                className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors border border-transparent hover:border-green-200"
+                              >
+                                <div className="flex-shrink-0 w-1 h-full bg-green-600 rounded-full mt-1" />
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="font-medium text-xs leading-tight mb-1">
+                                    {item.title}
+                                  </h4>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant="outline" className="text-xs">
+                                      {useCase.status}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
