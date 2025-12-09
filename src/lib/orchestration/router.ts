@@ -180,6 +180,11 @@ CONTEXT-AWARE BEHAVIOR:
 
 GUIDELINES:
 - If user describes a NEW multi-step process with clear steps → use extract_process
+- **MULTI-PROCESS DETECTION**: If user describes MULTIPLE DISTINCT PROCESSES in one message → use extract_process with the "processes" array
+  * Example: "We onboard employees and we also handle customer onboarding" = 2 processes
+  * Example: "Our sales process involves X, Y, Z and our support process has A, B, C" = 2 processes
+  * Each process MUST have at least 2 steps
+  * Use the "processes" array in data (not single "processName"/"steps")
 - If user is adding to/clarifying/updating an EXISTING process → use refine_process with the intent refine_process
   * Examples: "Actually, add a step for...", "The approval process also includes...", "Let me add more details to that process"
   * You must identify which process to refine using processName matching or targetIds
@@ -217,9 +222,25 @@ Return ONLY valid JSON in this exact format:
   },
   "explanation": "Natural language response to the user",
   "data": {
+    // FOR SINGLE PROCESS (legacy):
     "processName": "optional",
     "processDescription": "optional",
     "steps": [{"title": "Step 1", "description": "...", "owner": "...", "inputs": [], "outputs": [], "frequency": "...", "duration": "..."}],
+
+    // FOR MULTIPLE PROCESSES (use this when user describes 2+ distinct workflows):
+    "processes": [
+      {
+        "processName": "Employee Onboarding",
+        "processDescription": "optional",
+        "steps": [{"title": "Step 1", "description": "...", "owner": "...", "inputs": [], "outputs": [], "frequency": "...", "duration": "..."}]
+      },
+      {
+        "processName": "Customer Onboarding",
+        "processDescription": "optional",
+        "steps": [{"title": "Step 1", "description": "..."}]
+      }
+    ],
+
     "useCaseTitle": "optional",
     "useCaseDescription": "optional"
   }
@@ -370,88 +391,188 @@ async function executeAction(
 /**
  * Handle process extraction
  * M15.1: Now returns full process data with steps and links for UI rendering
+ * M16: Enhanced to support multi-process extraction from a single message
  */
 async function handleExtractProcess(
   decision: OrchestrationDecision,
   context: OrchestrationContext,
   result: OrchestrationResult
 ): Promise<void> {
-  if (!decision.data?.processName || !decision.data?.steps) {
-    throw new Error('Missing process data');
-  }
+  // M16: Check if we have multiple processes or a single process
+  const hasMultipleProcesses = decision.data?.processes && decision.data.processes.length > 0;
 
-  // M15.1: Validate we have at least 2 steps before attempting extraction
-  if (decision.data.steps.length < 2) {
-    throw new Error('Process must have at least 2 steps');
-  }
+  if (hasMultipleProcesses) {
+    // M16: Handle multiple processes extraction
+    const processes = decision.data!.processes!;
 
-  const { process, steps, links } = await extractProcessFromChat({
-    processName: decision.data.processName,
-    processDescription: decision.data.processDescription,
-    steps: decision.data.steps,
-    workspaceId: context.workspaceId,
-  });
+    // Validate each process has at least 2 steps
+    for (const proc of processes) {
+      if (!proc.steps || proc.steps.length < 2) {
+        throw new Error(`Process "${proc.processName}" must have at least 2 steps`);
+      }
+    }
 
-  // M15.1: Fetch full process data with steps and links for frontend
-  const fullProcess = await db.process.findUnique({
-    where: { id: process.id },
-    include: {
-      steps: {
-        select: {
-          id: true,
-          title: true,
-          description: true,
-          owner: true,
-          positionX: true,
-          positionY: true,
-          frequency: true,
-          duration: true,
-          inputs: true,
-          outputs: true,
+    // Extract each process
+    const createdProcesses = [];
+    for (const processData of processes) {
+      const { process, steps, links } = await extractProcessFromChat({
+        processName: processData.processName,
+        processDescription: processData.processDescription,
+        steps: processData.steps,
+        workspaceId: context.workspaceId,
+      });
+
+      // Fetch full process data with steps and links for frontend
+      const fullProcess = await db.process.findUnique({
+        where: { id: process.id },
+        include: {
+          steps: {
+            select: {
+              id: true,
+              title: true,
+              description: true,
+              owner: true,
+              positionX: true,
+              positionY: true,
+              frequency: true,
+              duration: true,
+              inputs: true,
+              outputs: true,
+            },
+          },
+          links: {
+            select: {
+              id: true,
+              fromStepId: true,
+              toStepId: true,
+              label: true,
+            },
+          },
+          _count: {
+            select: { steps: true },
+          },
+        },
+      });
+
+      createdProcesses.push({
+        id: process.id,
+        name: process.name,
+        stepCount: fullProcess?._count?.steps || steps.length,
+        steps: fullProcess?.steps || steps,
+        links: fullProcess?.links || links,
+        createdSteps: steps,
+      });
+
+      // Update metadata with new process ID
+      result.updatedMetadata.processIds = [
+        ...(result.updatedMetadata.processIds || []),
+        process.id,
+      ];
+    }
+
+    // Update result with all created processes
+    result.artifacts.createdProcesses = [
+      ...(result.artifacts.createdProcesses || []),
+      ...createdProcesses.map(p => ({
+        id: p.id,
+        name: p.name,
+        stepCount: p.stepCount,
+        steps: p.steps,
+        links: p.links,
+      })),
+    ];
+
+    result.artifacts.createdSteps = [
+      ...(result.artifacts.createdSteps || []),
+      ...createdProcesses.flatMap(p =>
+        p.createdSteps.map((s: any) => ({ id: s.id, title: s.title, processId: p.id }))
+      ),
+    ];
+
+    // M16: UI hint to scroll to processes section (highlight first one)
+    result.ui = {
+      scrollTo: 'processes',
+      highlightId: createdProcesses[0]?.id,
+    };
+  } else {
+    // Legacy: Handle single process extraction
+    if (!decision.data?.processName || !decision.data?.steps) {
+      throw new Error('Missing process data');
+    }
+
+    // M15.1: Validate we have at least 2 steps before attempting extraction
+    if (decision.data.steps.length < 2) {
+      throw new Error('Process must have at least 2 steps');
+    }
+
+    const { process, steps, links } = await extractProcessFromChat({
+      processName: decision.data.processName,
+      processDescription: decision.data.processDescription,
+      steps: decision.data.steps,
+      workspaceId: context.workspaceId,
+    });
+
+    // M15.1: Fetch full process data with steps and links for frontend
+    const fullProcess = await db.process.findUnique({
+      where: { id: process.id },
+      include: {
+        steps: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            owner: true,
+            positionX: true,
+            positionY: true,
+            frequency: true,
+            duration: true,
+            inputs: true,
+            outputs: true,
+          },
+        },
+        links: {
+          select: {
+            id: true,
+            fromStepId: true,
+            toStepId: true,
+            label: true,
+          },
+        },
+        _count: {
+          select: { steps: true },
         },
       },
-      links: {
-        select: {
-          id: true,
-          fromStepId: true,
-          toStepId: true,
-          label: true,
-        },
+    });
+
+    // Update result with full structured process data
+    result.artifacts.createdProcesses = [
+      ...(result.artifacts.createdProcesses || []),
+      {
+        id: process.id,
+        name: process.name,
+        stepCount: fullProcess?._count?.steps || steps.length,
+        steps: fullProcess?.steps || steps,
+        links: fullProcess?.links || links,
       },
-      _count: {
-        select: { steps: true },
-      },
-    },
-  });
+    ];
 
-  // Update result with full structured process data
-  result.artifacts.createdProcesses = [
-    ...(result.artifacts.createdProcesses || []),
-    {
-      id: process.id,
-      name: process.name,
-      stepCount: fullProcess?._count?.steps || steps.length,
-      steps: fullProcess?.steps || steps,
-      links: fullProcess?.links || links,
-    },
-  ];
+    result.artifacts.createdSteps = [
+      ...(result.artifacts.createdSteps || []),
+      ...steps.map((s) => ({ id: s.id, title: s.title, processId: process.id })),
+    ];
 
-  result.artifacts.createdSteps = [
-    ...(result.artifacts.createdSteps || []),
-    ...steps.map((s) => ({ id: s.id, title: s.title, processId: process.id })),
-  ];
+    // M15.1: Add UI hint to scroll to the newly created process
+    result.ui = {
+      scrollTo: 'processes',
+      highlightId: process.id,
+    };
 
-  // M15.1: Add UI hint to scroll to the newly created process
-  result.ui = {
-    scrollTo: 'processes',
-    highlightId: process.id,
-  };
-
-  // Update metadata
-  result.updatedMetadata.processIds = [
-    ...(result.updatedMetadata.processIds || []),
-    process.id,
-  ];
+    // Update metadata
+    result.updatedMetadata.processIds = [
+      ...(result.updatedMetadata.processIds || []),
+      process.id,
+    ];
+  }
 }
 
 /**

@@ -58,7 +58,7 @@ export type OrchestrationDecision = {
     aiUseCaseId?: string;
   };
   data?: {
-    // For process extraction
+    // For single process extraction (legacy - kept for backward compatibility)
     processName?: string;
     processDescription?: string;
     steps?: Array<{
@@ -69,6 +69,21 @@ export type OrchestrationDecision = {
       outputs?: string[];
       frequency?: string;
       duration?: string;
+    }>;
+
+    // For multi-process extraction (new)
+    processes?: Array<{
+      processName: string;
+      processDescription?: string;
+      steps: Array<{
+        title: string;
+        description?: string;
+        owner?: string;
+        inputs?: string[];
+        outputs?: string[];
+        frequency?: string;
+        duration?: string;
+      }>;
     }>;
 
     // For process updates
