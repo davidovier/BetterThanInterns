@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   LayoutDashboard,
-  FolderKanban,
   Shield,
   Sparkles,
   LogOut,
@@ -48,12 +47,6 @@ const navSections = [
       { href: '/library/opportunities', label: 'Opportunities', icon: Target },
       { href: '/library/blueprints', label: 'Blueprints', icon: FileText },
       { href: '/library/governance', label: 'Governance', icon: Shield },
-    ]
-  },
-  {
-    label: 'Organize',
-    items: [
-      { href: '/projects', label: 'Projects', icon: FolderKanban },
     ]
   },
 ];
