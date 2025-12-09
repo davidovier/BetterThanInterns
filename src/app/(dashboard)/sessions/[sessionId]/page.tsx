@@ -516,9 +516,9 @@ export default function SessionDetailPage({
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
+    <div className="h-screen flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between px-8 py-4 border-b bg-card/50 backdrop-blur-sm">
+      <div className="flex items-center justify-between px-8 py-4 border-b bg-card/50 backdrop-blur-sm shrink-0">
         <div className="flex items-center space-x-4">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm" className="hover:-translate-y-[1px] transition-all">
@@ -556,7 +556,7 @@ export default function SessionDetailPage({
       </div>
 
       {/* Three-panel layout: Chat (30%) | Graph (45%) | Workspace (25%) */}
-      <div className="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
+      <div className="flex-1 grid grid-cols-12 gap-0 overflow-hidden min-h-0">
         {/* Chat Panel - Left (30%) */}
         <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20 overflow-hidden">
           {/* Chat Header */}
