@@ -10,6 +10,7 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   NodeMouseHandler,
+  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
@@ -236,40 +237,42 @@ export default function SessionDetailPage({
   const updateGraphFromProcess = useCallback((process: Process) => {
     if (!process.steps) return;
 
-    // Convert steps to React Flow nodes
-    const flowNodes: Node[] = process.steps.map((step: any) => {
+    // Convert steps to React Flow nodes with vertical layout
+    const flowNodes: Node[] = process.steps.map((step: any, index: number) => {
       // Check if this step has an opportunity
       const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
       const impactLevel = stepOpportunity?.impactLevel;
 
+      // Enhanced node styling with gradients and shadows
+      let nodeStyle: any = {
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        border: '2px solid rgba(255,255,255,0.3)',
+        borderRadius: '12px',
+        padding: '16px 24px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        minWidth: '200px',
+      };
+
       // Apply heatmap styling based on impact level
-      let nodeStyle: any = {};
       if (impactLevel === 'high') {
-        nodeStyle = {
-          borderColor: '#ef4444',
-          borderWidth: '3px',
-          backgroundColor: '#fee2e2',
-          borderStyle: 'solid',
-        };
+        nodeStyle.background = 'linear-gradient(135deg, #f87171 0%, #dc2626 100%)';
+        nodeStyle.border = '2px solid rgba(239, 68, 68, 0.5)';
+        nodeStyle.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
       } else if (impactLevel === 'medium') {
-        nodeStyle = {
-          borderColor: '#f59e0b',
-          borderWidth: '2px',
-          backgroundColor: '#fef3c7',
-          borderStyle: 'solid',
-        };
+        nodeStyle.background = 'linear-gradient(135deg, #fb923c 0%, #ea580c 100%)';
+        nodeStyle.border = '2px solid rgba(234, 88, 12, 0.5)';
+        nodeStyle.boxShadow = '0 4px 12px rgba(234, 88, 12, 0.3)';
       } else if (impactLevel === 'low') {
-        nodeStyle = {
-          borderColor: '#3b82f6',
-          borderWidth: '2px',
-          backgroundColor: '#dbeafe',
-          borderStyle: 'solid',
-        };
+        nodeStyle.background = 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)';
+        nodeStyle.border = '2px solid rgba(59, 130, 246, 0.5)';
+        nodeStyle.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
       }
 
       // Add highlight if this step is selected
       if (highlightedStepId === step.id) {
-        nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
+        nodeStyle.boxShadow = '0 0 0 4px rgba(99, 102, 241, 0.6), 0 4px 12px rgba(0,0,0,0.15)';
+        nodeStyle.transform = 'scale(1.05)';
       }
 
       return {
@@ -278,20 +281,21 @@ export default function SessionDetailPage({
         data: {
           label: (
             <div className="text-center">
-              <div className="font-medium">{step.title}</div>
+              <div className="font-semibold text-sm">{step.title}</div>
               {step.owner && (
-                <div className="text-xs text-muted-foreground">{step.owner}</div>
+                <div className="text-xs opacity-90 mt-1">{step.owner}</div>
               )}
             </div>
           ),
         },
-        position: { x: step.positionX, y: step.positionY },
+        // Vertical layout: x stays centered, y increases for each step
+        position: { x: 100, y: index * 150 },
         style: nodeStyle,
       };
     });
     setNodes(flowNodes);
 
-    // Convert links to React Flow edges
+    // Convert links to React Flow edges with enhanced styling
     if (process.links) {
       const flowEdges: Edge[] = process.links.map((link: any) => ({
         id: link.id,
@@ -299,6 +303,14 @@ export default function SessionDetailPage({
         target: link.toStepId,
         label: link.label,
         animated: true,
+        style: {
+          stroke: '#9333ea',
+          strokeWidth: 2
+        },
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: '#9333ea',
+        },
       }));
       setEdges(flowEdges);
     }
@@ -569,9 +581,9 @@ export default function SessionDetailPage({
         <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20 overflow-hidden">
           {/* Chat Header */}
           <div className="p-6 border-b bg-card/80 backdrop-blur-sm shrink-0">
-            <h2 className="font-semibold text-base mb-1">Unified Assistant</h2>
+            <h2 className="font-semibold text-base mb-1">AI Assistant</h2>
             <p className="text-xs text-muted-foreground">
-              Map processes, discover opportunities, and generate blueprints
+              Describe workflows and ask questions about your processes
             </p>
           </div>
 
@@ -675,7 +687,22 @@ export default function SessionDetailPage({
               >
                 <Background />
                 <Controls />
-                <MiniMap />
+                <MiniMap
+                  nodeColor={(node) => {
+                    // Color nodes in minimap based on their gradient
+                    const style = node.style as any;
+                    if (style?.background?.includes('f87171')) return '#ef4444'; // High impact - red
+                    if (style?.background?.includes('fb923c')) return '#ea580c'; // Medium impact - orange
+                    if (style?.background?.includes('60a5fa')) return '#3b82f6'; // Low impact - blue
+                    return '#9333ea'; // Default - purple
+                  }}
+                  maskColor="rgba(0, 0, 0, 0.1)"
+                  style={{
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    border: '2px solid rgba(147, 51, 234, 0.2)',
+                    borderRadius: '12px',
+                  }}
+                />
               </ReactFlow>
 
               {/* Process info overlay */}
@@ -705,7 +732,7 @@ export default function SessionDetailPage({
                       <span className="text-xs">High impact</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 border-2 border-amber-500 bg-amber-100 rounded-sm"></div>
+                      <div className="w-4 h-4 border-2 border-orange-500 bg-orange-100 rounded-sm"></div>
                       <span className="text-xs">Medium impact</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -773,7 +800,7 @@ export default function SessionDetailPage({
                             opp.impactLevel === 'high'
                               ? 'bg-red-50 text-red-700 border-red-200'
                               : opp.impactLevel === 'medium'
-                              ? 'bg-amber-50 text-amber-700 border-amber-200'
+                              ? 'bg-orange-50 text-orange-700 border-orange-200'
                               : 'bg-blue-50 text-blue-700 border-blue-200'
                           }`}
                         >
