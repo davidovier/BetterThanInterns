@@ -13,6 +13,7 @@ import {
   OrchestrationDecision,
 } from './types';
 import { extractProcessFromChat } from './actions/process-from-chat';
+import { refineProcess } from './actions/refine-process';
 import { scanOpportunities } from './actions/opportunity-scan';
 import { generateBlueprint } from './actions/generate-blueprint';
 import { createAiUseCase } from './actions/governance-flow';
@@ -141,7 +142,8 @@ INTENTS:
 - general_question: User is asking questions or having a general conversation
 
 ACTIONS:
-- extract_process: Extract and create a new process with steps
+- extract_process: Extract and create a NEW process with steps (use when user describes a brand new process)
+- refine_process: Update/refine an EXISTING process with additional or modified steps (use when user is clarifying or adding to an existing process)
 - scan_opportunities: Analyze process steps for automation opportunities
 - generate_blueprint: Create an implementation blueprint for a project
 - create_use_case: Register an AI use case for governance tracking
@@ -164,13 +166,23 @@ CONTEXT-AWARE BEHAVIOR:
 - If multiple matches exist and user is ambiguous, use clarification_needed
 
 GUIDELINES:
-- If user describes a multi-step process with clear steps, extract it (use extract_process)
-- If user mentions "opportunities" or "automation", scan for opportunities
-- If user says "blueprint" or "implementation plan", generate blueprint
-- If user mentions "governance" or "AI use case", create use case
-- If user asks for "summary", generate summary
-- If user is vague or incomplete, use clarification_needed with low confidence
-- For general questions, use respond_only
+- If user describes a NEW multi-step process with clear steps → use extract_process
+- If user is adding to/clarifying/updating an EXISTING process → use refine_process with the intent refine_process
+  * Examples: "Actually, add a step for...", "The approval process also includes...", "Let me add more details to that process"
+  * You must identify which process to refine using processName matching or targetIds
+- If user mentions "opportunities" or "automation" → scan_opportunities
+- If user says "blueprint" or "implementation plan" → generate_blueprint
+- If user mentions "governance" or "AI use case" → create_use_case
+- If user asks for "summary" → generate_summary
+- If user is vague or incomplete → clarification_needed with low confidence
+- For general questions → respond_only
+
+CHOOSING BETWEEN extract_process AND refine_process:
+- extract_process: User is describing something completely new, no existing process referenced
+- refine_process: User is building on or modifying something already discussed/created in this session
+  * Look at existing process names to determine if user is referring to one of them
+  * If user says "that process", "the X process", "add to the workflow", etc. → refine_process
+  * If confidence is high that this is a refinement, use refine_process even if processName is slightly different
 
 Return ONLY valid JSON in this exact format:
 {
@@ -272,6 +284,10 @@ async function executeAction(
   switch (action) {
     case 'extract_process':
       await handleExtractProcess(decision, context, result);
+      break;
+
+    case 'refine_process':
+      await handleRefineProcess(decision, context, result);
       break;
 
     case 'scan_opportunities':
@@ -384,6 +400,88 @@ async function handleExtractProcess(
     ...(result.updatedMetadata.processIds || []),
     process.id,
   ];
+}
+
+/**
+ * Handle process refinement
+ * M14: Updates existing process instead of creating a new one
+ */
+async function handleRefineProcess(
+  decision: OrchestrationDecision,
+  context: OrchestrationContext,
+  result: OrchestrationResult
+): Promise<void> {
+  // Build parameters for refinement
+  const recentProcessIds = (context.currentMetadata.processIds || []) as string[];
+
+  const { process, steps, links, wasUpdated } = await refineProcess({
+    workspaceId: context.workspaceId,
+    processId: decision.targetIds?.processId || decision.data?.processId,
+    processName: decision.data?.processName,
+    processDescription: decision.data?.processDescription,
+    steps: decision.data?.steps,
+    recentProcessIds,
+  });
+
+  if (wasUpdated) {
+    // Fetch full process data with counts for UI
+    const fullProcess = await db.process.findUnique({
+      where: { id: process.id },
+      include: {
+        steps: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            owner: true,
+            positionX: true,
+            positionY: true,
+            frequency: true,
+            duration: true,
+            inputs: true,
+            outputs: true,
+          },
+        },
+        links: {
+          select: {
+            id: true,
+            fromStepId: true,
+            toStepId: true,
+            label: true,
+          },
+        },
+        _count: {
+          select: { steps: true },
+        },
+      },
+    });
+
+    // Update result with refined process data
+    result.artifacts.createdProcesses = [
+      ...(result.artifacts.createdProcesses || []),
+      {
+        id: process.id,
+        name: process.name,
+        stepCount: fullProcess?._count?.steps || steps.length,
+        steps: fullProcess?.steps || steps,
+        links: fullProcess?.links || links,
+      },
+    ];
+
+    // Add UI hint to scroll to the updated process
+    result.ui = {
+      scrollTo: 'processes',
+      highlightId: process.id,
+    };
+
+    // Ensure process ID is in metadata (it should already be there)
+    if (!result.updatedMetadata.processIds?.includes(process.id)) {
+      result.updatedMetadata.processIds = [
+        ...(result.updatedMetadata.processIds || []),
+        process.id,
+      ];
+    }
+  }
 }
 
 /**

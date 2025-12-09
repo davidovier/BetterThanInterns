@@ -29,6 +29,7 @@ export type OrchestrationIntent =
 export type OrchestrationAction =
   | 'extract_process'
   | 'update_process'
+  | 'refine_process' // M14: Update existing process with new/refined steps
   | 'scan_opportunities'
   | 'generate_blueprint'
   | 'create_use_case'
@@ -211,4 +212,25 @@ export type CreateUseCaseParams = {
 export type GenerateSummaryParams = {
   sessionId: string;
   workspaceId: string;
+};
+
+/**
+ * Parameters for process refinement action
+ * M14: Used when updating/refining an existing process
+ */
+export type RefineProcessParams = {
+  workspaceId: string;
+  processId?: string; // Optional: explicit target process
+  processName?: string; // Used for name similarity matching
+  processDescription?: string; // Optional: update description
+  steps?: Array<{
+    title: string;
+    description?: string;
+    owner?: string;
+    inputs?: string[];
+    outputs?: string[];
+    frequency?: string;
+    duration?: string;
+  }>;
+  recentProcessIds?: string[]; // From session metadata for fallback identification
 };

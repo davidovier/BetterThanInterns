@@ -15,7 +15,7 @@ import 'reactflow/dist/style.css';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
-import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Target, Wrench, FolderOpen, HelpCircle, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { Badge } from '@/components/ui/badge';

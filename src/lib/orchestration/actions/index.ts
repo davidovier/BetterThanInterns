@@ -5,6 +5,7 @@
  */
 
 export { extractProcessFromChat } from './process-from-chat';
+export { refineProcess } from './refine-process';
 export { scanOpportunities } from './opportunity-scan';
 export { generateBlueprint } from './generate-blueprint';
 export { createAiUseCase } from './governance-flow';
