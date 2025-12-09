@@ -146,6 +146,14 @@ export default function SessionDetailPage({
     }
   }, [selectedProcess, opportunities, highlightedStepId]);
 
+  // Scroll to bottom when loading is complete
+  useEffect(() => {
+    if (!isLoadingSession && messages.length > 0) {
+      // Use instant scroll (no smooth) for initial load
+      messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    }
+  }, [isLoadingSession]);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
