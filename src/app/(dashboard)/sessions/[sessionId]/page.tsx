@@ -684,6 +684,10 @@ export default function SessionDetailPage({
                 onEdgesChange={onEdgesChange}
                 onNodeClick={handleNodeClick}
                 fitView
+                fitViewOptions={{
+                  padding: 0.3,
+                  maxZoom: 0.97,
+                }}
               >
                 <Background />
                 <Controls />
