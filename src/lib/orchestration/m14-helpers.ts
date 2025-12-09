@@ -13,10 +13,34 @@ import type {
 } from './types';
 
 /**
- * Minimum confidence threshold for executing actions
- * If confidence < this value, trigger clarification instead
+ * Confidence thresholds for M14 orchestration
+ * Separate thresholds for intent classification vs data extraction
  */
-export const CONFIDENCE_MIN_FOR_ACTION = 0.65;
+export const CONFIDENCE_THRESHOLDS = {
+  // Intent confidence: How sure are we about what the user wants to do?
+  INTENT_MIN: 0.6, // Lower threshold - favor action over clarification
+
+  // Extraction confidence: How complete is the extracted data?
+  EXTRACTION_MIN: 0.7, // Higher threshold - need good data to execute
+
+  // Dynamic adjustment based on session complexity
+  getIntentThreshold: (processCount: number): number => {
+    // When >5 processes exist, harder to disambiguate, require higher confidence
+    if (processCount > 5) return 0.7;
+    if (processCount > 3) return 0.65;
+    return 0.6; // Default for simple sessions
+  },
+
+  getExtractionThreshold: (processCount: number): number => {
+    // Extraction requirements stay consistent regardless of complexity
+    return 0.7;
+  },
+};
+
+/**
+ * @deprecated Use CONFIDENCE_THRESHOLDS instead
+ */
+export const CONFIDENCE_MIN_FOR_ACTION = CONFIDENCE_THRESHOLDS.INTENT_MIN;
 
 /**
  * Compute next step suggestion based on session state (heuristic, no LLM)

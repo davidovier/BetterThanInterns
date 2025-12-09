@@ -46,7 +46,9 @@ export type OrchestrationDecision = {
   intent: OrchestrationIntent;
   actions: OrchestrationAction[];
   explanation: string; // Natural language explanation for the user
-  confidence?: number; // M14: 0-1 confidence score for intent classification
+  confidence?: number; // M14: 0-1 confidence score for intent classification (DEPRECATED - use intentConfidence)
+  intentConfidence?: number; // M14: 0-1 confidence score for intent classification
+  extractionConfidence?: number; // M14: 0-1 confidence score for data extraction quality
   targetIds?: { // M14: Referenced artifact IDs when user mentions existing items
     processId?: string;
     opportunityId?: string;

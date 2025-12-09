@@ -19,7 +19,7 @@ import { generateBlueprint } from './actions/generate-blueprint';
 import { createAiUseCase } from './actions/governance-flow';
 import { generateSessionSummary } from './actions/session-summary';
 import {
-  CONFIDENCE_MIN_FOR_ACTION,
+  CONFIDENCE_THRESHOLDS,
   computeNextStepSuggestion,
   generateClarificationQuestion,
   fetchArtifactNamesForContext,
@@ -150,12 +150,22 @@ ACTIONS:
 - generate_summary: Generate a session summary
 - respond_only: Just provide a conversational response
 
-CONFIDENCE SCORING:
-- Return a confidence score (0.0-1.0) for your intent classification
-- High confidence (0.8-1.0): Clear, detailed user message with all needed info
-- Medium confidence (0.5-0.8): User intent is clear but some details missing
-- Low confidence (0.0-0.5): Ambiguous, vague, or incomplete information
-- If confidence < 0.65, consider using "clarification_needed" intent
+CONFIDENCE SCORING (M14 Enhanced - Separate Intent vs Extraction):
+You must return TWO separate confidence scores:
+
+1. intentConfidence (0.0-1.0): How sure are you about what the user WANTS to do?
+   - High (0.8-1.0): Clear user intent, unambiguous request
+   - Medium (0.5-0.8): Intent is reasonably clear but could be interpreted multiple ways
+   - Low (0.0-0.5): Very ambiguous, multiple possible interpretations
+
+2. extractionConfidence (0.0-1.0): How complete is the EXTRACTED DATA?
+   - High (0.8-1.0): All critical fields extracted with high quality data
+   - Medium (0.5-0.8): Most fields extracted but some are incomplete or uncertain
+   - Low (0.0-0.5): Missing critical fields or very poor data quality
+
+IMPORTANT: These are independent scores!
+- User might clearly want to create a process (high intent) but only mention 1 step (low extraction)
+- User might vaguely say "do something" (low intent) but describe 5 detailed steps (high extraction)
 
 CONTEXT-AWARE BEHAVIOR:
 - If user says "that process" / "the last one" / etc., use reference_existing_artifact intent
@@ -194,7 +204,8 @@ Return ONLY valid JSON in this exact format:
 {
   "intent": "intent_type",
   "actions": ["action1", "action2"],
-  "confidence": 0.85,
+  "intentConfidence": 0.85,
+  "extractionConfidence": 0.90,
   "targetIds": {
     "processId": "optional_if_user_referenced_existing",
     "opportunityId": "optional",
@@ -666,6 +677,7 @@ async function handleGenerateSummary(
 
 /**
  * M14: Check if clarification is needed based on decision confidence
+ * M14 Enhanced: Separate intent vs extraction confidence with dynamic thresholds
  */
 function shouldRequestClarification(
   decision: OrchestrationDecision,
@@ -676,7 +688,12 @@ function shouldRequestClarification(
     return { reason: 'low_intent_confidence' };
   }
 
-  // Low confidence score for actionable intents
+  // Calculate process count for dynamic thresholds
+  const processCount = context.currentMetadata.processIds?.length || 0;
+  const intentThreshold = CONFIDENCE_THRESHOLDS.getIntentThreshold(processCount);
+  const extractionThreshold = CONFIDENCE_THRESHOLDS.getExtractionThreshold(processCount);
+
+  // Actionable intents that require good data
   const actionableIntents = [
     'process_description',
     'refine_process',
@@ -685,12 +702,32 @@ function shouldRequestClarification(
     'governance_request',
   ];
 
-  if (
-    actionableIntents.includes(decision.intent) &&
-    decision.confidence !== undefined &&
-    decision.confidence < CONFIDENCE_MIN_FOR_ACTION
-  ) {
-    return { reason: 'low_intent_confidence' };
+  if (actionableIntents.includes(decision.intent)) {
+    // Get confidence scores (backwards compatible with old 'confidence' field)
+    const intentConf = decision.intentConfidence ?? decision.confidence ?? 1.0;
+    const extractionConf = decision.extractionConfidence ?? decision.confidence ?? 1.0;
+
+    // HIGH INTENT + LOW EXTRACTION: User clearly wants something but missing data
+    // → Trigger clarification to get complete data
+    if (intentConf >= intentThreshold && extractionConf < extractionThreshold) {
+      return { reason: 'low_extraction_confidence' };
+    }
+
+    // LOW INTENT + HIGH EXTRACTION: User provided good data but intent unclear
+    // → Favor extraction, proceed with action (no clarification)
+    if (intentConf < intentThreshold && extractionConf >= extractionThreshold) {
+      // Proceed with extraction - good data trumps ambiguous intent
+      return null;
+    }
+
+    // LOW INTENT + LOW EXTRACTION: Both are problematic
+    // → Trigger clarification
+    if (intentConf < intentThreshold && extractionConf < extractionThreshold) {
+      return { reason: 'low_intent_confidence' };
+    }
+
+    // HIGH INTENT + HIGH EXTRACTION: All good, proceed
+    // (implicitly handled by returning null at the end)
   }
 
   // Reference existing artifact but unclear which one
@@ -706,7 +743,7 @@ function shouldRequestClarification(
     }
   }
 
-  // Process extraction with missing critical data
+  // Process extraction with missing critical data (safety check)
   if (
     decision.intent === 'process_description' &&
     (!decision.data?.processName || !decision.data?.steps || decision.data.steps.length < 2)
