@@ -48,34 +48,60 @@ export function ProcessMiniMap({
       const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
       const impactLevel = stepOpportunity?.impactLevel;
 
-      // Apply heatmap styling based on impact level
-      let nodeStyle: any = {};
+      // Apply professional color scheme based on impact level
+      // Using a more sophisticated gradient approach with better color harmony
+      let nodeStyle: any = {
+        borderRadius: '12px',
+        padding: '12px 16px',
+        fontSize: '13px',
+      };
+
       if (impactLevel === 'high') {
+        // High impact: Deep emerald green (indicates high value/ROI)
         nodeStyle = {
-          borderColor: '#ef4444',
-          borderWidth: '3px',
-          backgroundColor: '#fee2e2',
+          ...nodeStyle,
+          borderColor: '#059669', // emerald-600
+          borderWidth: '2.5px',
+          backgroundColor: '#d1fae5', // emerald-100
           borderStyle: 'solid',
+          boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15)',
         };
       } else if (impactLevel === 'medium') {
+        // Medium impact: Warm amber (balanced opportunity)
         nodeStyle = {
-          borderColor: '#f59e0b',
+          ...nodeStyle,
+          borderColor: '#d97706', // amber-600
           borderWidth: '2px',
-          backgroundColor: '#fef3c7',
+          backgroundColor: '#fef3c7', // amber-100
           borderStyle: 'solid',
+          boxShadow: '0 2px 6px rgba(217, 119, 6, 0.12)',
         };
       } else if (impactLevel === 'low') {
+        // Low impact: Soft slate (still valuable but lower priority)
         nodeStyle = {
-          borderColor: '#3b82f6',
+          ...nodeStyle,
+          borderColor: '#64748b', // slate-500
           borderWidth: '2px',
-          backgroundColor: '#dbeafe',
+          backgroundColor: '#f1f5f9', // slate-100
           borderStyle: 'solid',
+          boxShadow: '0 2px 6px rgba(100, 116, 139, 0.1)',
+        };
+      } else {
+        // No opportunity: Clean neutral
+        nodeStyle = {
+          ...nodeStyle,
+          borderColor: '#e2e8f0', // slate-200
+          borderWidth: '2px',
+          backgroundColor: '#ffffff',
+          borderStyle: 'solid',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
         };
       }
 
       // Add highlight if this step is selected
       if (highlightedStepId === step.id) {
-        nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.5)';
+        nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.4), ' + (nodeStyle.boxShadow || '');
+        nodeStyle.borderColor = '#6366f1'; // brand-500
       }
 
       return {
@@ -84,9 +110,9 @@ export function ProcessMiniMap({
         data: {
           label: (
             <div className="text-center">
-              <div className="font-medium text-sm">{step.title}</div>
+              <div className="font-medium text-sm leading-tight">{step.title}</div>
               {step.owner && (
-                <div className="text-xs text-muted-foreground">{step.owner}</div>
+                <div className="text-xs text-muted-foreground mt-1">{step.owner}</div>
               )}
             </div>
           ),

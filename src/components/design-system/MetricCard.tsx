@@ -29,20 +29,20 @@ export function MetricCard({
 
   return (
     <Card className={cn('rounded-2xl shadow-soft hover:shadow-medium transition-all', variantClasses[variant], className)}>
-      <CardContent className="p-6">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+      <CardContent className="p-4 sm:p-5 lg:p-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-0.5 sm:space-y-1 flex-1 min-w-0">
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-medium truncate">
               {label}
             </p>
-            <p className="text-3xl font-bold tracking-tight">{value}</p>
+            <p className="text-2xl sm:text-3xl font-bold tracking-tight">{value}</p>
             {trend && (
-              <p className="text-xs text-muted-foreground">{trend}</p>
+              <p className="text-xs text-muted-foreground truncate">{trend}</p>
             )}
           </div>
           {Icon && (
-            <div className="rounded-full bg-muted/40 p-3">
-              <Icon className="h-5 w-5 text-muted-foreground" />
+            <div className="rounded-full bg-muted/40 p-2 sm:p-2.5 lg:p-3 shrink-0">
+              <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
             </div>
           )}
         </div>

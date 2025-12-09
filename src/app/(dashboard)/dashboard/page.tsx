@@ -144,18 +144,19 @@ export default function DashboardPage() {
 
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
+    <div className="w-full h-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-[32px] font-semibold tracking-tight">Sessions</h1>
-            <p className="text-muted-foreground mt-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-[32px] font-semibold tracking-tight">Sessions</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1.5 sm:mt-2">
               Start a conversation. The AI extracts processes, identifies opportunities, and generates blueprints automatically.
             </p>
           </div>
           <Button
             onClick={() => setShowNewSession(!showNewSession)}
-            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all shrink-0"
           >
             <Plus className="h-4 w-4 mr-2" />
             New Session
@@ -164,7 +165,7 @@ export default function DashboardPage() {
 
         {/* Metrics Row - Only show when there are sessions */}
         {!isLoadingSessions && sessions.length > 0 && (
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <MetricCard
               label="Total Sessions"
               value={sessions.length}
@@ -192,30 +193,30 @@ export default function DashboardPage() {
         {/* New Session Form */}
         {showNewSession && (
           <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">Create New Session</CardTitle>
-              <CardDescription>
+            <CardHeader className="space-y-1 sm:space-y-1.5">
+              <CardTitle className="text-lg sm:text-xl font-semibold">Create New Session</CardTitle>
+              <CardDescription className="text-sm">
                 Start a conversation with the AI assistant to explore your workflows.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={createSession} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="session-title">Session Title</Label>
+                  <Label htmlFor="session-title" className="text-sm font-medium">Session Title</Label>
                   <Input
                     id="session-title"
                     value={newSessionTitle}
                     onChange={(e) => setNewSessionTitle(e.target.value)}
                     placeholder="e.g., Exploring Invoice Processing"
                     required
-                    className="rounded-lg"
+                    className="rounded-lg h-10"
                   />
                 </div>
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 sm:gap-0">
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                    className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all w-full sm:w-auto"
                   >
                     {isLoading ? 'Creating...' : 'Create Session'}
                   </Button>
@@ -223,7 +224,7 @@ export default function DashboardPage() {
                     type="button"
                     variant="ghost"
                     onClick={() => setShowNewSession(false)}
-                    className="hover:-translate-y-[1px] transition-all"
+                    className="hover:-translate-y-[1px] transition-all w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -234,7 +235,7 @@ export default function DashboardPage() {
         )}
 
         {/* Sessions Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {isLoadingSessions ? (
             <>
               {[1, 2, 3].map((i) => (
@@ -275,25 +276,25 @@ export default function DashboardPage() {
 
               return (
                 <Link key={sessionItem.id} href={`/sessions/${sessionItem.id}`} prefetch={true}>
-                  <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full">
-                    <CardHeader>
-                      <div className="flex items-start justify-between mb-2">
-                        <CardTitle className="text-xl font-semibold">{sessionItem.title}</CardTitle>
+                  <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px] transition-all cursor-pointer h-full flex flex-col">
+                    <CardHeader className="flex-1">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <CardTitle className="text-lg sm:text-xl font-semibold line-clamp-2 flex-1">{sessionItem.title}</CardTitle>
                         {sessionItem.isDemo && (
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs shrink-0">
                             Demo
                           </Badge>
                         )}
                       </div>
                       {sessionItem.contextSummary && (
-                        <CardDescription className="text-base line-clamp-2">
+                        <CardDescription className="text-sm sm:text-base line-clamp-2">
                           {sessionItem.contextSummary}
                         </CardDescription>
                       )}
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="space-y-3">
                       {totalArtifacts > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                           {processCount > 0 && (
                             <Badge variant="secondary" className="text-xs">
                               <GitBranch className="h-3 w-3 mr-1" />
@@ -320,12 +321,12 @@ export default function DashboardPage() {
                           )}
                         </div>
                       )}
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <div className="flex items-center text-muted-foreground">
-                          <Sparkles className="h-4 w-4 mr-2" />
+                          <Sparkles className="h-4 w-4 mr-2 shrink-0" />
                           <span>Session</span>
                         </div>
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground text-right">
                           {new Date(sessionItem.updatedAt).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -341,5 +342,6 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+    </div>
   );
 }

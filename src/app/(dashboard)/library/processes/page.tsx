@@ -83,118 +83,122 @@ export default function ProcessLibraryPage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
-        <div>
-          <Skeleton className="h-10 w-64 mb-2" />
-          <Skeleton className="h-5 w-96" />
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="rounded-2xl">
-              <CardContent className="p-6">
-                <Skeleton className="h-20" />
-              </CardContent>
-            </Card>
-          ))}
+      <div className="w-full h-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
+          <div>
+            <Skeleton className="h-8 sm:h-10 w-48 sm:w-64 mb-2" />
+            <Skeleton className="h-4 sm:h-5 w-72 sm:w-96" />
+          </div>
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="rounded-2xl">
+                <CardContent className="p-6">
+                  <Skeleton className="h-20" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-8 py-8 space-y-8">
-      <PageHeader
-        title="Process Library"
-        description="All mapped processes across your sessions"
-        icon={Network}
-      />
-
-      {processes.length === 0 ? (
-        <EmptyState
+    <div className="w-full h-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 space-y-6 sm:space-y-8">
+        <PageHeader
+          title="Process Library"
+          description="All mapped processes across your sessions"
           icon={Network}
-          title="No processes yet"
-          description="Start a session to map your first process. Processes capture your workflows and identify automation opportunities."
         />
-      ) : (
-        <>
-          {/* Metrics Row */}
-          <div className="grid md:grid-cols-3 gap-6">
-            <MetricCard
-              label="Total Processes"
-              value={totalProcesses}
-              icon={Network}
-              variant="default"
-            />
-            <MetricCard
-              label="Average Steps"
-              value={averageSteps}
-              icon={FileText}
-              variant="primary"
-            />
-            <MetricCard
-              label="Processes This Week"
-              value={processesThisWeek}
-              icon={TrendingUp}
-              variant="success"
-            />
-          </div>
 
-          {/* Processes Table */}
-          <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">All Processes</CardTitle>
-              <CardDescription>
-                {totalProcesses} {totalProcesses === 1 ? 'process' : 'processes'} mapped
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {processes.map((process) => (
-                  <Link
-                    key={process.id}
-                    href={`/projects/${process.projectId}/processes/${process.id}`}
-                    prefetch={true}
-                  >
-                    <div className="p-4 rounded-xl border border-border/60 bg-card hover:bg-muted/30 hover:border-primary/40 hover:-translate-y-[1px] transition-all cursor-pointer">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-semibold text-base">{process.name}</h3>
-                            <Badge variant="outline" className="text-xs">
-                              {process.stepCount} {process.stepCount === 1 ? 'step' : 'steps'}
-                            </Badge>
-                          </div>
-                          {process.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-1">
-                              {process.description}
-                            </p>
-                          )}
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>Project: {process.projectName}</span>
-                            {process.owner && (
-                              <>
-                                <span>•</span>
-                                <span>Owner: {process.owner}</span>
-                              </>
+        {processes.length === 0 ? (
+          <EmptyState
+            icon={Network}
+            title="No processes yet"
+            description="Start a session to map your first process. Processes capture your workflows and identify automation opportunities."
+          />
+        ) : (
+          <>
+            {/* Metrics Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+              <MetricCard
+                label="Total Processes"
+                value={totalProcesses}
+                icon={Network}
+                variant="default"
+              />
+              <MetricCard
+                label="Average Steps"
+                value={averageSteps}
+                icon={FileText}
+                variant="primary"
+              />
+              <MetricCard
+                label="Processes This Week"
+                value={processesThisWeek}
+                icon={TrendingUp}
+                variant="success"
+              />
+            </div>
+
+            {/* Processes Table */}
+            <Card className="rounded-2xl border-border/60 bg-card shadow-soft">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-lg sm:text-xl font-semibold">All Processes</CardTitle>
+                <CardDescription className="text-sm">
+                  {totalProcesses} {totalProcesses === 1 ? 'process' : 'processes'} mapped
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 sm:space-y-3">
+                  {processes.map((process) => (
+                    <Link
+                      key={process.id}
+                      href={`/projects/${process.projectId}/processes/${process.id}`}
+                      prefetch={true}
+                    >
+                      <div className="p-3 sm:p-4 rounded-xl border border-border/60 bg-card hover:bg-muted/30 hover:border-primary/40 hover:-translate-y-[1px] transition-all cursor-pointer">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                          <div className="flex-1 space-y-2 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                              <h3 className="font-semibold text-sm sm:text-base truncate">{process.name}</h3>
+                              <Badge variant="outline" className="text-xs shrink-0">
+                                {process.stepCount} {process.stepCount === 1 ? 'step' : 'steps'}
+                              </Badge>
+                            </div>
+                            {process.description && (
+                              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                                {process.description}
+                              </p>
                             )}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 text-xs text-muted-foreground">
+                              <span className="truncate">Project: {process.projectName}</span>
+                              {process.owner && (
+                                <>
+                                  <span className="hidden sm:inline">•</span>
+                                  <span className="truncate">Owner: {process.owner}</span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                        <div className="text-xs text-muted-foreground text-right">
-                          {new Date(process.createdAt).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric',
-                          })}
+                          <div className="text-xs text-muted-foreground text-left sm:text-right shrink-0">
+                            {new Date(process.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </>
-      )}
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+      </div>
     </div>
   );
 }
