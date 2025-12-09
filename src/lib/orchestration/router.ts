@@ -51,7 +51,7 @@ export async function orchestrate(
 
     if (needsClarification) {
       // Generate clarification question instead of executing actions
-      const sessionContextStr = buildSessionContext(context);
+      const sessionContextStr = await buildSessionContext(context);
       const clarificationMessage = await generateClarificationQuestion(
         userMessage,
         sessionContextStr,
@@ -184,6 +184,12 @@ CHOOSING BETWEEN extract_process AND refine_process:
   * If user says "that process", "the X process", "add to the workflow", etc. → refine_process
   * If confidence is high that this is a refinement, use refine_process even if processName is slightly different
 
+ANSWERING QUESTIONS ABOUT EXISTING PROCESSES:
+- When user asks "how many steps?" or "what processes?" → use respond_only and reference the PROCESSES IN THIS SESSION data
+- You have full context about process names, step counts, and links in the session state
+- Answer questions directly using this information - no need for clarification if the data is available
+- Example: "The employee onboarding process has 6 steps" (from session state data)
+
 Return ONLY valid JSON in this exact format:
 {
   "intent": "intent_type",
@@ -212,7 +218,7 @@ Return ONLY valid JSON in this exact format:
   ];
 
   // Add context about current session state
-  const sessionContext = buildSessionContext(context);
+  const sessionContext = await buildSessionContext(context);
   if (sessionContext) {
     conversationMessages.splice(1, 0, {
       role: 'system' as const,
@@ -245,12 +251,39 @@ Return ONLY valid JSON in this exact format:
 
 /**
  * Build session context summary for LLM
+ * M14: Enhanced with detailed process information for better context awareness
  */
-function buildSessionContext(context: OrchestrationContext): string {
+async function buildSessionContext(context: OrchestrationContext): Promise<string> {
   const parts: string[] = ['CURRENT SESSION STATE:'];
 
+  // Fetch detailed process information if available
   if (context.currentMetadata.processIds && context.currentMetadata.processIds.length > 0) {
-    parts.push(`- ${context.currentMetadata.processIds.length} process(es) created`);
+    try {
+      const processes = await db.process.findMany({
+        where: {
+          id: { in: context.currentMetadata.processIds as string[] },
+        },
+        include: {
+          _count: {
+            select: { steps: true, links: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (processes.length > 0) {
+        parts.push(`\nPROCESSES IN THIS SESSION:`);
+        processes.forEach((proc) => {
+          parts.push(
+            `- "${proc.name}": ${proc._count.steps} steps, ${proc._count.links} links (ID: ${proc.id})`
+          );
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching process details for context:', error);
+      // Fallback to simple count
+      parts.push(`- ${context.currentMetadata.processIds.length} process(es) created`);
+    }
   }
 
   if (context.currentMetadata.opportunityIds && context.currentMetadata.opportunityIds.length > 0) {
