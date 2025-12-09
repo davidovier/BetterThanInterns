@@ -556,11 +556,11 @@ export default function SessionDetailPage({
       </div>
 
       {/* Three-panel layout: Chat (30%) | Graph (45%) | Workspace (25%) */}
-      <div className="flex-1 grid grid-cols-12 gap-0 min-h-0">
+      <div className="flex-1 grid grid-cols-12 gap-0 overflow-hidden">
         {/* Chat Panel - Left (30%) */}
-        <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20">
+        <div className="col-span-4 flex flex-col border-r bg-gradient-to-b from-card to-muted/20 overflow-hidden">
           {/* Chat Header */}
-          <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
+          <div className="p-6 border-b bg-card/80 backdrop-blur-sm shrink-0">
             <h2 className="font-semibold text-base mb-1">Unified Assistant</h2>
             <p className="text-xs text-muted-foreground">
               Map processes, discover opportunities, and generate blueprints
@@ -568,7 +568,7 @@ export default function SessionDetailPage({
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+          <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-muted-foreground text-sm py-12 px-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-100 to-brand-50 flex items-center justify-center mx-auto mb-4 shadow-soft">
@@ -604,7 +604,7 @@ export default function SessionDetailPage({
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t bg-card/80 backdrop-blur-sm">
+          <div className="p-4 border-t bg-card/80 backdrop-blur-sm shrink-0">
             <div className="flex space-x-2">
               <div className="flex-1 relative">
                 <Textarea
@@ -724,9 +724,9 @@ export default function SessionDetailPage({
         </div>
 
         {/* Workspace Panel - Right (25%) */}
-        <div className="col-span-3 flex flex-col border-l bg-gradient-to-b from-card to-muted/20">
+        <div className="col-span-3 flex flex-col border-l bg-gradient-to-b from-card to-muted/20 overflow-hidden">
           {/* Workspace Header */}
-          <div className="p-6 border-b bg-card/80 backdrop-blur-sm">
+          <div className="p-6 border-b bg-card/80 backdrop-blur-sm shrink-0">
             <h2 className="font-semibold text-base flex items-center gap-2 mb-1">
               <div className="rounded-full bg-brand-100 p-1.5">
                 <Target className="h-4 w-4 text-brand-600" />
@@ -739,7 +739,7 @@ export default function SessionDetailPage({
           </div>
 
           {/* Workspace Content - Scrollable */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {/* AI Opportunities */}
             {opportunities.length > 0 && (
               <div>
