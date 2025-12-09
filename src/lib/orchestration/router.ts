@@ -224,7 +224,7 @@ Return ONLY valid JSON in this exact format:
   // Build conversation context
   const conversationMessages = [
     { role: 'system' as const, content: systemPrompt },
-    ...context.conversationHistory.slice(-5), // Last 5 messages for context
+    ...context.conversationHistory.slice(-15), // Last 15 messages for context (fetched from DB)
     { role: 'user' as const, content: userMessage },
   ];
 

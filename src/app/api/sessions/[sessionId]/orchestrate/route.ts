@@ -55,11 +55,28 @@ export async function POST(
     // Build orchestration context
     const currentMetadata = (assistantSession.metadata as any) || {};
 
-    // Get recent conversation history (placeholder - would be stored in DB in production)
+    // Fetch recent conversation history from database (last 20 messages)
+    const recentMessages = await db.sessionMessage.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+      select: {
+        role: true,
+        content: true,
+        createdAt: true,
+      },
+    });
+
+    // Reverse to get chronological order (oldest first)
     const conversationHistory: Array<{
       role: 'user' | 'assistant' | 'system';
       content: string;
-    }> = [];
+    }> = recentMessages
+      .reverse()
+      .map((msg) => ({
+        role: msg.role as 'user' | 'assistant' | 'system',
+        content: msg.content,
+      }));
 
     const context: OrchestrationContext = {
       sessionId: assistantSession.id,
