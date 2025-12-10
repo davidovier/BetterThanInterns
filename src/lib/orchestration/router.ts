@@ -221,8 +221,8 @@ GUIDELINES:
   * Examples: "Actually, add a step for...", "The approval process also includes...", "Let me add more details to that process"
   * You must identify which process to refine using processName matching or targetIds
 - If user mentions "opportunities" or "automation" → scan_opportunities
-  * IMPORTANT: DO NOT include processId in data - we will scan ALL processes in the session automatically
-  * Leave data empty {} for scan_opportunities action
+  * IMPORTANT: DO NOT include processId in data OR targetIds - we will scan ALL processes in the session automatically
+  * Leave both data empty {} and targetIds empty {} (or omit targetIds entirely) for scan_opportunities action
 - If user says "blueprint" or "implementation plan" → generate_blueprint
 - If user mentions "governance" or "AI use case" → create_use_case
 - If user asks for "summary" → generate_summary
@@ -278,7 +278,7 @@ Return ONLY valid JSON in this exact format:
     "useCaseTitle": "optional",
     "useCaseDescription": "optional",
 
-    // FOR SCAN_OPPORTUNITIES: Leave data empty, we scan ALL session processes automatically
+    // FOR SCAN_OPPORTUNITIES: Leave data AND targetIds empty, we scan ALL session processes automatically
     // Example:
     // User: "Scan for opportunities"
     // Response: {
@@ -287,7 +287,8 @@ Return ONLY valid JSON in this exact format:
     //   "intentConfidence": 0.95,
     //   "extractionConfidence": 0.95,
     //   "explanation": "I'll scan all processes in this session for automation opportunities.",
-    //   "data": {}
+    //   "targetIds": {},  // MUST be empty - do NOT include processId
+    //   "data": {}        // MUST be empty - do NOT include processId
     // }
   }
 }`;
@@ -715,16 +716,20 @@ async function handleScanOpportunities(
   let processIdsToScan: string[] = [];
 
   console.log('[SCAN DEBUG] decision.data:', JSON.stringify(decision.data, null, 2));
+  console.log('[SCAN DEBUG] decision.targetIds:', JSON.stringify(decision.targetIds, null, 2));
   console.log('[SCAN DEBUG] context.currentMetadata.processIds:', context.currentMetadata.processIds);
 
+  // Check if a specific process ID is provided (in either data or targetIds)
+  const specificProcessId = decision.data?.processId || decision.targetIds?.processId;
+
   // If specific process ID provided, use only that one
-  if (decision.data?.processId) {
-    console.log('[SCAN DEBUG] Using specific processId from decision.data:', decision.data.processId);
-    processIdsToScan = [decision.data.processId];
+  if (specificProcessId) {
+    console.log('[SCAN DEBUG] Using specific processId:', specificProcessId, 'from', decision.data?.processId ? 'decision.data' : 'decision.targetIds');
+    processIdsToScan = [specificProcessId];
   }
   // Otherwise, scan all processes in the session
   else {
-    console.log('[SCAN DEBUG] No processId in decision.data, scanning all session processes');
+    console.log('[SCAN DEBUG] No processId specified, scanning all session processes');
     // Include newly created processes from this orchestration
     if (result.artifacts.createdProcesses && result.artifacts.createdProcesses.length > 0) {
       processIdsToScan.push(...result.artifacts.createdProcesses.map(p => p.id));
