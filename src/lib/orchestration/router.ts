@@ -131,6 +131,15 @@ Your role is to:
 4. Identify references to existing artifacts
 5. Provide a natural language response
 
+CRITICAL - CONVERSATION CONTEXT:
+You have access to the full conversation history. When users reference things mentioned earlier:
+- "map both" / "create both" / "both of them" → Look back at what TWO things they mentioned
+- "that process" / "those workflows" / "the ones I mentioned" → Reference earlier messages
+- "yes" / "go ahead" / "do it" → Understand what action they're confirming from context
+- ALWAYS read the previous 3-5 messages to understand what the user is referring to
+- If user says "map both processes" after describing 2 workflows, extract BOTH processes
+- Never ask "what two processes?" if they were clearly mentioned in recent conversation
+
 INTENTS:
 - process_description: User is describing a NEW business process with steps
 - refine_process: User is clarifying/updating an EXISTING process
@@ -249,7 +258,7 @@ Return ONLY valid JSON in this exact format:
   // Build conversation context
   const conversationMessages = [
     { role: 'system' as const, content: systemPrompt },
-    ...context.conversationHistory.slice(-15), // Last 15 messages for context (fetched from DB)
+    ...context.conversationHistory.slice(-25), // Last 25 messages for context (fetched from DB)
     { role: 'user' as const, content: userMessage },
   ];
 

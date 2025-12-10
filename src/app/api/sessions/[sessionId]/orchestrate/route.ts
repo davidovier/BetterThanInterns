@@ -55,11 +55,11 @@ export async function POST(
     // Build orchestration context
     const currentMetadata = (assistantSession.metadata as any) || {};
 
-    // Fetch recent conversation history from database (last 20 messages)
+    // Fetch recent conversation history from database (last 30 messages)
     const recentMessages = await db.sessionMessage.findMany({
       where: { sessionId },
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: 30,
       select: {
         role: true,
         content: true,
