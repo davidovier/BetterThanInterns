@@ -397,7 +397,7 @@ export default function SessionDetailPage({
     setInputMessage('');
     setIsLoading(true);
 
-    // Optimistic update
+    // Optimistic update - only add user message, typing indicator will show for assistant
     const tempUserMsg: ChatMessage = {
       id: 'temp-user-' + Date.now(),
       role: 'user',
@@ -405,14 +405,7 @@ export default function SessionDetailPage({
       createdAt: new Date(),
     };
 
-    const tempAssistantMsg: ChatMessage = {
-      id: 'temp-assistant-' + Date.now(),
-      role: 'assistant',
-      content: '...',
-      createdAt: new Date(),
-    };
-
-    setMessages((prev) => [...prev, tempUserMsg, tempAssistantMsg]);
+    setMessages((prev) => [...prev, tempUserMsg]);
 
     try {
       // Call orchestration endpoint
