@@ -5,7 +5,6 @@ import ReactFlow, {
   Node,
   Edge,
   Background,
-  Controls,
   MiniMap,
   useNodesState,
   useEdgesState,
@@ -776,7 +775,6 @@ export default function SessionDetailPage({
                 }}
               >
                 <Background />
-                <Controls />
                 <MiniMap
                   nodeColor={(node) => {
                     // Color nodes in minimap based on border color
