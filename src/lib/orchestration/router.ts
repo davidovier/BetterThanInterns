@@ -195,6 +195,10 @@ IMPORTANT: These are independent scores!
 - User might clearly want to create a process (high intent) but only mention 1 step (low extraction)
 - User might vaguely say "do something" (low intent) but describe 5 detailed steps (high extraction)
 
+SPECIAL RULE FOR MULTI-PROCESS EXTRACTION:
+When user clearly describes MULTIPLE processes with steps, set extractionConfidence >= 0.7 even if details are minimal.
+The goal is to capture all processes mentioned, not to get perfect detail on each one.
+
 CONTEXT-AWARE BEHAVIOR:
 - If user says "that process" / "the last one" / etc., use reference_existing_artifact intent
 - Match user references to these existing artifacts:
@@ -205,11 +209,14 @@ CONTEXT-AWARE BEHAVIOR:
 
 GUIDELINES:
 - If user describes a NEW multi-step process with clear steps → use extract_process
-- **MULTI-PROCESS DETECTION**: If user describes MULTIPLE DISTINCT PROCESSES in one message → use extract_process with the "processes" array
+- **MULTI-PROCESS DETECTION - CRITICAL**: If user describes MULTIPLE DISTINCT PROCESSES in one message → ALWAYS use extract_process with the "processes" array
   * Example: "We onboard employees and we also handle customer onboarding" = 2 processes
   * Example: "Our sales process involves X, Y, Z and our support process has A, B, C" = 2 processes
+  * Example: "Our inventory management: A, B, C. Our order fulfillment: X, Y, Z. Our quality control: M, N, O" = 3 processes
   * Each process MUST have at least 2 steps
   * Use the "processes" array in data (not single "processName"/"steps")
+  * DO NOT ask "which process?" - extract ALL of them immediately
+  * High extraction confidence is NOT required when multiple processes are clearly mentioned with steps
 - If user is adding to/clarifying/updating an EXISTING process → use refine_process with the intent refine_process
   * Examples: "Actually, add a step for...", "The approval process also includes...", "Let me add more details to that process"
   * You must identify which process to refine using processName matching or targetIds
