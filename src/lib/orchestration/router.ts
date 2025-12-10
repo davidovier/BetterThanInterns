@@ -714,12 +714,17 @@ async function handleScanOpportunities(
   // Collect all process IDs to scan
   let processIdsToScan: string[] = [];
 
+  console.log('[SCAN DEBUG] decision.data:', JSON.stringify(decision.data, null, 2));
+  console.log('[SCAN DEBUG] context.currentMetadata.processIds:', context.currentMetadata.processIds);
+
   // If specific process ID provided, use only that one
   if (decision.data?.processId) {
+    console.log('[SCAN DEBUG] Using specific processId from decision.data:', decision.data.processId);
     processIdsToScan = [decision.data.processId];
   }
   // Otherwise, scan all processes in the session
   else {
+    console.log('[SCAN DEBUG] No processId in decision.data, scanning all session processes');
     // Include newly created processes from this orchestration
     if (result.artifacts.createdProcesses && result.artifacts.createdProcesses.length > 0) {
       processIdsToScan.push(...result.artifacts.createdProcesses.map(p => p.id));
@@ -736,6 +741,8 @@ async function handleScanOpportunities(
       });
     }
   }
+
+  console.log('[SCAN DEBUG] Process IDs to scan:', processIdsToScan);
 
   if (processIdsToScan.length === 0) {
     throw new Error('No processes available to scan for opportunities');
