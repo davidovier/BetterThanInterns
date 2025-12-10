@@ -5,7 +5,6 @@ import ReactFlow, {
   Node,
   Edge,
   Background,
-  MiniMap,
   useNodesState,
   useEdgesState,
   NodeMouseHandler,
@@ -784,24 +783,6 @@ export default function SessionDetailPage({
                 }}
               >
                 <Background />
-                <MiniMap
-                  nodeColor={(node) => {
-                    // Color nodes in minimap based on border color
-                    const style = node.style as any;
-                    if (style?.borderColor === '#ef4444') return '#ef4444'; // High impact - red
-                    if (style?.borderColor === '#ea580c') return '#ea580c'; // Medium impact - orange
-                    if (style?.borderColor === '#3b82f6') return '#3b82f6'; // Low impact - blue
-                    return '#9333ea'; // Default - purple
-                  }}
-                  maskColor="rgba(0, 0, 0, 0.1)"
-                  pannable
-                  zoomable
-                  style={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    border: '2px solid rgba(147, 51, 234, 0.2)',
-                    borderRadius: '12px',
-                  }}
-                />
               </ReactFlow>
 
               {/* Process info overlay */}
