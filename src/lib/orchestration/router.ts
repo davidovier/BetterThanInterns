@@ -961,11 +961,15 @@ function shouldRequestClarification(
   }
 
   // Process extraction with missing critical data (safety check)
-  if (
-    decision.intent === 'process_description' &&
-    (!decision.data?.processName || !decision.data?.steps || decision.data.steps.length < 2)
-  ) {
-    return { reason: 'low_extraction_confidence' };
+  // M16: Support both single process (processName/steps) and multi-process (processes array)
+  if (decision.intent === 'process_description') {
+    const hasMultiProcess = decision.data?.processes && decision.data.processes.length > 0;
+    const hasSingleProcess = decision.data?.processName && decision.data?.steps && decision.data.steps.length >= 2;
+
+    // Must have either multi-process or single-process format
+    if (!hasMultiProcess && !hasSingleProcess) {
+      return { reason: 'low_extraction_confidence' };
+    }
   }
 
   return null;
