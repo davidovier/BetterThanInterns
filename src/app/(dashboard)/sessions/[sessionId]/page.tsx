@@ -75,6 +75,10 @@ type Opportunity = {
     id: string;
     title: string;
   } | null;
+  process?: {
+    id: string;
+    name: string;
+  } | null;
 };
 
 type Blueprint = {
@@ -129,6 +133,9 @@ export default function SessionDetailPage({
     blueprints: false,
     governance: false,
   });
+
+  // Track which process groups within opportunities are collapsed
+  const [collapsedOpportunityProcesses, setCollapsedOpportunityProcesses] = useState<Record<string, boolean>>({});
 
   const selectedProcess = processes[selectedProcessIndex] || null;
 
@@ -225,10 +232,34 @@ export default function SessionDetailPage({
     return items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }, [processes, opportunities, blueprints, aiUseCases]);
 
+  // Group opportunities by process
+  const opportunitiesByProcess = useMemo(() => {
+    const grouped = new Map<string, { processName: string; opportunities: Opportunity[] }>();
+
+    opportunities.forEach((opp) => {
+      const processId = opp.processId || 'unknown';
+      const processName = opp.process?.name || 'Unknown Process';
+
+      if (!grouped.has(processId)) {
+        grouped.set(processId, { processName, opportunities: [] });
+      }
+      grouped.get(processId)!.opportunities.push(opp);
+    });
+
+    return grouped;
+  }, [opportunities]);
+
   const toggleCategory = (category: string) => {
     setCollapsedCategories((prev) => ({
       ...prev,
       [category]: !prev[category],
+    }));
+  };
+
+  const toggleOpportunityProcess = (processId: string) => {
+    setCollapsedOpportunityProcesses((prev) => ({
+      ...prev,
+      [processId]: !prev[processId],
     }));
   };
 
@@ -901,7 +932,7 @@ export default function SessionDetailPage({
                   </div>
                 )}
 
-                {/* Opportunities Section */}
+                {/* Opportunities Section - Grouped by Process */}
                 {opportunities.length > 0 && (
                   <div className="border rounded-lg bg-card overflow-hidden">
                     <button
@@ -922,54 +953,76 @@ export default function SessionDetailPage({
                       )}
                     </button>
                     {!collapsedCategories.opportunities && (
-                      <div className="px-3 pb-3 space-y-2">
-                        {timelineItems
-                          .filter((item) => item.type === 'opportunity')
-                          .map((item) => {
-                            const opp = item.data as Opportunity;
-                            return (
-                              <div
-                                key={item.id}
-                                className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-amber-200"
-                                onClick={() => {
-                                  if (opp.stepId) {
-                                    setHighlightedStepId(opp.stepId);
-                                  }
-                                }}
-                                onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
-                                onMouseLeave={() => setHighlightedStepId(null)}
-                              >
-                                <div className="flex-shrink-0 w-1 h-full bg-amber-600 rounded-full mt-1" />
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between gap-2 mb-1">
-                                    <h4 className="font-medium text-xs leading-tight flex-1">
-                                      {item.title}
-                                    </h4>
-                                    <Badge
-                                      variant="outline"
-                                      className={`text-xs shrink-0 ${
-                                        opp.impactLevel === 'high'
-                                          ? 'bg-red-50 text-red-700 border-red-200'
-                                          : opp.impactLevel === 'medium'
-                                          ? 'bg-orange-50 text-orange-700 border-orange-200'
-                                          : 'bg-blue-50 text-blue-700 border-blue-200'
-                                      }`}
-                                    >
-                                      {opp.impactLevel}
-                                    </Badge>
-                                  </div>
-                                  {opp.step && (
-                                    <div className="text-xs text-muted-foreground mb-1">
-                                      → {opp.step.title}
-                                    </div>
-                                  )}
-                                  <p className="text-xs text-muted-foreground line-clamp-2">
-                                    {opp.rationaleText}
-                                  </p>
-                                </div>
+                      <div className="px-3 pb-3 space-y-3">
+                        {Array.from(opportunitiesByProcess.entries()).map(([processId, { processName, opportunities: processOpps }]) => (
+                          <div key={processId} className="border rounded-lg bg-muted/20">
+                            {/* Process Group Header */}
+                            <button
+                              onClick={() => toggleOpportunityProcess(processId)}
+                              className="w-full flex items-center justify-between p-2 hover:bg-muted/40 transition-colors rounded-t-lg"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-foreground">{processName}</span>
+                                <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                  {processOpps.length}
+                                </Badge>
                               </div>
-                            );
-                          })}
+                              {collapsedOpportunityProcesses[processId] ? (
+                                <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                              )}
+                            </button>
+
+                            {/* Opportunities in this Process */}
+                            {!collapsedOpportunityProcesses[processId] && (
+                              <div className="space-y-2 p-2">
+                                {processOpps.map((opp) => (
+                                  <div
+                                    key={opp.id}
+                                    className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/30 transition-colors cursor-pointer border border-transparent hover:border-amber-200 bg-card"
+                                    onClick={() => {
+                                      if (opp.stepId) {
+                                        setHighlightedStepId(opp.stepId);
+                                      }
+                                    }}
+                                    onMouseEnter={() => opp.stepId && setHighlightedStepId(opp.stepId)}
+                                    onMouseLeave={() => setHighlightedStepId(null)}
+                                  >
+                                    <div className="flex-shrink-0 w-1 h-full bg-amber-600 rounded-full mt-1" />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start justify-between gap-2 mb-1">
+                                        <h4 className="font-medium text-xs leading-tight flex-1">
+                                          {opp.title}
+                                        </h4>
+                                        <Badge
+                                          variant="outline"
+                                          className={`text-xs shrink-0 ${
+                                            opp.impactLevel === 'high'
+                                              ? 'bg-red-50 text-red-700 border-red-200'
+                                              : opp.impactLevel === 'medium'
+                                              ? 'bg-orange-50 text-orange-700 border-orange-200'
+                                              : 'bg-blue-50 text-blue-700 border-blue-200'
+                                          }`}
+                                        >
+                                          {opp.impactLevel}
+                                        </Badge>
+                                      </div>
+                                      {opp.step && (
+                                        <div className="text-xs text-muted-foreground mb-1">
+                                          → {opp.step.title}
+                                        </div>
+                                      )}
+                                      <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {opp.rationaleText}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>

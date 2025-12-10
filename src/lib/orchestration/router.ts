@@ -697,32 +697,51 @@ async function handleScanOpportunities(
   context: OrchestrationContext,
   result: OrchestrationResult
 ): Promise<void> {
-  // Determine which process to scan
-  let processId = decision.data?.processId;
+  // Collect all process IDs to scan
+  let processIdsToScan: string[] = [];
 
-  // If no specific process ID, use the most recently created one
-  if (!processId && result.artifacts.createdProcesses && result.artifacts.createdProcesses.length > 0) {
-    processId = result.artifacts.createdProcesses[result.artifacts.createdProcesses.length - 1].id;
+  // If specific process ID provided, use only that one
+  if (decision.data?.processId) {
+    processIdsToScan = [decision.data.processId];
+  }
+  // Otherwise, scan all processes in the session
+  else {
+    // Include newly created processes from this orchestration
+    if (result.artifacts.createdProcesses && result.artifacts.createdProcesses.length > 0) {
+      processIdsToScan.push(...result.artifacts.createdProcesses.map(p => p.id));
+    }
+
+    // Include existing processes from context metadata
+    if (context.currentMetadata.processIds && context.currentMetadata.processIds.length > 0) {
+      const existingIds = context.currentMetadata.processIds as string[];
+      // Avoid duplicates
+      existingIds.forEach(id => {
+        if (!processIdsToScan.includes(id)) {
+          processIdsToScan.push(id);
+        }
+      });
+    }
   }
 
-  // If still no process ID, use from context metadata
-  if (!processId && context.currentMetadata.processIds && context.currentMetadata.processIds.length > 0) {
-    const processIds = context.currentMetadata.processIds as string[];
-    processId = processIds[processIds.length - 1];
+  if (processIdsToScan.length === 0) {
+    throw new Error('No processes available to scan for opportunities');
   }
 
-  if (!processId) {
-    throw new Error('No process available to scan for opportunities');
-  }
-
-  const opportunityIds = await scanOpportunities({
-    processId,
-    workspaceId: context.workspaceId,
-  });
+  // Scan all processes in parallel
+  const allOpportunityIds: string[] = [];
+  await Promise.all(
+    processIdsToScan.map(async (processId) => {
+      const opportunityIds = await scanOpportunities({
+        processId,
+        workspaceId: context.workspaceId,
+      });
+      allOpportunityIds.push(...opportunityIds);
+    })
+  );
 
   // Fetch opportunity details for result
   const opportunities = await db.opportunity.findMany({
-    where: { id: { in: opportunityIds } },
+    where: { id: { in: allOpportunityIds } },
     select: { id: true, title: true },
   });
 
@@ -733,7 +752,7 @@ async function handleScanOpportunities(
 
   result.updatedMetadata.opportunityIds = [
     ...(result.updatedMetadata.opportunityIds || []),
-    ...opportunityIds,
+    ...allOpportunityIds,
   ];
 }
 
