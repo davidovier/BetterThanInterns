@@ -221,6 +221,8 @@ GUIDELINES:
   * Examples: "Actually, add a step for...", "The approval process also includes...", "Let me add more details to that process"
   * You must identify which process to refine using processName matching or targetIds
 - If user mentions "opportunities" or "automation" → scan_opportunities
+  * IMPORTANT: DO NOT include processId in data - we will scan ALL processes in the session automatically
+  * Leave data empty {} for scan_opportunities action
 - If user says "blueprint" or "implementation plan" → generate_blueprint
 - If user mentions "governance" or "AI use case" → create_use_case
 - If user asks for "summary" → generate_summary
@@ -274,7 +276,19 @@ Return ONLY valid JSON in this exact format:
     ],
 
     "useCaseTitle": "optional",
-    "useCaseDescription": "optional"
+    "useCaseDescription": "optional",
+
+    // FOR SCAN_OPPORTUNITIES: Leave data empty, we scan ALL session processes automatically
+    // Example:
+    // User: "Scan for opportunities"
+    // Response: {
+    //   "intent": "opportunity_request",
+    //   "actions": ["scan_opportunities"],
+    //   "intentConfidence": 0.95,
+    //   "extractionConfidence": 0.95,
+    //   "explanation": "I'll scan all processes in this session for automation opportunities.",
+    //   "data": {}
+    // }
   }
 }`;
 
