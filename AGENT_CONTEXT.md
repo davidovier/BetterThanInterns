@@ -131,20 +131,35 @@
 - **Toasts**: Bottom-right notifications
 - **Dropdowns**: Radix UI menus with icons
 
+## Core Value Proposition
+
+**🎯 THE KILLER FEATURE**: Real-time visual process mapping through conversation
+
+Users describe their workflows in plain English, and the application **instantly visualizes** them as interactive flowcharts. This is the primary differentiator and the "aha moment" that makes Better Than Interns unique.
+
+**Critical Architecture Requirement**: The session workspace MUST display:
+1. **Chat interface** - where users describe processes
+2. **Live process graph** - React Flow visualization that updates in real-time
+3. **Artifact sidebar** - list of all created artifacts
+
+The graph is NOT optional - it's the core product experience.
+
 ## Key Features
 
-### 1. Conversational Process Mapping
+### 1. Conversational Process Mapping ⭐ CORE FEATURE
 - Users describe processes in natural language
 - AI assistant (GPT-4) extracts structured information
-- Real-time workflow graph generation
+- **Real-time workflow graph generation** - graph builds as user types
 - Context-aware conversation flow
+- Users can see their messy processes visualized clearly
 
-### 2. Visual Workflow Editor
-- Interactive React Flow graph
-- Drag-and-drop step reordering
-- Manual step editing with details dialog
-- Automatic layout and positioning
+### 2. Visual Workflow Editor ⭐ CORE FEATURE
+- Interactive React Flow graph in center of workspace
+- Click steps to view/edit details
+- Automatic layout using dagre algorithm
+- Real-time updates as AI processes messages
 - Zoom, pan, and fit-to-view controls
+- Visual representation is the primary UI element
 
 ### 3. Session Management
 - Create, read, update, delete sessions

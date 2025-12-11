@@ -3,7 +3,10 @@
 import { useState, useEffect } from 'react';
 import { SessionChatPane, ChatMessage } from './SessionChatPane';
 import { SessionArtifactPane } from './SessionArtifactPane';
+import { SessionGraphPane } from './SessionGraphPane';
 import { SessionArtifacts } from '@/types/artifacts';
+import { ProcessStep } from '@/types/process';
+import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { useToast } from '@/components/ui/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -29,6 +32,9 @@ export function UnifiedSessionWorkspace({
     aiUseCases: [],
   });
   const [highlightedArtifactId, setHighlightedArtifactId] = useState<string | null>(null);
+  const [selectedProcessIndex, setSelectedProcessIndex] = useState(0);
+  const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
+  const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
 
   // Load initial messages and artifacts
   useEffect(() => {
@@ -80,6 +86,71 @@ export function UnifiedSessionWorkspace({
       toast({
         title: 'Error',
         description: 'Failed to load artifacts',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleStepClick = async (stepId: string, processId: string) => {
+    try {
+      const response = await fetch(`/api/processes/${processId}?includeGraph=true`);
+      if (!response.ok) throw new Error('Failed to load step');
+
+      const result = await response.json();
+      const processData = result.ok && result.data ? result.data.process : result.process;
+
+      const step = processData.steps.find((s: any) => s.id === stepId);
+      if (step) {
+        setSelectedStep({
+          id: step.id,
+          title: step.title,
+          description: step.description || undefined,
+          owner: step.owner || undefined,
+          inputs: step.inputs || [],
+          outputs: step.outputs || [],
+          frequency: step.frequency || undefined,
+          duration: step.duration || undefined,
+          positionX: step.positionX,
+          positionY: step.positionY,
+        });
+        setIsStepDialogOpen(true);
+      }
+    } catch (error) {
+      console.error('Error loading step:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load step details',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleStepUpdate = async (stepId: string, updates: any) => {
+    try {
+      const processId = artifacts.processes[selectedProcessIndex]?.id;
+      if (!processId) return;
+
+      const response = await fetch(`/api/processes/${processId}/steps/${stepId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) throw new Error('Failed to update step');
+
+      toast({
+        title: 'Success',
+        description: 'Step updated successfully',
+      });
+
+      // Reload artifacts to get updated data
+      await loadArtifacts();
+      setIsStepDialogOpen(false);
+    } catch (error) {
+      console.error('Error updating step:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update step',
         variant: 'destructive',
       });
     }
@@ -182,10 +253,10 @@ export function UnifiedSessionWorkspace({
         </div>
       </div>
 
-      {/* Main Workspace - 60/40 Split */}
+      {/* Main Workspace - Three-panel layout: Chat (30%) | Graph (45%) | Artifacts (25%) */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Chat Pane - 60% */}
-        <div className="w-[60%] border-r border-border">
+        {/* Chat Pane - 30% */}
+        <div className="w-[30%] border-r border-border">
           <SessionChatPane
             messages={messages}
             inputMessage={inputMessage}
@@ -195,14 +266,36 @@ export function UnifiedSessionWorkspace({
           />
         </div>
 
-        {/* Artifact Pane - 40% */}
-        <div className="w-[40%]">
+        {/* Graph Pane - 45% */}
+        <div className="w-[45%] border-r border-border">
+          <SessionGraphPane
+            processes={artifacts.processes}
+            opportunities={artifacts.opportunities}
+            selectedProcessIndex={selectedProcessIndex}
+            highlightedStepId={highlightedArtifactId}
+            onProcessSelect={setSelectedProcessIndex}
+            onStepClick={handleStepClick}
+          />
+        </div>
+
+        {/* Artifact Pane - 25% */}
+        <div className="w-[25%]">
           <SessionArtifactPane
             artifacts={artifacts}
             highlightedArtifactId={highlightedArtifactId}
           />
         </div>
       </div>
+
+      {/* Step Details Dialog */}
+      {selectedStep && (
+        <StepDetailsDialog
+          step={selectedStep}
+          isOpen={isStepDialogOpen}
+          onClose={() => setIsStepDialogOpen(false)}
+          onUpdate={handleStepUpdate}
+        />
+      )}
     </div>
   );
 }
