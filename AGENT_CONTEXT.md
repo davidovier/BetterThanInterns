@@ -4,13 +4,14 @@
 
 **Better Than Interns** is a Next.js 14+ web application that helps teams map, analyze, and optimize business processes through conversational AI. Users describe their workflows in natural language, and the AI assistant extracts structured process information while generating real-time visual workflow graphs.
 
-**Current State**: The application has recently been simplified to focus on a sessions-first experience, removing unnecessary complexity and consolidating around core functionality. The session workspace has been rebuilt (M15.2) with an artifact-stream architecture, replacing the graph-first UI with a clean 60/40 split layout.
+**Current State**: The application has recently been simplified to focus on a sessions-first experience, removing unnecessary complexity and consolidating around core functionality. The session workspace has been rebuilt (M15.2 → M15.3) with a unified three-panel layout featuring chat, live process graph visualization, and artifact stream.
 
 ## Architecture & Tech Stack
 
 ### Frontend
 - **Next.js 14+** with App Router and TypeScript
 - **React 18** with Server and Client Components
+- **React Flow** for interactive process graph visualization
 - **Shadcn/ui + Radix UI** for accessible component primitives
 - **Tailwind CSS** with custom design system
 - **Framer Motion** for animations and transitions
@@ -43,9 +44,9 @@
 │   ├── ui/                  # Shadcn/ui primitives
 │   ├── layout/              # AppShell, navigation
 │   ├── workspace/           # Workspace context
-│   ├── session/             # SessionChatPane, SessionArtifactPane, UnifiedSessionWorkspace
+│   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace
 │   ├── artifacts/           # ProcessCard, OpportunityCard, BlueprintCard, GovernanceCard
-│   └── process/             # Legacy process components
+│   └── process/             # step-details-dialog, other process components
 ├── lib/
 │   ├── auth.ts             # NextAuth configuration
 │   ├── prisma.ts           # Prisma client
@@ -188,19 +189,30 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M15.2 - Rebuild unified session workspace UI**
+1. **feat: M15.3 - Restore React Flow process graph visualization**
+   - **CRITICAL**: Restored the core value proposition removed in M15.2
+   - Created SessionGraphPane component with React Flow integration
+   - Updated UnifiedSessionWorkspace to three-panel layout: Chat (30%) | Graph (45%) | Artifacts (25%)
+   - Restored step editing functionality via StepDetailsDialog
+   - Integrated opportunity heatmap coloring (high/medium/low impact) on graph nodes
+   - Added process tabs for multi-process sessions
+   - Restored click-to-edit step functionality
+   - Graph updates in real-time as conversation progresses
+   - Result: Core product experience restored while keeping M15.2 improvements
+
+2. **feat: M15.2 - Rebuild unified session workspace UI**
    - Replaced graph-first session page with artifact-stream workspace
    - Created 8 new components (artifact cards + session components)
    - Reduced session page from 1,154 lines to 81 lines (-93%)
    - Implemented 60/40 split layout (chat + artifacts)
    - Added Framer Motion animations for new artifacts
    - Auto-scroll and highlight for newly created artifacts
-   - Removed ReactFlow graph editor and step editing modals
+   - ~~Removed ReactFlow graph editor and step editing modals~~ (MISTAKE - restored in M15.3)
    - Added date-fns for relative timestamps
    - All artifacts now load via single `/api/sessions/[sessionId]/artifacts` call
    - M10 design system compliant with consistent spacing and colors
 
-2. **docs: Consolidate documentation and remove outdated files**
+3. **docs: Consolidate documentation and remove outdated files**
    - Removed 25 outdated markdown files
    - Created comprehensive AGENT_CONTEXT.md (32KB)
    - Updated README.md to be concise and user-facing
@@ -402,25 +414,28 @@ const gradients = [
 
 ---
 
-### 6. Session Detail Page (`/sessions/[sessionId]`) ⭐ Core Feature (M15.2 - Rebuilt)
+### 6. Session Detail Page (`/sessions/[sessionId]`) ⭐ Core Feature (M15.3 - Graph Restored)
 **File**: `/src/app/(dashboard)/sessions/[sessionId]/page.tsx` (81 lines)
 
-**Purpose**: Unified artifact-stream workspace with conversational AI
+**Purpose**: Unified workspace with conversational AI, live process graph, and artifact stream
 
 **Architecture**: Simple loading/error wrapper that renders `UnifiedSessionWorkspace`
 
 **Features**:
 
-**60/40 Split Layout**:
-- Left (60%): Chat pane with conversation history
-- Right (40%): Artifact stream with categorized cards
-- Both panes scroll independently
+**Three-Panel Layout (Chat | Graph | Artifacts)**:
+- Left (30%): Chat pane with conversation history
+- Center (45%): **React Flow process graph** - THE CORE FEATURE
+- Right (25%): Artifact stream with categorized cards
+- All panes scroll independently
 - No resizing - fixed proportions for optimal UX
 
 **Components Used**:
-- `UnifiedSessionWorkspace` - Main orchestrator component
-- `SessionChatPane` - Left panel (chat messages + input)
-- `SessionArtifactPane` - Right panel (artifact cards)
+- `UnifiedSessionWorkspace` - Main orchestrator component (273 lines)
+- `SessionChatPane` - Left panel (chat messages + input, 148 lines)
+- `SessionGraphPane` - **Center panel (React Flow graph, 220 lines)**
+- `SessionArtifactPane` - Right panel (artifact cards, 150 lines)
+- `StepDetailsDialog` - Edit step details on click
 - `ProcessCard` - Process artifacts with mini-map preview
 - `OpportunityCard` - Opportunity artifacts with impact/effort scores
 - `BlueprintCard` - Blueprint artifacts (placeholder for future markdown)
@@ -433,6 +448,21 @@ const gradients = [
 - Auto-resizing textarea (80px-200px)
 - Enter to send, Shift+Enter for new line
 - Loading states during AI processing
+
+**Graph Pane Features** (THE CORE VALUE PROPOSITION):
+- Real-time React Flow visualization of process steps
+- Nodes display step title and owner
+- Edges show workflow connections (animated)
+- **Opportunity heatmap**: Steps colored by impact level (high=red, medium=amber, low=blue)
+- Click steps to open StepDetailsDialog for editing
+- Process tabs for multi-process sessions
+- Process info overlay (name, step count)
+- Heatmap legend (when opportunities exist)
+- Empty state with guidance when no processes exist
+- Auto-layout with fitView
+- Zoom/pan controls via React Flow Controls
+- MiniMap for navigation
+- Graph updates automatically when artifacts reload
 
 **Artifact Pane Features**:
 - Vertical stream organized by category:
@@ -461,9 +491,11 @@ const gradients = [
 - POST `/api/sessions/[sessionId]/orchestrate` (send message, get AI response + artifacts)
 
 **Key Files**:
-- `/src/components/session/UnifiedSessionWorkspace.tsx` (194 lines)
-- `/src/components/session/SessionChatPane.tsx` (148 lines)
-- `/src/components/session/SessionArtifactPane.tsx` (150 lines)
+- `/src/components/session/UnifiedSessionWorkspace.tsx` (273 lines) - orchestrates all three panels
+- `/src/components/session/SessionChatPane.tsx` (148 lines) - chat interface
+- `/src/components/session/SessionGraphPane.tsx` (220 lines) - **React Flow graph visualization**
+- `/src/components/session/SessionArtifactPane.tsx` (150 lines) - artifact stream
+- `/src/components/process/step-details-dialog.tsx` - edit step on click
 - `/src/components/artifacts/ProcessCard.tsx` (220 lines)
 - `/src/components/artifacts/OpportunityCard.tsx` (232 lines)
 - `/src/components/artifacts/BlueprintCard.tsx` (124 lines)
