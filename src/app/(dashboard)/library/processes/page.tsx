@@ -155,7 +155,7 @@ export default function ProcessLibraryPage() {
                   {processes.map((process) => (
                     <Link
                       key={process.id}
-                      href={`/projects/${process.projectId}/processes/${process.id}`}
+                      href={`/processes/${process.id}`}
                       prefetch={true}
                     >
                       <div className="p-3 sm:p-4 rounded-xl border border-border/60 bg-card hover:bg-muted/30 hover:border-primary/40 hover:-translate-y-[1px] transition-all cursor-pointer">
