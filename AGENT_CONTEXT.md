@@ -4,19 +4,18 @@
 
 **Better Than Interns** is a Next.js 14+ web application that helps teams map, analyze, and optimize business processes through conversational AI. Users describe their workflows in natural language, and the AI assistant extracts structured process information while generating real-time visual workflow graphs.
 
-**Current State**: The application has recently been simplified to focus on a sessions-first experience, removing unnecessary complexity and consolidating around core functionality.
+**Current State**: The application has recently been simplified to focus on a sessions-first experience, removing unnecessary complexity and consolidating around core functionality. The session workspace has been rebuilt (M15.2) with an artifact-stream architecture, replacing the graph-first UI with a clean 60/40 split layout.
 
 ## Architecture & Tech Stack
 
 ### Frontend
 - **Next.js 14+** with App Router and TypeScript
 - **React 18** with Server and Client Components
-- **React Flow** for interactive process graph visualization
-- **@dnd-kit** for drag-and-drop step reordering
 - **Shadcn/ui + Radix UI** for accessible component primitives
 - **Tailwind CSS** with custom design system
-- **Framer Motion** for animations
+- **Framer Motion** for animations and transitions
 - **NextAuth** for authentication
+- **date-fns** for relative timestamp formatting
 
 ### Backend
 - **Next.js API Routes** (App Router)
@@ -44,13 +43,15 @@
 │   ├── ui/                  # Shadcn/ui primitives
 │   ├── layout/              # AppShell, navigation
 │   ├── workspace/           # Workspace context
-│   ├── session/             # Chat interface, graph view
-│   └── process/             # Process components
+│   ├── session/             # SessionChatPane, SessionArtifactPane, UnifiedSessionWorkspace
+│   ├── artifacts/           # ProcessCard, OpportunityCard, BlueprintCard, GovernanceCard
+│   └── process/             # Legacy process components
 ├── lib/
 │   ├── auth.ts             # NextAuth configuration
 │   ├── prisma.ts           # Prisma client
 │   └── openai.ts           # OpenAI client
-└── types/                   # TypeScript type definitions
+└── types/
+    └── artifacts.ts         # Artifact type definitions
 
 /prisma
 ├── schema.prisma           # Database schema
@@ -172,7 +173,25 @@
 
 ### Latest Commits (Most Recent First)
 
-1. **refactor: Major codebase cleanup and architecture consolidation**
+1. **feat: M15.2 - Rebuild unified session workspace UI**
+   - Replaced graph-first session page with artifact-stream workspace
+   - Created 8 new components (artifact cards + session components)
+   - Reduced session page from 1,154 lines to 81 lines (-93%)
+   - Implemented 60/40 split layout (chat + artifacts)
+   - Added Framer Motion animations for new artifacts
+   - Auto-scroll and highlight for newly created artifacts
+   - Removed ReactFlow graph editor and step editing modals
+   - Added date-fns for relative timestamps
+   - All artifacts now load via single `/api/sessions/[sessionId]/artifacts` call
+   - M10 design system compliant with consistent spacing and colors
+
+2. **docs: Consolidate documentation and remove outdated files**
+   - Removed 25 outdated markdown files
+   - Created comprehensive AGENT_CONTEXT.md (32KB)
+   - Updated README.md to be concise and user-facing
+   - Net documentation cleanup: -8,000 lines outdated, +1,500 lines current
+
+3. **refactor: Major codebase cleanup and architecture consolidation**
    - Removed 9 dashboard pages
    - Removed 3 API route groups
    - Removed 2 component directories
@@ -181,19 +200,13 @@
    - Updated auth redirects from `/dashboard` to `/sessions`
    - Net removal: ~5,100 lines of code
 
-2. **fix: Pass sessionId when scanning for opportunities**
+4. **fix: Pass sessionId when scanning for opportunities**
    - Fixed multi-process opportunity scanning
    - Ensured sessionId is included in scan requests
 
-3. **fix: Update session metadata when scanning opportunities via direct API**
+5. **fix: Update session metadata when scanning opportunities via direct API**
    - Updated artifact counts after scanning
    - Improved session metadata consistency
-
-4. **debug: Add server-side logging to trace opportunity metadata flow**
-   - Added logging for debugging
-
-5. **debug: Add console logging to trace opportunity loading flow**
-   - Added client-side debugging logs
 
 ### Pages Removed
 - `/dashboard` (old sessions list)
@@ -374,69 +387,73 @@ const gradients = [
 
 ---
 
-### 6. Session Detail Page (`/sessions/[sessionId]`) ⭐ Core Feature
-**File**: `/src/app/(dashboard)/sessions/[sessionId]/page.tsx` (1,154 lines)
+### 6. Session Detail Page (`/sessions/[sessionId]`) ⭐ Core Feature (M15.2 - Rebuilt)
+**File**: `/src/app/(dashboard)/sessions/[sessionId]/page.tsx` (81 lines)
 
-**Purpose**: Interactive chat interface + workflow graph editor
+**Purpose**: Unified artifact-stream workspace with conversational AI
+
+**Architecture**: Simple loading/error wrapper that renders `UnifiedSessionWorkspace`
 
 **Features**:
 
-**Two-Panel Layout**:
-- Left: Chat interface (conversational AI)
-- Right: Workflow graph (React Flow)
-- Resizable with drag handle
-- Responsive (stacks on mobile)
+**60/40 Split Layout**:
+- Left (60%): Chat pane with conversation history
+- Right (40%): Artifact stream with categorized cards
+- Both panes scroll independently
+- No resizing - fixed proportions for optimal UX
 
-**Chat Panel**:
-- Message history with role-based styling (user/assistant)
-- Streaming AI responses with typewriter effect
-- Input field with auto-resize
-- Context-aware assistant (knows existing processes/steps)
-- Artifacts panel showing processes and opportunities
-- Process selection dropdown
-- "Scan for Opportunities" button
+**Components Used**:
+- `UnifiedSessionWorkspace` - Main orchestrator component
+- `SessionChatPane` - Left panel (chat messages + input)
+- `SessionArtifactPane` - Right panel (artifact cards)
+- `ProcessCard` - Process artifacts with mini-map preview
+- `OpportunityCard` - Opportunity artifacts with impact/effort scores
+- `BlueprintCard` - Blueprint artifacts (placeholder for future markdown)
+- `GovernanceCard` - AI use case artifacts
 
-**Graph Panel**:
-- Interactive React Flow visualization
-- Custom node designs with gradient backgrounds
-- Edge connections with animated paths
-- Controls: zoom in/out, fit view, lock/unlock
-- Click step to edit details
-- Drag to reorder (updates positions)
-- Auto-layout using dagre
+**Chat Pane Features**:
+- Message bubbles with user/assistant/system styling
+- Typing indicator with animated dots
+- Auto-scroll to bottom on new messages
+- Auto-resizing textarea (80px-200px)
+- Enter to send, Shift+Enter for new line
+- Loading states during AI processing
 
-**Step Editing**:
-- Modal dialog with full step details
-- Fields: label, type, owner, inputs, outputs, frequency, duration
-- Save updates to database
-- Delete step functionality
-- Optimistic UI updates
-
-**Opportunity Scanning**:
-- AI analyzes selected process(es)
-- Generates automation opportunities
-- Displays in artifacts panel with impact/effort scores
+**Artifact Pane Features**:
+- Vertical stream organized by category:
+  - Processes (with step count, opportunities badge)
+  - Opportunities (with impact/effort scores, feasibility bar)
+  - Blueprints (with version badge)
+  - AI Use Cases (with status, linked counts)
+- Empty state when no artifacts exist
+- Auto-scroll to highlighted artifacts
+- 3-second ring highlight for new artifacts
+- Framer Motion enter animations
+- Click cards to open detail modals
 
 **State Management**:
-- Local state for UI (messages, processes)
-- Optimistic updates for better UX
-- Fetch on mount, update on actions
+- Single artifacts API call on mount
+- Reload after orchestration completes
+- Optimistic updates for user messages
+- Highlight state with auto-clear timeout
 
 **Layout**: Uses AppShell with navigation
 
 **API Integration**:
-- GET `/api/sessions/[sessionId]` (fetch session + messages)
-- POST `/api/sessions/[sessionId]/chat` (send message, get AI response)
-- GET `/api/processes?sessionId=[id]` (fetch processes)
-- PATCH `/api/processes/[processId]/steps/[stepId]` (update step)
-- DELETE `/api/processes/[processId]/steps/[stepId]` (delete step)
-- POST `/api/opportunities/scan` (scan for opportunities)
+- GET `/api/sessions/[sessionId]` (load session metadata)
+- GET `/api/sessions/[sessionId]/messages` (load conversation history)
+- GET `/api/sessions/[sessionId]/artifacts` (bulk load all artifacts)
+- POST `/api/sessions/[sessionId]/orchestrate` (send message, get AI response + artifacts)
 
-**Key Components**:
-- `ChatMessage` - Individual message bubble
-- `ArtifactsPanel` - Collapsible side panel
-- `ProcessGraph` - React Flow wrapper
-- `StepDetailsDialog` - Edit modal
+**Key Files**:
+- `/src/components/session/UnifiedSessionWorkspace.tsx` (194 lines)
+- `/src/components/session/SessionChatPane.tsx` (148 lines)
+- `/src/components/session/SessionArtifactPane.tsx` (150 lines)
+- `/src/components/artifacts/ProcessCard.tsx` (220 lines)
+- `/src/components/artifacts/OpportunityCard.tsx` (232 lines)
+- `/src/components/artifacts/BlueprintCard.tsx` (124 lines)
+- `/src/components/artifacts/GovernanceCard.tsx` (155 lines)
+- `/src/types/artifacts.ts` (86 lines)
 
 ---
 
