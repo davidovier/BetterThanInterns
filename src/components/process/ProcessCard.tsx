@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ProcessMiniMap } from './ProcessMiniMap';
+import { EditableStepList } from './EditableStepList';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,8 +35,9 @@ type ProcessCardProps = {
   opportunities?: Array<{ stepId: string | null; impactLevel: 'low' | 'medium' | 'high' }>;
 };
 
-export function ProcessCard({ process, opportunities = [] }: ProcessCardProps) {
+export function ProcessCard({ process: initialProcess, opportunities = [] }: ProcessCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [process, setProcess] = useState(initialProcess);
 
   const stepCount = process.steps?.length || 0;
   const lastUpdated = process.updatedAt
@@ -98,29 +100,43 @@ export function ProcessCard({ process, opportunities = [] }: ProcessCardProps) {
 
       {/* Full Editor Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-5xl h-[80vh]">
+        <DialogContent className="max-w-7xl h-[85vh]">
           <DialogHeader>
             <DialogTitle>{process.name}</DialogTitle>
             {process.description && (
               <DialogDescription>{process.description}</DialogDescription>
             )}
           </DialogHeader>
-          <div className="flex-1 overflow-auto">
-            {stepCount >= 2 ? (
-              <ProcessMiniMap
+          <div className="flex-1 overflow-hidden flex gap-4">
+            {/* Editable Step List */}
+            <div className="w-80 flex-shrink-0 overflow-y-auto pr-2">
+              <EditableStepList
+                processId={process.id}
                 steps={process.steps}
-                links={process.links}
-                height={600}
-                readOnly={false}
-                opportunities={opportunities.filter((opp) => opp.stepId)}
+                onStepsUpdate={(updatedSteps) => {
+                  setProcess({ ...process, steps: updatedSteps });
+                }}
               />
-            ) : (
-              <div className="h-full flex items-center justify-center border border-dashed border-border rounded-xl bg-muted/20">
-                <p className="text-sm text-muted-foreground">
-                  This process needs at least 2 steps to display a workflow map
-                </p>
-              </div>
-            )}
+            </div>
+
+            {/* Process Graph */}
+            <div className="flex-1 overflow-hidden">
+              {stepCount >= 2 ? (
+                <ProcessMiniMap
+                  steps={process.steps}
+                  links={process.links}
+                  height={600}
+                  readOnly={true}
+                  opportunities={opportunities.filter((opp) => opp.stepId)}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center border border-dashed border-border rounded-xl bg-muted/20">
+                  <p className="text-sm text-muted-foreground">
+                    Add at least 2 steps to see the process map
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           <div className="flex justify-end pt-4 border-t">
             <Button onClick={() => setIsModalOpen(false)}>
