@@ -189,7 +189,25 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M15.3 - Restore React Flow process graph visualization**
+1. **feat: M15.3.3 - Restore 'Scan for Opportunities' button with dual approach**
+   - Added `scanForOpportunities` function to UnifiedSessionWorkspace
+   - Added "Scan for Opportunities" button to page header (right side)
+   - Button enables **dual approach** for opportunity discovery:
+     * **Explicit scan**: User clicks button to scan current process
+     * **Implicit scan**: AI discovers opportunities during conversation
+   - Button state management (enabled/disabled/loading)
+   - Success toast showing opportunity count after scan
+   - Auto-reloads artifacts to display new opportunities
+   - API: `POST /api/processes/[id]/scan-opportunities?sessionId=[id]`
+
+2. **feat: M15.3.2 - Update graph to use vertical layout with vibrant gradients**
+   - Switch from horizontal to vertical layout (y = index * 150, x = 100)
+   - Add vibrant gradient styling to nodes (purple, red, orange, blue)
+   - Enhanced node styling with rounded corners, shadows, and padding
+   - Add purple animated edges with arrow markers
+   - Update heatmap legend with gradient swatches
+
+3. **feat: M15.3.1 - Restore React Flow process graph visualization**
    - **CRITICAL**: Restored the core value proposition removed in M15.2
    - Created SessionGraphPane component with React Flow integration
    - Updated UnifiedSessionWorkspace to three-panel layout: Chat (30%) | Graph (45%) | Artifacts (25%)
@@ -200,7 +218,7 @@ The graph is NOT optional - it's the core product experience.
    - Graph updates in real-time as conversation progresses
    - Result: Core product experience restored while keeping M15.2 improvements
 
-2. **feat: M15.2 - Rebuild unified session workspace UI**
+4. **feat: M15.2 - Rebuild unified session workspace UI**
    - Replaced graph-first session page with artifact-stream workspace
    - Created 8 new components (artifact cards + session components)
    - Reduced session page from 1,154 lines to 81 lines (-93%)
@@ -421,6 +439,15 @@ const gradients = [
 
 **Architecture**: Simple loading/error wrapper that renders `UnifiedSessionWorkspace`
 
+**Header**:
+- Back button (left) - returns to `/sessions`
+- Session title (center)
+- **"Scan for Opportunities" button (right)** - explicit scan for current process
+  - Disabled when no processes exist or while scanning
+  - Shows loading spinner during scan
+  - Success toast displays opportunity count
+  - Calls `POST /api/processes/[id]/scan-opportunities?sessionId=[id]`
+
 **Features**:
 
 **Three-Panel Layout (Chat | Graph | Artifacts)**:
@@ -475,6 +502,16 @@ const gradients = [
 - 3-second ring highlight for new artifacts
 - Framer Motion enter animations
 - Click cards to open detail modals
+
+**Opportunity Discovery - Dual Approach**:
+1. **Explicit Scan**: Click "Scan for Opportunities" button in header
+   - Scans currently selected process
+   - Shows loading state and success toast
+   - Auto-reloads artifacts
+2. **Implicit Discovery**: AI identifies opportunities during conversation
+   - Happens automatically via orchestration endpoint
+   - Opportunities appear in artifact stream
+   - No user action required
 
 **State Management**:
 - Single artifacts API call on mount
