@@ -6,15 +6,13 @@ import ReactFlow, {
   Edge,
   Background,
   Controls,
-  MiniMap,
   useNodesState,
   useEdgesState,
   NodeMouseHandler,
   MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
-import { Sparkles, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Sparkles } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProcessArtifact, OpportunityArtifact } from '@/types/artifacts';
 
@@ -169,29 +167,7 @@ export function SessionGraphPane({
           >
             <Background />
             <Controls />
-            <MiniMap />
           </ReactFlow>
-
-          {/* Process info overlay */}
-          <div
-            className={`absolute ${
-              processes.length > 1 ? 'top-20' : 'top-4'
-            } left-4 bg-card/95 backdrop-blur-sm rounded-full px-4 py-2 shadow-medium border border-border/60 flex items-center space-x-3`}
-          >
-            <div className="text-sm font-medium">{selectedProcess?.name || 'Process'}</div>
-            <div className="h-4 w-px bg-border" />
-            <div className="text-xs text-muted-foreground">
-              {nodes.length} {nodes.length === 1 ? 'step' : 'steps'}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-6 w-6 p-0 rounded-full hover:bg-muted"
-              title="Click steps to edit details"
-            >
-              <HelpCircle className="h-4 w-4 text-muted-foreground" />
-            </Button>
-          </div>
 
           {/* Heatmap Legend */}
           {opportunities.some((opp) => opp.processId === selectedProcess?.id) && (
