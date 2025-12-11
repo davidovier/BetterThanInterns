@@ -598,25 +598,36 @@ export default function SessionDetailPage({
   };
 
   const scanForOpportunities = async () => {
-    if (!selectedProcess) return;
+    if (processes.length === 0) return;
 
     setIsScanning(true);
     try {
-      const response = await fetch(
-        `/api/processes/${selectedProcess.id}/scan-opportunities?sessionId=${params.sessionId}`,
-        {
-          method: 'POST',
-        }
+      // Scan all processes in parallel
+      const scanPromises = processes.map((process) =>
+        fetch(
+          `/api/processes/${process.id}/scan-opportunities?sessionId=${params.sessionId}`,
+          { method: 'POST' }
+        )
       );
 
-      if (!response.ok) throw new Error('Failed to scan for opportunities');
+      const responses = await Promise.all(scanPromises);
 
-      const result = await response.json();
-      const count = result.ok && result.data ? result.data.count : result.count;
+      // Check if all succeeded
+      const allSucceeded = responses.every(r => r.ok);
+      if (!allSucceeded) {
+        throw new Error('Some scans failed');
+      }
+
+      // Calculate total opportunities found
+      const results = await Promise.all(responses.map(r => r.json()));
+      const totalCount = results.reduce((sum, result) => {
+        const count = result.ok && result.data ? result.data.count : result.count || 0;
+        return sum + count;
+      }, 0);
 
       toast({
         title: 'Scan complete!',
-        description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
+        description: `Found ${totalCount} automation ${totalCount === 1 ? 'opportunity' : 'opportunities'} across ${processes.length} ${processes.length === 1 ? 'process' : 'processes'}`,
       });
 
       // Reload artifacts
@@ -624,7 +635,7 @@ export default function SessionDetailPage({
     } catch (error) {
       toast({
         title: 'Scan failed',
-        description: 'Could not analyze process for opportunities',
+        description: 'Could not analyze processes for opportunities',
         variant: 'destructive',
       });
     } finally {
@@ -666,7 +677,7 @@ export default function SessionDetailPage({
         </div>
         <Button
           onClick={scanForOpportunities}
-          disabled={isScanning || !selectedProcess || nodes.length === 0}
+          disabled={isScanning || processes.length === 0}
           className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
         >
           {isScanning ? (
