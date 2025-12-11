@@ -8,7 +8,7 @@ import { SessionArtifacts } from '@/types/artifacts';
 import { ProcessStep } from '@/types/process';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -35,6 +35,7 @@ export function UnifiedSessionWorkspace({
   const [selectedProcessIndex, setSelectedProcessIndex] = useState(0);
   const [selectedStep, setSelectedStep] = useState<ProcessStep | null>(null);
   const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   // Load initial messages and artifacts
   useEffect(() => {
@@ -156,6 +157,43 @@ export function UnifiedSessionWorkspace({
     }
   };
 
+  const scanForOpportunities = async () => {
+    const selectedProcess = artifacts.processes[selectedProcessIndex];
+    if (!selectedProcess) return;
+
+    setIsScanning(true);
+    try {
+      const response = await fetch(
+        `/api/processes/${selectedProcess.id}/scan-opportunities?sessionId=${sessionId}`,
+        {
+          method: 'POST',
+        }
+      );
+
+      if (!response.ok) throw new Error('Failed to scan for opportunities');
+
+      const result = await response.json();
+      const count = result.ok && result.data ? result.data.count : result.count;
+
+      toast({
+        title: 'Scan Complete',
+        description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
+      });
+
+      // Reload artifacts to show new opportunities
+      await loadArtifacts();
+    } catch (error) {
+      console.error('Failed to scan for opportunities:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to scan for opportunities',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
@@ -240,16 +278,36 @@ export function UnifiedSessionWorkspace({
     <div className="h-screen flex flex-col">
       {/* Header */}
       <div className="border-b border-border p-4 bg-background">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/sessions">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Link>
-          </Button>
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-semibold truncate">{sessionTitle}</h1>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/sessions">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Link>
+            </Button>
+            <div className="h-6 w-px bg-border" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-semibold truncate">{sessionTitle}</h1>
+            </div>
           </div>
+          <Button
+            onClick={scanForOpportunities}
+            disabled={isScanning || !artifacts.processes[selectedProcessIndex] || artifacts.processes.length === 0}
+            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+          >
+            {isScanning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Scanning...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Scan for Opportunities
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
