@@ -78,7 +78,7 @@ function SignUpForm() {
           title: 'Welcome to Better Than Interns!',
           description: 'Your account has been created',
         });
-        router.push('/dashboard');
+        router.push('/sessions');
         router.refresh();
       }
     } catch (error) {

@@ -7,17 +7,10 @@ import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  LayoutDashboard,
-  Shield,
   Sparkles,
   LogOut,
-  User,
   Settings,
   MessageSquare,
-  Library,
-  GitBranch,
-  Target,
-  FileText,
   Menu,
   X,
   ChevronLeft,
@@ -38,19 +31,19 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const navSections = [
+type NavSection = {
+  label?: string;
+  items: Array<{
+    href: string;
+    label: string;
+    icon: any;
+  }>;
+};
+
+const navSections: NavSection[] = [
   {
     items: [
-      { href: '/dashboard', label: 'Sessions', icon: MessageSquare },
-    ]
-  },
-  {
-    label: 'Library',
-    items: [
-      { href: '/library/processes', label: 'Processes', icon: GitBranch },
-      { href: '/library/opportunities', label: 'Opportunities', icon: Target },
-      { href: '/library/blueprints', label: 'Blueprints', icon: FileText },
-      { href: '/library/governance', label: 'Governance', icon: Shield },
+      { href: '/sessions', label: 'Sessions', icon: MessageSquare },
     ]
   },
 ];
@@ -120,7 +113,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen bg-gradient-radial from-background via-background to-muted/20">
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-card/80 backdrop-blur-lg px-4 flex items-center justify-between">
-        <Link href="/dashboard" className="flex items-center space-x-2">
+        <Link href="/sessions" className="flex items-center space-x-2">
           <Sparkles className="h-6 w-6 text-brand-500" />
           <span className="text-lg font-semibold tracking-tight">Better Than Interns</span>
         </Link>
@@ -147,7 +140,7 @@ export function AppShell({ children }: AppShellProps) {
           {/* Logo */}
           <div className="flex h-16 items-center border-b px-4 justify-between">
             <Link
-              href="/dashboard"
+              href="/sessions"
               className={`flex items-center transition-all ${sidebarCollapsed ? 'justify-center w-full' : 'space-x-2'}`}
             >
               <Sparkles className="h-6 w-6 text-brand-500 flex-shrink-0" />

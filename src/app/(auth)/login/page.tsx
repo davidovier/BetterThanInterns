@@ -45,7 +45,7 @@ function LoginContent() {
           variant: 'destructive',
         });
       } else {
-        router.push('/dashboard');
+        router.push('/sessions');
         router.refresh();
       }
     } catch (error) {
