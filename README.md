@@ -2,30 +2,39 @@
 
 **We automate your workflow chaos so you don't have to babysit an intern.**
 
+A Next.js 14+ web application that helps teams map, analyze, and optimize business processes through conversational AI. Users describe their workflows in natural language, and the AI assistant extracts structured process information while generating real-time visual workflow graphs.
+
 ---
 
-## Current Status: Milestone 1 - Process Mapping MVP ✅
+## Features
 
-This implementation includes:
+- **Conversational Process Mapping** - Describe workflows in plain English, get structured diagrams
+- **Real-time Graph Visualization** - Interactive React Flow graphs that update as you chat
+- **AI-Powered Opportunity Detection** - Automatically identify automation opportunities
+- **Manual Editing** - Click any step to edit details (owner, inputs, outputs, frequency, etc.)
+- **Workspace Multi-tenancy** - Team collaboration with role-based access
+- **Session Management** - Organize your process mapping conversations
 
-### Milestone 0 - Walking Skeleton ✅
-- ✅ Next.js 14+ with App Router and TypeScript
-- ✅ Authentication with NextAuth (email/password)
-- ✅ PostgreSQL database with Prisma ORM
-- ✅ Workspace and Project management
-- ✅ Demo process graph with React Flow
-- ✅ OpenAI LLM integration test
-- ✅ Shadcn/ui components with Tailwind CSS
+---
 
-### Milestone 1 - Process Mapping MVP ✅
-- ✅ Process, ProcessStep, ProcessLink, ChatSession, ChatMessage models
-- ✅ Conversational AI process mapping assistant
-- ✅ Real-time workflow graph generation from chat
-- ✅ Two-panel UI (chat + graph) per wireframes.md
-- ✅ Manual step editing with details dialog
-- ✅ LLM-powered workflow extraction with structured output
-- ✅ Process and step CRUD APIs
-- ✅ Automatic graph layout and updates
+## Tech Stack
+
+**Frontend:**
+- Next.js 14+ with App Router
+- React 18 with TypeScript
+- React Flow for graph visualization
+- Shadcn/ui + Radix UI components
+- Tailwind CSS
+
+**Backend:**
+- Next.js API Routes
+- Prisma ORM with PostgreSQL
+- OpenAI GPT-4 for AI assistant
+- NextAuth for authentication
+
+**Infrastructure:**
+- Vercel (deployment)
+- Supabase (PostgreSQL database)
 
 ---
 
@@ -33,61 +42,44 @@ This implementation includes:
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- Supabase account (database already configured)
+- Node.js 18+
+- Supabase account
 - OpenAI API key
 - Vercel account (for deployment)
 
 ### Installation
 
-**Option A: Quick Setup Script (Recommended)**
+1. **Clone and install dependencies:**
 
 ```bash
-# Run the automated setup script
-./scripts/setup-supabase.sh
-```
-
-This will:
-- Install all dependencies
-- Generate Prisma client
-- Push database schema to Supabase
-- Verify configuration
-
-Then just add your OpenAI API key to `.env` and run:
-
-```bash
-npm run dev
-```
-
-**Option B: Manual Setup**
-
-1. **Install dependencies:**
-
-```bash
+git clone <repository-url>
+cd BetterThanInterns
 npm install
 ```
 
-2. **Environment variables:**
+2. **Set up environment variables:**
 
-The `.env` file is already configured with Supabase credentials. You only need to add your OpenAI API key:
+Create a `.env` file with the following:
 
 ```bash
-# Open .env and add your OpenAI key
-OPENAI_API_KEY="sk-your-actual-openai-key-here"
-```
+# Database (Supabase)
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."
 
-Current configuration:
-- ✅ Database: Supabase (PostgreSQL with connection pooling)
-- ✅ NextAuth: Pre-configured with secret
-- ⚠️ OpenAI: **You need to add your key**
+# NextAuth
+NEXTAUTH_SECRET="your-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# OpenAI
+OPENAI_API_KEY="sk-your-key-here"
+```
 
 3. **Set up the database:**
 
 ```bash
-npm run db:push
+npx prisma generate
+npx prisma db push
 ```
-
-This creates all tables in your Supabase database.
 
 4. **Start development server:**
 
@@ -101,208 +93,140 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Deployment to Production
-
-This app is configured for **Vercel + Supabase** deployment.
-
-### Quick Deploy
-
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete deployment guide.
-
-**Quick steps:**
-
-1. Push to GitHub
-2. Import to Vercel from GitHub
-3. Add environment variables in Vercel dashboard
-4. Deploy!
-
-The database is already set up on Supabase - you just need to deploy the frontend to Vercel.
-
----
-
 ## Usage
 
-### First-Time Setup
+### Getting Started
 
-1. Click **"Create account"** on the login page
-2. Enter your name, email, and password
-3. You'll be automatically signed in and see the dashboard
-4. A default workspace is created for you automatically
+1. **Create an account** at `/signup`
+   - Choose a plan (Starter, Pro, or Enterprise)
+   - Enter your name, email, and password
+   - You'll be automatically signed in
 
-### Testing the Walking Skeleton
+2. **Create your first session** at `/sessions`
+   - Click "Create New Session"
+   - Give it a title and description
+   - Click "Create Session"
 
-1. **Create a project:**
-   - Click "New Project" on the dashboard
-   - Enter a project name (e.g., "Invoice Processing")
-   - Click "Create Project"
+3. **Start mapping a process:**
+   - Click on your session to open the chat interface
+   - Describe your workflow in natural language:
+     ```
+     "We receive purchase orders by email. The AP clerk downloads them
+     and enters data into a spreadsheet. Then the manager reviews and
+     approves them in QuickBooks."
+     ```
 
-2. **View the demo:**
-   - Click on any project or navigate to `/demo`
-   - See a hardcoded process graph showing an invoice workflow
-   - This demonstrates React Flow is working
+4. **Watch the graph build in real-time:**
+   - The AI extracts steps, owners, and connections
+   - The graph on the right updates automatically
+   - Steps appear as connected boxes
 
-3. **Test LLM integration:**
-   - On the demo page, scroll to "Test LLM Integration"
-   - Enter a test prompt (e.g., "What is Better Than Interns?")
-   - Click "Test LLM Call"
-   - Verify you get a response from OpenAI
+5. **Edit step details:**
+   - Click any step in the graph
+   - Update owner, inputs, outputs, frequency, duration
+   - Save changes
+
+6. **Scan for opportunities:**
+   - Click "Scan for Opportunities" in the artifacts panel
+   - AI analyzes your process for automation potential
+   - View opportunities with impact and effort scores
 
 ---
 
 ## Project Structure
 
 ```
-src/
+/src
 ├── app/
-│   ├── (auth)/              # Authentication pages
-│   │   ├── login/
-│   │   └── signup/
-│   ├── (dashboard)/         # Protected dashboard pages
-│   │   ├── dashboard/
-│   │   └── demo/
-│   ├── api/                 # API routes (backend)
-│   │   ├── auth/
-│   │   ├── workspaces/
-│   │   ├── projects/
-│   │   └── test-llm/
-│   ├── globals.css
-│   └── layout.tsx
+│   ├── (auth)/              # Login, signup pages
+│   ├── (dashboard)/         # Sessions, account pages
+│   ├── (marketing)/         # Landing, pricing pages
+│   └── api/                 # API routes
 ├── components/
-│   ├── ui/                  # Shadcn UI components
-│   ├── dashboard-nav.tsx
-│   └── providers/
+│   ├── ui/                  # Shadcn/ui components
+│   ├── layout/              # AppShell, navigation
+│   ├── session/             # Chat interface, graph view
+│   └── process/             # Process components
 ├── lib/
 │   ├── auth.ts             # NextAuth configuration
-│   ├── db.ts               # Prisma client
-│   ├── llm.ts              # OpenAI client
-│   └── utils.ts
-├── types/
-│   └── next-auth.d.ts
+│   ├── prisma.ts           # Prisma client
+│   └── openai.ts           # OpenAI client
 └── prisma/
     └── schema.prisma       # Database schema
 ```
 
 ---
 
-## Database Schema (Through Milestone 1)
+## Database Schema
 
 ```prisma
-- User              # User accounts
-- Account           # OAuth accounts (NextAuth)
-- Session           # User sessions (NextAuth)
-- Workspace         # Multi-tenant workspaces
-- WorkspaceMember   # User-workspace relationships
-- Project           # Projects within workspaces
-- Process           # Business processes
-- ProcessStep       # Individual process steps
-- ProcessLink       # Connections between steps
-- ChatSession       # Conversation sessions
-- ChatMessage       # Chat messages with workflow deltas
+User              # User accounts
+Workspace         # Multi-tenant workspaces
+WorkspaceMember   # User-workspace relationships
+AssistantSession  # Chat sessions
+ChatMessage       # Conversation history
+Process           # Business processes
+ProcessStep       # Individual workflow steps
+ProcessLink       # Connections between steps
+Opportunity       # AI-identified automation opportunities
 ```
-
----
-
-## API Endpoints (Milestone 0)
-
-### Authentication
-- `POST /api/auth/signup` - Create new account
-- `POST /api/auth/[...nextauth]` - NextAuth handlers
-
-### Workspaces
-- `GET /api/workspaces` - List user's workspaces
-
-### Projects
-- `GET /api/workspaces/[workspaceId]/projects` - List projects
-- `POST /api/workspaces/[workspaceId]/projects` - Create project
-- `GET /api/projects/[projectId]` - Get project details
-
-### Testing
-- `POST /api/test-llm` - Test OpenAI integration
-
----
-
-## How to Use (Milestone 1)
-
-### Mapping Your First Process
-
-1. **Create a Project:**
-   - Sign in and click "New Project"
-   - Give it a name like "Invoice Processing"
-
-2. **Create a Process:**
-   - Click on your project
-   - Click "New Process"
-   - Name it (e.g., "Approve Purchase Orders")
-   - Click "Start Mapping"
-
-3. **Chat with the Assistant:**
-   - You'll see a two-panel interface
-   - Left: Chat panel
-   - Right: Process graph
-   - Start describing your process:
-     ```
-     "We receive purchase orders by email every morning.
-     The AP clerk downloads them and enters them into a spreadsheet.
-     Then the manager reviews and approves them."
-     ```
-
-4. **Watch the Graph Build:**
-   - As you chat, the assistant extracts steps
-   - The graph updates in real-time
-   - Steps appear as boxes with connections
-
-5. **Edit Steps Manually:**
-   - Click any step in the graph
-   - A dialog opens with all step details
-   - Update owner, frequency, duration, inputs/outputs
-   - Click "Save Changes"
-
-6. **Continue the Conversation:**
-   - The assistant asks clarifying questions
-   - Add more details about decision points, data flows
-   - The graph expands automatically
-
-## Next Steps: Milestone 2
-
-The next phase (Milestone 2 - Opportunity Scanner) will implement:
-
-- AI-powered scanning of workflows for automation opportunities
-- Impact and feasibility scoring
-- ROI calculations
-- Heatmap overlay on process graphs
-- Opportunity list view with filtering
-
-See `dev-plan.md` for the full roadmap.
 
 ---
 
 ## Development Commands
 
 ```bash
-# Start development server
-npm run dev
+# Development
+npm run dev              # Start dev server
 
-# Generate Prisma client
-npm run db:generate
+# Database
+npx prisma generate      # Generate Prisma client
+npx prisma db push       # Sync schema to database
+npx prisma migrate dev   # Create migration
+npx prisma studio        # Open database GUI
 
-# Push schema changes to database
-npm run db:push
+# Build
+npm run build           # Build for production
+npm start               # Start production server
 
-# Run database migrations
-npm run db:migrate
-
-# Open Prisma Studio (database GUI)
-npm run db:studio
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Lint code
-npm run lint
+# Code Quality
+npm run lint            # Run ESLint
+npx tsc --noEmit        # Type check
 ```
+
+---
+
+## Deployment
+
+### Vercel + Supabase
+
+1. **Push to GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+2. **Import to Vercel:**
+   - Go to vercel.com
+   - Import your repository
+   - Add environment variables
+
+3. **Set environment variables in Vercel:**
+   - `DATABASE_URL`
+   - `DIRECT_URL`
+   - `NEXTAUTH_SECRET`
+   - `NEXTAUTH_URL` (your production URL)
+   - `OPENAI_API_KEY`
+
+4. **Deploy!**
+   - Vercel will automatically build and deploy
+
+---
+
+## Documentation
+
+For comprehensive documentation including all pages, API routes, and architecture details, see:
+
+**[AGENT_CONTEXT.md](./AGENT_CONTEXT.md)** - Complete application documentation
 
 ---
 
@@ -310,36 +234,49 @@ npm run lint
 
 ### Database connection issues
 
-Make sure PostgreSQL is running and the `DATABASE_URL` in `.env` is correct.
+Make sure your `DATABASE_URL` and `DIRECT_URL` are correct and Supabase is accessible.
 
-### LLM test failing
+### OpenAI API errors
 
-Verify your `OPENAI_API_KEY` is set correctly in `.env` and has available credits.
+Verify your `OPENAI_API_KEY` is valid and has available credits.
 
 ### Build errors
 
-Try deleting `node_modules` and `.next`, then reinstall:
+Try clearing cache and reinstalling:
 
 ```bash
 rm -rf node_modules .next
 npm install
 ```
 
+### Type errors
+
+Regenerate Prisma client:
+
+```bash
+npx prisma generate
+```
+
 ---
 
-## Brand & Design
+## Brand Voice
 
-This project follows the **Better Than Interns** brand guidelines:
+**Tone:** Smart, witty, slightly irreverent, helpful without being patronizing
 
-- **Tone:** Smart, playful, slightly sarcastic, extremely competent
-- **UI:** Clean, friendly edges, pill-shaped buttons
-- **Colors:** Primary blue accent, neutral backgrounds
-- **Typography:** Inter font
-
-See `brand.md` and `design-system.md` for more details.
+**Examples:**
+- Landing: "Where workflows actually make sense"
+- Starter plan: "Perfect for solo experiments"
+- Pro plan: "For teams actually shipping automations"
+- Enterprise plan: "Bring your lawyers"
 
 ---
 
 ## License
 
 Private project - Better Than Interns
+
+---
+
+## Support
+
+For issues or questions, check the comprehensive documentation in `AGENT_CONTEXT.md` or review the codebase structure above.
