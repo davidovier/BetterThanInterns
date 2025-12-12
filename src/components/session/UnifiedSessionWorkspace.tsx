@@ -321,6 +321,7 @@ export function UnifiedSessionWorkspace({
             isLoading={isLoading}
             onInputChange={setInputMessage}
             onSendMessage={sendMessage}
+            hasProcesses={artifacts.processes.length > 0}
           />
         </div>
 
@@ -341,6 +342,7 @@ export function UnifiedSessionWorkspace({
           <SessionArtifactPane
             artifacts={artifacts}
             highlightedArtifactId={highlightedArtifactId}
+            onScanForOpportunities={scanForOpportunities}
           />
         </div>
       </div>

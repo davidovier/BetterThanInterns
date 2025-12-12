@@ -190,15 +190,21 @@ export function SessionGraphPane({
           )}
         </>
       ) : (
+        // M16: Empty Graph State
         <div className="h-full flex items-center justify-center p-8">
-          <div className="text-center">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-muted to-muted/40 flex items-center justify-center mx-auto mb-4 shadow-soft">
-              <Sparkles className="h-10 w-10 text-muted-foreground/40" />
+          <div className="text-center max-w-sm space-y-4">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center mx-auto shadow-sm border border-slate-200">
+              <Sparkles className="h-10 w-10 text-slate-400" />
             </div>
-            <p className="font-medium text-sm mb-2">No process mapped yet</p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Start by describing a process in the chat, and watch it appear here in real-time
-            </p>
+            <div>
+              <h3 className="font-semibold text-sm text-slate-900 mb-2">
+                Your process map will appear here
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Describe a workflow in the chat and we'll sketch it out for you. No need for perfect
+                wording—start with "First we... then we..."
+              </p>
+            </div>
           </div>
         </div>
       )}

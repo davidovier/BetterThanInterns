@@ -6,18 +6,23 @@ import { ProcessCard } from '@/components/artifacts/ProcessCard';
 import { OpportunityCard } from '@/components/artifacts/OpportunityCard';
 import { BlueprintCard } from '@/components/artifacts/BlueprintCard';
 import { GovernanceCard } from '@/components/artifacts/GovernanceCard';
-import { Inbox, ChevronDown, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Inbox, ChevronDown, ChevronRight, Sparkles, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type SessionArtifactPaneProps = {
   artifacts: SessionArtifacts;
   highlightedArtifactId?: string | null;
   onArtifactClick?: (artifactId: string, artifactType: string) => void;
+  // M16: Scan for opportunities callback
+  onScanForOpportunities?: () => void;
 };
 
 export function SessionArtifactPane({
   artifacts,
   highlightedArtifactId,
   onArtifactClick,
+  onScanForOpportunities,
 }: SessionArtifactPaneProps) {
   const artifactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -28,6 +33,15 @@ export function SessionArtifactPane({
     blueprints: true,
     aiUseCases: true,
   });
+
+  // M16: Dismissible scan suggestion state
+  const [showScanSuggestion, setShowScanSuggestion] = useState(true);
+
+  // M16: Check if we should show the scan suggestion pill
+  // Show when: at least 1 process with >=2 steps AND no opportunities
+  const hasProcessWithSteps = artifacts.processes.some(p => (p._count?.steps || p.steps?.length || 0) >= 2);
+  const hasOpportunities = artifacts.opportunities.length > 0;
+  const shouldShowScanSuggestion = hasProcessWithSteps && !hasOpportunities && showScanSuggestion;
 
   // Auto-scroll to highlighted artifact
   useEffect(() => {
@@ -63,6 +77,52 @@ export function SessionArtifactPane({
 
       {/* Content */}
       <div className="p-3">
+        {/* M16: Scan Suggestion Pill */}
+        <AnimatePresence>
+          {shouldShowScanSuggestion && onScanForOpportunities && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 12 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="relative bg-gradient-to-r from-brand-50 to-amber-50 border border-brand-200 rounded-xl p-3">
+                <button
+                  onClick={() => setShowScanSuggestion(false)}
+                  className="absolute top-2 right-2 p-1 hover:bg-white/80 rounded-full transition-colors"
+                  aria-label="Dismiss suggestion"
+                >
+                  <X className="h-3 w-3 text-slate-400" />
+                </button>
+                <div className="pr-6">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Sparkles className="h-4 w-4 text-brand-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs font-medium text-slate-900 mb-1">
+                        Ready to find automation opportunities?
+                      </p>
+                      <p className="text-xs text-slate-600 mb-2">
+                        Let's scan your process to identify where AI can help save time
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      onScanForOpportunities();
+                      setShowScanSuggestion(false);
+                    }}
+                    size="sm"
+                    className="w-full bg-brand-500 hover:bg-brand-600 text-xs h-8"
+                  >
+                    <Sparkles className="h-3 w-3 mr-1.5" />
+                    Scan for Opportunities
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Empty State */}
         {!hasAnyArtifacts && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
