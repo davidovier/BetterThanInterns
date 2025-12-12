@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { SessionChatPane, ChatMessage } from './SessionChatPane';
 import { SessionArtifactPane } from './SessionArtifactPane';
 import { SessionGraphPane } from './SessionGraphPane';
+import { AssistantPresence, AssistantPresenceState } from './AssistantPresence';
 import { SessionArtifacts } from '@/types/artifacts';
 import { ProcessStep } from '@/types/process';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
@@ -37,11 +38,24 @@ export function UnifiedSessionWorkspace({
   const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
+  // M17: Assistant Presence State
+  const [presenceState, setPresenceState] = useState<AssistantPresenceState>('idle');
+  const [isInputFocused, setIsInputFocused] = useState(false);
+
   // Load initial messages and artifacts
   useEffect(() => {
     loadMessages();
     loadArtifacts();
   }, [sessionId]);
+
+  // M17: Manage presence state based on input focus
+  useEffect(() => {
+    if (isInputFocused && !isLoading) {
+      setPresenceState('listening');
+    } else if (!isLoading) {
+      setPresenceState('idle');
+    }
+  }, [isInputFocused, isLoading]);
 
   const loadMessages = async () => {
     try {
@@ -200,6 +214,8 @@ export function UnifiedSessionWorkspace({
     const userMsg = inputMessage;
     setInputMessage('');
     setIsLoading(true);
+    // M17: Set presence to 'thinking' when message is sent
+    setPresenceState('thinking');
 
     // Optimistic update - add user message
     const tempUserMsg: ChatMessage = {
@@ -227,6 +243,9 @@ export function UnifiedSessionWorkspace({
       }
 
       const { artifacts: newArtifacts, ui } = result.data;
+
+      // M17: Transition to 'updating' when artifacts are being applied
+      setPresenceState('updating');
 
       // Reload messages from database to get the actual persisted messages
       await loadMessages();
@@ -260,8 +279,15 @@ export function UnifiedSessionWorkspace({
           description: `Created: ${newArtifacts.createdBlueprints.map((b: any) => b.title).join(', ')}`,
         });
       }
+
+      // M17: Brief pause on 'updating' before returning to idle
+      setTimeout(() => {
+        setPresenceState('idle');
+      }, 800);
     } catch (error) {
       console.error('Failed to send message:', error);
+      // M17: Set presence to error, which will auto-clear after 1.5s
+      setPresenceState('error');
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to send message',
@@ -290,6 +316,9 @@ export function UnifiedSessionWorkspace({
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-semibold truncate">{sessionTitle}</h1>
             </div>
+            {/* M17: Assistant Presence Indicator */}
+            <div className="h-6 w-px bg-border" />
+            <AssistantPresence state={presenceState} />
           </div>
           <Button
             onClick={scanForOpportunities}
@@ -322,6 +351,8 @@ export function UnifiedSessionWorkspace({
             onInputChange={setInputMessage}
             onSendMessage={sendMessage}
             hasProcesses={artifacts.processes.length > 0}
+            onInputFocus={() => setIsInputFocused(true)}
+            onInputBlur={() => setIsInputFocused(false)}
           />
         </div>
 

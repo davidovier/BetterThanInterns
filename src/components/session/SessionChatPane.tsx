@@ -22,6 +22,9 @@ type SessionChatPaneProps = {
   onSendMessage: () => void;
   // M16: Onboarding state
   hasProcesses?: boolean;
+  // M17: Presence layer events
+  onInputFocus?: () => void;
+  onInputBlur?: () => void;
 };
 
 const STARTER_PROMPTS = [
@@ -43,6 +46,8 @@ export function SessionChatPane({
   onInputChange,
   onSendMessage,
   hasProcesses = false,
+  onInputFocus,
+  onInputBlur,
 }: SessionChatPaneProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -250,6 +255,8 @@ export function SessionChatPane({
               value={inputMessage}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={onInputFocus}
+              onBlur={onInputBlur}
               placeholder={
                 isFirstTime
                   ? "Describe your process... (e.g., 'First we receive an invoice, then...')"

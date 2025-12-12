@@ -45,7 +45,7 @@
 │   ├── layout/              # AppShell, navigation
 │   ├── workspace/           # Workspace context
 │   ├── sessions/            # SessionsHeader, SessionsFilterBar, SessionCard, AnimatedBackground (M16)
-│   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace
+│   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace, AssistantPresence (M17)
 │   ├── artifacts/           # ProcessCard, OpportunityCard, BlueprintCard, GovernanceCard
 │   ├── design-system/       # EmptyState, MetricCard
 │   └── process/             # step-details-dialog, other process components
@@ -197,6 +197,42 @@ The graph is NOT optional - it's the core product experience.
 ## Recent Major Changes
 
 ### Milestone Progress
+
+#### M17 - Assistant Presence Layer (December 12, 2025)
+
+**M17 Assistant Presence** - Visible AI presence indicator in session workspace
+- **Status**: ✅ Completed
+- **Goal**: Make the assistant feel like a visible, intelligent presence - not just chat messages
+- **Target Aesthetic**: CEO-grade, premium, restrained (Apple/Linear/Superhuman quality)
+- **New Component**:
+  - `AssistantPresence.tsx` - Abstract orb-based presence indicator with 5 states
+  - No avatars, no faces - minimal 10px gradient orb with state-specific animations
+- **State Design**:
+  - **idle**: Slow breathing pulse, slate gradient, 60% opacity
+  - **listening**: Reactive pulse when input focused, brand gradient, 90% opacity
+  - **thinking**: Gentle glow with outer ring, triggered when orchestration in flight
+  - **updating**: Ripple effect with expanding rings, shown when artifacts reload
+  - **error**: Brief red flash, auto-clears to idle after 1.5s
+- **Integration**:
+  - Placed in session header between title and "Scan" button
+  - Event-driven state transitions (no arbitrary timeouts)
+  - Input focus/blur triggers listening state
+  - API lifecycle (send → response → artifact reload) drives thinking → updating → idle
+  - Error state self-manages recovery
+- **Technical Details**:
+  - Modified SessionChatPane to expose onInputFocus/onInputBlur callbacks
+  - UnifiedSessionWorkspace tracks presenceState and isInputFocused
+  - Framer Motion for all animations (breathing, pulsing, ripples)
+  - 800ms pause on "updating" before returning to idle for visual feedback
+- **UX Philosophy**: Transform assistant from "chatbot" to "AI consultant sitting next to you"
+- **Known Limitations**:
+  - No progress indication during long API calls (thinking state is static)
+  - Fixed 800ms timeout for updating→idle (not tied to actual render completion)
+  - Doesn't reflect background operations like opportunity scanning
+- **Recommended Next Steps**:
+  - Add time-based progress hints during "thinking" (e.g., "Still thinking..." after 3s)
+  - Integrate presence with artifact creation flow (visual connection orb → artifact)
+  - Unify all AI operations under presence (include scanning, blueprint generation)
 
 #### M16 - Sessions UI & Onboarding (December 12, 2025)
 
