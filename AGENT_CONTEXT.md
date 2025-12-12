@@ -41,11 +41,13 @@
 │   ├── api/                 # API routes
 │   └── layout.tsx           # Root layout
 ├── components/
-│   ├── ui/                  # Shadcn/ui primitives
+│   ├── ui/                  # Shadcn/ui primitives + tooltip
 │   ├── layout/              # AppShell, navigation
 │   ├── workspace/           # Workspace context
+│   ├── sessions/            # SessionsHeader, SessionsFilterBar, SessionCard, AnimatedBackground (M16)
 │   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace
 │   ├── artifacts/           # ProcessCard, OpportunityCard, BlueprintCard, GovernanceCard
+│   ├── design-system/       # EmptyState, MetricCard
 │   └── process/             # step-details-dialog, other process components
 ├── lib/
 │   ├── auth.ts             # NextAuth configuration
@@ -111,14 +113,21 @@
 --brand-700: #0369a1
 ```
 
-### Gradient Schemes (Sessions Page)
-6 vibrant gradient combinations rotate across session cards:
-- Violet → Purple → Fuchsia
-- Blue → Cyan → Teal
-- Emerald → Green → Lime
-- Orange → Amber → Yellow
-- Rose → Pink → Fuchsia
-- Indigo → Blue → Cyan
+### Visual Style (Post-M16)
+**Sessions Page**: Premium, CEO-level aesthetic
+- Clean slate-50 background
+- Subtle 3D animated gradient blobs (2-4% opacity) for depth
+- Professional iconography (Briefcase, GitBranch, Target)
+- White cards with minimal slate-200 borders
+- Single brand accent color (brand-600) used sparingly
+- High contrast typography with generous whitespace
+- Hover effects: subtle lift (-1px), shadow increase, brand accent reveals
+
+**Session Detail**: Clean, minimal workflow visualization
+- React Flow nodes: White backgrounds with subtle borders
+- Impact-based subtle colors: high (red border/bg), medium (amber), low (blue)
+- Gray edges (stroke: #9ca3af) instead of vibrant gradients
+- Professional, readable design
 
 ### Typography
 - **Headings**: `font-bold tracking-tight`
@@ -187,9 +196,79 @@ The graph is NOT optional - it's the core product experience.
 
 ## Recent Major Changes
 
+### Milestone Progress
+
+#### M16 - Sessions UI & Onboarding (December 12, 2025)
+
+**M16 Sessions UI Redesign** - Complete visual redesign of `/sessions` page
+- **Status**: ✅ Completed
+- **Goal**: CEO-level, premium visual style for sessions list page
+- **Key Changes**:
+  - Replaced loud rainbow gradients with clean slate-50 background
+  - Added subtle 3D animated gradient blobs (2-4% opacity) for depth
+  - Changed from playful Sparkles to professional Briefcase/GitBranch/Target icons
+  - Implemented premium white cards with minimal borders and hover effects
+  - Added client-side filtering (All, Recent, With Processes, With Opportunities)
+  - Added client-side sorting (Recently Updated, Recently Created, Name A-Z)
+  - Grid/List view toggle
+  - Workspace name and plan badge display
+- **New Components**:
+  - `AnimatedBackground.tsx` - Floating gradient blobs
+  - `SessionsHeader.tsx` - Premium hero with workspace context
+  - `SessionsFilterBar.tsx` - Filter pills, sort dropdown, view toggle
+  - `SessionCard.tsx` - Clean cards with professional styling
+  - `tooltip.tsx` - Radix UI tooltip wrapper (was missing)
+- **Technical**: Uses useMemo for optimal filter/sort performance, Framer Motion animations
+- **Dependencies**: Added @radix-ui/react-tooltip
+- **Files**: See M16_SESSIONS_UI_PROGRESS.md for complete documentation
+
+**M16B - Blueprint & Governance Backfill** - Session-scoped blueprints and AI use cases
+- **Status**: ✅ Completed
+- **Goal**: Re-introduce minimal Blueprint and AI Use Case features scoped to sessions
+- **Schema Changes**:
+  - Blueprint: Added `sessionId`, `summary`, improved `contentMarkdown`
+  - AiUseCase: Added `sessionId`, `riskSummary`, changed default status to "idea"
+- **New API Endpoints**:
+  - `GET/POST /api/sessions/[sessionId]/blueprints` - Session-scoped blueprints
+  - `GET/POST /api/sessions/[sessionId]/ai-use-cases` - Session-scoped AI use cases
+- **Features**:
+  - AI-powered blueprint generation with 7 sections (Executive Summary, Implementation Roadmap, etc.)
+  - AI-powered use case creation with title, description, and riskSummary
+  - Dual-source loading: Merges metadata-based and session-scoped artifacts
+  - Updated BlueprintCard to show summary preview
+  - Updated GovernanceCard with new status values (idea/approved/shipped) and riskSummary
+- **OpenAI Integration**: GPT-4o generates structured markdown blueprints and JSON use cases
+- **Files**: See M16B_PROGRESS.md for implementation details
+
+**M16 - First-Time Onboarding** - Welcome states and in-session guidance
+- **Status**: ✅ Completed
+- **Goal**: Improve UX for new and early-stage sessions
+- **Features**:
+  - **First-Time Welcome State** (SessionChatPane):
+    - Centered welcome UI with gradient icon
+    - 3 clickable starter prompts that auto-send messages
+    - Appears when `messages.length === 0` AND `hasProcesses === false`
+  - **In-Session Helper** (SessionChatPane):
+    - Shows 2 example prompts after first message
+    - Appears when `messages.length > 0` AND `messages.length <= 2` AND `!hasProcesses`
+  - **Empty Graph State** (SessionGraphPane):
+    - Updated copy: "Your process map will appear here"
+    - Helpful guidance on how to describe workflows
+  - **Scan Suggestion Pill** (SessionArtifactPane):
+    - Gradient pill suggesting opportunity scan
+    - Appears when process has >= 2 steps but no opportunities
+    - Dismissible with X button
+- **Design**: Progressive disclosure, witty tone, smooth animations
+- **Files**: See M16_PROGRESS.md for state logic details
+
 ### Latest Commits (Most Recent First)
 
-1. **redesign: Complete artifacts pane redesign with card grid layout**
+1. **feat: M16 Sessions UI Redesign - CEO-level premium visual style** (commit 10b1988)
+   - Complete visual redesign with extracted components
+   - Added @radix-ui/react-tooltip dependency
+   - See M16_SESSIONS_UI_PROGRESS.md
+
+2. **redesign: Complete artifacts pane redesign with card grid layout**
    - **SessionArtifactPane**: Added collapsible sections with chevron icons for each artifact type
    - Slate color scheme (`bg-slate-50`, `text-slate-700`, `border-slate-200`)
    - Compact header with smaller typography
@@ -416,50 +495,59 @@ The graph is NOT optional - it's the core product experience.
 
 ---
 
-### 5. Sessions List Page (`/sessions`) ⭐ Main Dashboard
-**File**: `/src/app/(dashboard)/sessions/page.tsx` (542 lines)
+### 5. Sessions List Page (`/sessions`) ⭐ Main Dashboard (M16 Redesigned)
+**File**: `/src/app/(dashboard)/sessions/page.tsx` (483 lines after M16 redesign)
 
-**Purpose**: Primary landing page after authentication, displays all sessions
+**Purpose**: Primary landing page after authentication, displays all sessions with premium CEO-level visual style
 
-**Features**:
-- **Metrics Dashboard**: Total sessions, processes, opportunities
-- **Session Grid**: 1-3 column responsive grid
-- **Vibrant Design**: 6 rotating gradient color schemes
-- **Session Cards**:
-  - Gradient accent bar at top
-  - Title, description, timestamp
-  - Artifact badges (process count, opportunity count)
-  - Dropdown menu (edit/delete)
-  - Click to open session
+**Features** (Post-M16 Redesign):
+- **Premium Hero Header** (SessionsHeader component):
+  - 4xl heading with tight tracking
+  - Workspace name and plan badge
+  - Help tooltip explaining sessions
+  - "New Session" CTA with hover effects
+- **Animated Background**: Subtle 3D gradient blobs (2-4% opacity)
+- **Metrics Dashboard**: Total sessions, processes, active this week (using MetricCard component)
+- **Filter & Sort Bar** (SessionsFilterBar component):
+  - **Filters**: All Sessions, Recent (7 days), With Processes, With Opportunities
+  - **Sorting**: Recently Updated, Recently Created, Name A-Z
+  - **View Toggle**: Grid/List (both use responsive grid currently)
+  - Client-side filtering and sorting using `useMemo` for performance
+- **Session Grid**: 1-3 column responsive grid with staggered animations
+- **Premium Session Cards** (SessionCard component):
+  - Clean white background with slate-200 border
+  - Hover effects: subtle lift (-1px), shadow increase, brand accent top line
+  - Title with hover color shift to brand-700
+  - Context summary or placeholder
+  - Artifact counts with professional icons (GitBranch for processes, Target for opportunities)
+  - "Last updated" timestamp using date-fns
+  - Three-dot menu (visible on hover) with rename/delete
+  - Demo badge if applicable
 - **CRUD Operations**:
-  - **Create**: Inline form with title/description
+  - **Create**: Dialog modal with title input
   - **Read**: Click card to navigate to session detail
   - **Update**: Rename via dialog
   - **Delete**: Confirmation dialog with cascade warning
-- **Empty State**: When no sessions exist
+- **Empty State**: Professional Briefcase icon with clear CTA
 - **Loading States**: Skeleton UI during operations
 
-**Layout**: Uses AppShell with navigation
+**Layout**: Uses AppShell with navigation, clean slate-50 background
 
 **API Integration**:
-- GET `/api/sessions` (fetch all sessions)
+- GET `/api/sessions?workspaceId=` (fetch all sessions for workspace)
 - POST `/api/sessions` (create new session)
 - PATCH `/api/sessions/[id]` (update session title)
 - DELETE `/api/sessions/[id]` (delete session + cascade)
 
 **Navigation**: Clicking a session card navigates to `/sessions/[sessionId]`
 
-**Gradient Schemes**:
-```typescript
-const gradients = [
-  'from-violet-500/10 via-purple-500/10 to-fuchsia-500/10',
-  'from-blue-500/10 via-cyan-500/10 to-teal-500/10',
-  'from-emerald-500/10 via-green-500/10 to-lime-500/10',
-  'from-orange-500/10 via-amber-500/10 to-yellow-500/10',
-  'from-rose-500/10 via-pink-500/10 to-fuchsia-500/10',
-  'from-indigo-500/10 via-blue-500/10 to-cyan-500/10',
-];
-```
+**Components Used**:
+- `AnimatedBackground` - Floating gradient blobs
+- `SessionsHeader` - Premium hero section
+- `SessionsFilterBar` - Filters, sorting, view toggle
+- `SessionCard` - Individual session cards
+- `MetricCard` - Dashboard metrics (from design-system)
+- `EmptyState` - No sessions state (from design-system)
 
 ---
 
@@ -1485,6 +1573,6 @@ Longer explanation if needed
 
 ---
 
-**Last Updated**: December 11, 2025
-**Document Version**: 1.0
-**Current App Version**: Based on commit `7f86013`
+**Last Updated**: December 12, 2025
+**Document Version**: 1.1
+**Current App Version**: Based on commit `10b1988` (M16 Sessions UI Redesign)
