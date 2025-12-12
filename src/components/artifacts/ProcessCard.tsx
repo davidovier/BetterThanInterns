@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { GitBranch, User, Clock, ChevronRight, Maximize2 } from 'lucide-react';
+import { GitBranch, User, Clock, Lightbulb } from 'lucide-react';
 import { ProcessArtifact } from '@/types/artifacts';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -27,75 +26,43 @@ export function ProcessCard({ process, isNew = false }: ProcessCardProps) {
   return (
     <>
       <motion.div
-        initial={isNew ? { opacity: 0, y: 20, scale: 0.95 } : false}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        className={isNew ? 'ring-2 ring-brand-500 ring-offset-2' : ''}
+        initial={isNew ? { opacity: 0, scale: 0.95 } : false}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        className={isNew ? 'ring-2 ring-brand-500 ring-offset-1' : ''}
       >
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-3">
+        <Card
+          className="hover:shadow-md transition-shadow duration-200 cursor-pointer border-slate-200 bg-white"
+          onClick={() => setShowDetails(true)}
+        >
+          <CardContent className="p-3">
+            {/* Header */}
+            <div className="flex items-start gap-2 mb-2">
+              <GitBranch className="h-3.5 w-3.5 text-brand-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <GitBranch className="h-4 w-4 text-brand-600 flex-shrink-0" />
-                  <CardTitle className="text-base truncate">{process.name}</CardTitle>
-                </div>
+                <h3 className="text-sm font-medium text-slate-900 line-clamp-1">
+                  {process.name}
+                </h3>
                 {process.description && (
-                  <CardDescription className="line-clamp-2 text-xs">
+                  <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
                     {process.description}
-                  </CardDescription>
+                  </p>
                 )}
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setShowDetails(true)}
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
             </div>
-          </CardHeader>
 
-          <CardContent className="pt-0">
-            {/* Mini Stats */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-              <div className="flex items-center gap-1">
+            {/* Key Metrics */}
+            <div className="flex items-center gap-3 text-xs">
+              <div className="flex items-center gap-1 text-slate-600">
                 <GitBranch className="h-3 w-3" />
                 <span>{process._count.steps} steps</span>
               </div>
               {process._count.opportunities > 0 && (
-                <div className="flex items-center gap-1">
-                  <span className="font-medium text-amber-600">
-                    {process._count.opportunities} opportunities
-                  </span>
+                <div className="flex items-center gap-1 text-amber-600">
+                  <Lightbulb className="h-3 w-3" />
+                  <span>{process._count.opportunities}</span>
                 </div>
               )}
-              {process.owner && (
-                <div className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  <span>{process.owner}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Mini Map Preview */}
-            <div className="relative bg-muted/30 rounded-lg p-3 border border-border/50 h-24 overflow-hidden">
-              <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <GitBranch className="h-4 w-4" />
-                  <span>Process Map ({process.steps.length} steps)</span>
-                </div>
-              </div>
-              {/* TODO: Add actual mini ReactFlow visualization in future iteration */}
-            </div>
-
-            {/* Footer */}
-            <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">
-              <span>
-                Updated {formatDistanceToNow(new Date(process.updatedAt), { addSuffix: true })}
-              </span>
-              <ChevronRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           </CardContent>
         </Card>
