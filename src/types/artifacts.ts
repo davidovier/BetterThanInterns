@@ -70,6 +70,7 @@ export type OpportunityArtifact = {
 export type BlueprintArtifact = {
   id: string;
   title: string;
+  summary?: string | null; // M16B
   version: number;
   createdAt: string;
   updatedAt: string;
@@ -79,7 +80,8 @@ export type AiUseCaseArtifact = {
   id: string;
   title: string;
   description: string;
-  status: 'planned' | 'pilot' | 'production' | 'paused';
+  riskSummary?: string | null; // M16B
+  status: 'idea' | 'planned' | 'approved' | 'shipped' | 'pilot' | 'production' | 'paused'; // M16B: added 'idea', 'approved', 'shipped'
   owner: string | null;
   linkedProcessIds: any; // JSON
   linkedOpportunityIds: any; // JSON

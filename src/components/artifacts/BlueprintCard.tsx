@@ -64,16 +64,25 @@ export function BlueprintCard({ blueprint, isNew = false }: BlueprintCardProps) 
               </Badge>
             </div>
 
-            {/* Preview Placeholder */}
-            <div className="relative bg-muted/30 rounded-lg p-4 border border-border/50 min-h-[80px]">
-              <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
-                <div className="text-center space-y-1">
-                  <FileText className="h-6 w-6 mx-auto mb-2 opacity-50" />
-                  <div>Comprehensive implementation plan</div>
-                  <div className="text-[10px]">Click to view details</div>
+            {/* Summary or Preview Placeholder */}
+            {blueprint.summary ? (
+              <div className="relative bg-muted/30 rounded-lg p-3 border border-border/50">
+                <p className="text-xs text-slate-700 line-clamp-3">{blueprint.summary}</p>
+                <div className="text-[10px] text-muted-foreground mt-2 text-center">
+                  Click to view full blueprint
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="relative bg-muted/30 rounded-lg p-4 border border-border/50 min-h-[80px]">
+                <div className="flex items-center justify-center h-full text-xs text-muted-foreground">
+                  <div className="text-center space-y-1">
+                    <FileText className="h-6 w-6 mx-auto mb-2 opacity-50" />
+                    <div>Comprehensive implementation plan</div>
+                    <div className="text-[10px]">Click to view details</div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="flex items-center justify-between mt-3 text-xs text-muted-foreground">

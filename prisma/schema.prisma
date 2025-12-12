@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================
@@ -292,8 +293,11 @@ model OpportunityTool {
 model Blueprint {
   id               String   @id @default(cuid())
   workspaceId      String
+  sessionId        String? // M16B: Session-scoped blueprints
   title            String
+  summary          String? // M16B: Short description
   contentJson      Json // Full structured blueprint content
+  contentMarkdown  String   @default("") @db.Text // M16B: Simplified markdown content
   renderedMarkdown String   @db.Text
   version          Int      @default(1)
   metadataJson     Json     @default("{}") // Counts, ROI summaries, etc.
@@ -312,13 +316,15 @@ model Blueprint {
 model AiUseCase {
   id          String   @id @default(cuid())
   workspaceId String
+  sessionId   String? // M16B: Session-scoped AI use cases
   blueprintId String?
 
-  title       String
-  description String   @db.Text
-  status      String   @default("planned") // "planned" | "pilot" | "production" | "paused"
-  owner       String?
-  source      String   @default("manual") // "manual" | "blueprint"
+  title        String
+  description  String   @db.Text
+  status       String   @default("idea") // M16B: "idea" | "approved" | "shipped" | "planned" | "pilot" | "production" | "paused"
+  riskSummary  String?  @db.Text // M16B: Short risk summary
+  owner        String?
+  source       String   @default("manual") // "manual" | "blueprint"
 
   linkedProcessIds     Json @default("[]") // array of process IDs
   linkedOpportunityIds Json @default("[]") // array of opportunity IDs

@@ -24,10 +24,16 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'production':
       return 'text-green-700 bg-green-50 border-green-200';
+    case 'shipped':
+      return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    case 'approved':
+      return 'text-teal-700 bg-teal-50 border-teal-200';
     case 'pilot':
       return 'text-blue-700 bg-blue-50 border-blue-200';
     case 'planned':
       return 'text-gray-700 bg-gray-50 border-gray-200';
+    case 'idea':
+      return 'text-slate-700 bg-slate-50 border-slate-200';
     case 'paused':
       return 'text-amber-700 bg-amber-50 border-amber-200';
     default:
@@ -161,11 +167,21 @@ export function GovernanceCard({ aiUseCase, isNew = false }: GovernanceCardProps
               </div>
             </div>
 
+            {/* Risk Summary */}
+            {aiUseCase.riskSummary && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Risk Summary</h4>
+                <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-200/50">
+                  <p className="text-sm text-slate-700">{aiUseCase.riskSummary}</p>
+                </div>
+              </div>
+            )}
+
             {/* Governance Placeholder */}
             <div className="p-6 bg-muted/20 rounded-lg border border-border/50 text-center text-sm text-muted-foreground">
               <Shield className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Risk assessment and policy mappings</p>
-              <p className="text-xs mt-2">Full governance details coming in next iteration</p>
+              <p>Full risk assessment and policy mappings</p>
+              <p className="text-xs mt-2">Detailed governance coming in future iterations</p>
             </div>
           </div>
         </DialogContent>

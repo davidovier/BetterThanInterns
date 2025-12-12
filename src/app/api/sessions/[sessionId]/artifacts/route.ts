@@ -47,7 +47,7 @@ export async function GET(
     const metadata = assistantSession.metadata as any || {};
 
     // Use Promise.all to fetch all artifacts in parallel
-    const [processes, opportunities, blueprints, aiUseCases] = await Promise.all([
+    const [processes, opportunities, metadataBlueprints, sessionBlueprints, metadataAiUseCases, sessionAiUseCases] = await Promise.all([
       // Load processes with their steps and links
       metadata.processIds?.length > 0
         ? db.process.findMany({
@@ -95,7 +95,7 @@ export async function GET(
           })
         : Promise.resolve([]),
 
-      // Load blueprints
+      // Load blueprints from metadata
       metadata.blueprintIds?.length > 0
         ? db.blueprint.findMany({
             where: {
@@ -105,6 +105,7 @@ export async function GET(
             select: {
               id: true,
               title: true,
+              summary: true,
               createdAt: true,
               updatedAt: true,
               version: true,
@@ -113,7 +114,26 @@ export async function GET(
           })
         : Promise.resolve([]),
 
-      // Load AI use cases
+      // Load session-scoped blueprints (M16B)
+      db.blueprint.findMany({
+        where: {
+          sessionId: params.sessionId,
+          workspaceId: assistantSession.workspaceId,
+        },
+        select: {
+          id: true,
+          title: true,
+          summary: true,
+          createdAt: true,
+          updatedAt: true,
+          version: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+
+      // Load AI use cases from metadata
       metadata.aiUseCaseIds?.length > 0
         ? db.aiUseCase.findMany({
             where: {
@@ -124,6 +144,7 @@ export async function GET(
               id: true,
               title: true,
               description: true,
+              riskSummary: true,
               status: true,
               owner: true,
               linkedProcessIds: true,
@@ -131,7 +152,37 @@ export async function GET(
             },
           })
         : Promise.resolve([]),
+
+      // Load session-scoped AI use cases (M16B)
+      db.aiUseCase.findMany({
+        where: {
+          sessionId: params.sessionId,
+          workspaceId: assistantSession.workspaceId,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          riskSummary: true,
+          status: true,
+          owner: true,
+          linkedProcessIds: true,
+          linkedOpportunityIds: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
     ]);
+
+    // Merge blueprints and AI use cases, removing duplicates
+    const blueprintMap = new Map();
+    [...metadataBlueprints, ...sessionBlueprints].forEach(b => blueprintMap.set(b.id, b));
+    const blueprints = Array.from(blueprintMap.values());
+
+    const aiUseCaseMap = new Map();
+    [...metadataAiUseCases, ...sessionAiUseCases].forEach(a => aiUseCaseMap.set(a.id, a));
+    const aiUseCases = Array.from(aiUseCaseMap.values());
 
     return ok({
       processes,
