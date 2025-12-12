@@ -18,6 +18,8 @@ type SessionArtifactPaneProps = {
   onScanForOpportunities?: () => void;
   // M17.1: Callback fired after artifacts are rendered
   onArtifactsRendered?: () => void;
+  // M17.1 Verification: Only fire callback when parent expects it
+  shouldConfirmRender?: boolean;
 };
 
 export function SessionArtifactPane({
@@ -26,6 +28,7 @@ export function SessionArtifactPane({
   onArtifactClick,
   onScanForOpportunities,
   onArtifactsRendered,
+  shouldConfirmRender = false,
 }: SessionArtifactPaneProps) {
   const artifactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -56,26 +59,31 @@ export function SessionArtifactPane({
     }
   }, [highlightedArtifactId]);
 
-  // M17.1: Notify parent when artifacts are rendered
-  // Create stable artifact signature to detect changes
-  const artifactSignature = JSON.stringify({
-    processCount: artifacts.processes.length,
-    opportunityCount: artifacts.opportunities.length,
-    blueprintCount: artifacts.blueprints.length,
-    aiUseCaseCount: artifacts.aiUseCases.length,
-    processIds: artifacts.processes.map(p => p.id).sort(),
-    opportunityIds: artifacts.opportunities.map(o => o.id).sort(),
-  });
+  // M17.1 Verification: Stable, cheap artifact signature (no JSON.stringify)
+  const processIdsSorted = artifacts.processes.map(p => p.id).sort();
+  const opportunityIdsSorted = artifacts.opportunities.map(o => o.id).sort();
+  const blueprintIdsSorted = artifacts.blueprints.map(b => b.id).sort();
+  const aiUseCaseIdsSorted = artifacts.aiUseCases.map(g => g.id).sort();
+
+  const artifactSignature =
+    `p:${processIdsSorted.join(',')}` +
+    `|o:${opportunityIdsSorted.join(',')}` +
+    `|b:${blueprintIdsSorted.join(',')}` +
+    `|g:${aiUseCaseIdsSorted.join(',')}` +
+    `|pc:${artifacts.processes.length}` +
+    `|oc:${artifacts.opportunities.length}` +
+    `|bc:${artifacts.blueprints.length}` +
+    `|gc:${artifacts.aiUseCases.length}`;
 
   useEffect(() => {
-    // Fire callback after render when artifacts change
-    if (onArtifactsRendered) {
+    // M17.1 Verification: Only fire callback when parent expects it
+    if (onArtifactsRendered && shouldConfirmRender) {
       // Use requestAnimationFrame to ensure DOM is painted
       requestAnimationFrame(() => {
         onArtifactsRendered();
       });
     }
-  }, [artifactSignature, onArtifactsRendered]);
+  }, [artifactSignature, onArtifactsRendered, shouldConfirmRender]);
 
   const hasAnyArtifacts =
     artifacts.processes.length > 0 ||

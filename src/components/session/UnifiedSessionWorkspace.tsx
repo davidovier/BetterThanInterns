@@ -13,6 +13,9 @@ import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
+// M17.1 Verification: Debug mode for presence state (dev-only)
+const DEBUG_PRESENCE = false;
+
 type UnifiedSessionWorkspaceProps = {
   sessionId: string;
   sessionTitle: string;
@@ -391,6 +394,19 @@ export function UnifiedSessionWorkspace({
         </div>
       </div>
 
+      {/* M17.1 Verification: Debug display (dev-only) */}
+      {DEBUG_PRESENCE && (
+        <div className="border-b border-border bg-slate-50 px-4 py-1.5">
+          <div className="text-xs text-muted-foreground font-mono space-x-4">
+            <span>state: <span className="font-semibold">{presenceState}</span></span>
+            <span>jobs: {activeJobs}</span>
+            <span>updating: {isUpdating ? 'true' : 'false'}</span>
+            <span>focused: {isInputFocused ? 'true' : 'false'}</span>
+            <span>highlight: {highlightedArtifactId || 'none'}</span>
+          </div>
+        </div>
+      )}
+
       {/* Main Workspace - Three-panel layout: Chat (30%) | Graph (45%) | Artifacts (25%) */}
       <div className="flex-1 flex overflow-hidden">
         {/* Chat Pane - 30% */}
@@ -426,6 +442,7 @@ export function UnifiedSessionWorkspace({
             highlightedArtifactId={highlightedArtifactId}
             onScanForOpportunities={scanForOpportunities}
             onArtifactsRendered={handleArtifactsRendered}
+            shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
           />
         </div>
       </div>
