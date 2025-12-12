@@ -16,6 +16,8 @@ type SessionArtifactPaneProps = {
   onArtifactClick?: (artifactId: string, artifactType: string) => void;
   // M16: Scan for opportunities callback
   onScanForOpportunities?: () => void;
+  // M17.1: Callback fired after artifacts are rendered
+  onArtifactsRendered?: () => void;
 };
 
 export function SessionArtifactPane({
@@ -23,6 +25,7 @@ export function SessionArtifactPane({
   highlightedArtifactId,
   onArtifactClick,
   onScanForOpportunities,
+  onArtifactsRendered,
 }: SessionArtifactPaneProps) {
   const artifactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -52,6 +55,27 @@ export function SessionArtifactPane({
       });
     }
   }, [highlightedArtifactId]);
+
+  // M17.1: Notify parent when artifacts are rendered
+  // Create stable artifact signature to detect changes
+  const artifactSignature = JSON.stringify({
+    processCount: artifacts.processes.length,
+    opportunityCount: artifacts.opportunities.length,
+    blueprintCount: artifacts.blueprints.length,
+    aiUseCaseCount: artifacts.aiUseCases.length,
+    processIds: artifacts.processes.map(p => p.id).sort(),
+    opportunityIds: artifacts.opportunities.map(o => o.id).sort(),
+  });
+
+  useEffect(() => {
+    // Fire callback after render when artifacts change
+    if (onArtifactsRendered) {
+      // Use requestAnimationFrame to ensure DOM is painted
+      requestAnimationFrame(() => {
+        onArtifactsRendered();
+      });
+    }
+  }, [artifactSignature, onArtifactsRendered]);
 
   const hasAnyArtifacts =
     artifacts.processes.length > 0 ||

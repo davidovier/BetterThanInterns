@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { SessionChatPane, ChatMessage } from './SessionChatPane';
 import { SessionArtifactPane } from './SessionArtifactPane';
 import { SessionGraphPane } from './SessionGraphPane';
@@ -38,24 +38,72 @@ export function UnifiedSessionWorkspace({
   const [isStepDialogOpen, setIsStepDialogOpen] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
-  // M17: Assistant Presence State
-  const [presenceState, setPresenceState] = useState<AssistantPresenceState>('idle');
+  // M17.1: Job counter-based presence state management
+  const [activeJobs, setActiveJobs] = useState(0);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [presenceState, setPresenceState] = useState<AssistantPresenceState>('idle');
+
+  // M17.1: Input energy for listening state reactivity
+  const inputEnergy = Math.max(0, Math.min(1, inputMessage.length / 120));
+
+  // M17.1: Error recovery timeout ref
+  const errorRecoveryTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // M17.1: Centralized async job wrapper
+  const runJob = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
+    setActiveJobs(n => n + 1);
+    try {
+      return await fn();
+    } finally {
+      setActiveJobs(n => Math.max(0, n - 1));
+    }
+  }, []);
+
+  // M17.1: Derive presence state from job counter and input focus
+  useEffect(() => {
+    // Clear any pending error recovery
+    if (errorRecoveryTimeout.current) {
+      clearTimeout(errorRecoveryTimeout.current);
+      errorRecoveryTimeout.current = null;
+    }
+
+    if (activeJobs > 0) {
+      // If we're applying updates, show updating state
+      if (isUpdating) {
+        setPresenceState('updating');
+      } else {
+        // Otherwise, AI is thinking
+        setPresenceState('thinking');
+      }
+    } else if (isInputFocused) {
+      setPresenceState('listening');
+    } else {
+      setPresenceState('idle');
+    }
+  }, [activeJobs, isInputFocused, isUpdating]);
+
+  // M17.1: Handle error state with parent-controlled recovery
+  const handleError = useCallback((error: Error, description: string) => {
+    console.error(description, error);
+    setPresenceState('error');
+    toast({
+      title: 'Error',
+      description,
+      variant: 'destructive',
+    });
+
+    // M17.1: Error recovery after 1200ms
+    errorRecoveryTimeout.current = setTimeout(() => {
+      setPresenceState('idle');
+    }, 1200);
+  }, [toast]);
 
   // Load initial messages and artifacts
   useEffect(() => {
     loadMessages();
     loadArtifacts();
   }, [sessionId]);
-
-  // M17: Manage presence state based on input focus
-  useEffect(() => {
-    if (isInputFocused && !isLoading) {
-      setPresenceState('listening');
-    } else if (!isLoading) {
-      setPresenceState('idle');
-    }
-  }, [isInputFocused, isLoading]);
 
   const loadMessages = async () => {
     try {
@@ -171,51 +219,58 @@ export function UnifiedSessionWorkspace({
     }
   };
 
+  // M17.1: Scan for opportunities with job tracking
   const scanForOpportunities = async () => {
     const selectedProcess = artifacts.processes[selectedProcessIndex];
     if (!selectedProcess) return;
 
     setIsScanning(true);
-    try {
-      const response = await fetch(
-        `/api/processes/${selectedProcess.id}/scan-opportunities?sessionId=${sessionId}`,
-        {
-          method: 'POST',
-        }
-      );
 
-      if (!response.ok) throw new Error('Failed to scan for opportunities');
+    await runJob(async () => {
+      try {
+        const response = await fetch(
+          `/api/processes/${selectedProcess.id}/scan-opportunities?sessionId=${sessionId}`,
+          {
+            method: 'POST',
+          }
+        );
 
-      const result = await response.json();
-      const count = result.ok && result.data ? result.data.count : result.count;
+        if (!response.ok) throw new Error('Failed to scan for opportunities');
 
-      toast({
-        title: 'Scan Complete',
-        description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
-      });
+        const result = await response.json();
+        const count = result.ok && result.data ? result.data.count : result.count;
 
-      // Reload artifacts to show new opportunities
-      await loadArtifacts();
-    } catch (error) {
-      console.error('Failed to scan for opportunities:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to scan for opportunities',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsScanning(false);
-    }
+        toast({
+          title: 'Scan Complete',
+          description: `Found ${count} automation ${count === 1 ? 'opportunity' : 'opportunities'}`,
+        });
+
+        // M17.1: Trigger updating state
+        setIsUpdating(true);
+        await loadArtifacts();
+      } catch (error) {
+        handleError(
+          error instanceof Error ? error : new Error('Unknown error'),
+          'Failed to scan for opportunities'
+        );
+      } finally {
+        setIsScanning(false);
+      }
+    });
   };
 
+  // M17.1: Callback fired when artifacts finish rendering
+  const handleArtifactsRendered = useCallback(() => {
+    setIsUpdating(false);
+  }, []);
+
+  // M17.1: Send message with job tracking
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
 
     const userMsg = inputMessage;
     setInputMessage('');
     setIsLoading(true);
-    // M17: Set presence to 'thinking' when message is sent
-    setPresenceState('thinking');
 
     // Optimistic update - add user message
     const tempUserMsg: ChatMessage = {
@@ -226,78 +281,74 @@ export function UnifiedSessionWorkspace({
     };
     setMessages((prev) => [...prev, tempUserMsg]);
 
-    try {
-      // Call orchestration endpoint
-      const response = await fetch(`/api/sessions/${sessionId}/orchestrate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMsg }),
-      });
-
-      if (!response.ok) throw new Error('Failed to send message');
-
-      const result = await response.json();
-
-      if (!result.ok) {
-        throw new Error(result.error?.message || 'Failed to process message');
-      }
-
-      const { artifacts: newArtifacts, ui } = result.data;
-
-      // M17: Transition to 'updating' when artifacts are being applied
-      setPresenceState('updating');
-
-      // Reload messages from database to get the actual persisted messages
-      await loadMessages();
-
-      // Reload artifacts to get updated state
-      await loadArtifacts();
-
-      // Handle UI hints (e.g., highlight specific artifact)
-      if (ui?.highlightId) {
-        setHighlightedArtifactId(ui.highlightId);
-        // Clear highlight after 3 seconds
-        setTimeout(() => setHighlightedArtifactId(null), 3000);
-      }
-
-      // Show success toast for created artifacts
-      if (newArtifacts?.createdProcesses?.length > 0) {
-        toast({
-          title: 'Process Created',
-          description: `Created: ${newArtifacts.createdProcesses.map((p: any) => p.name).join(', ')}`,
+    await runJob(async () => {
+      try {
+        // Call orchestration endpoint
+        const response = await fetch(`/api/sessions/${sessionId}/orchestrate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMsg }),
         });
-      }
-      if (newArtifacts?.createdOpportunities?.length > 0) {
-        toast({
-          title: 'Opportunities Identified',
-          description: `Found ${newArtifacts.createdOpportunities.length} automation opportunities`,
-        });
-      }
-      if (newArtifacts?.createdBlueprints?.length > 0) {
-        toast({
-          title: 'Blueprint Generated',
-          description: `Created: ${newArtifacts.createdBlueprints.map((b: any) => b.title).join(', ')}`,
-        });
-      }
 
-      // M17: Brief pause on 'updating' before returning to idle
-      setTimeout(() => {
-        setPresenceState('idle');
-      }, 800);
-    } catch (error) {
-      console.error('Failed to send message:', error);
-      // M17: Set presence to error, which will auto-clear after 1.5s
-      setPresenceState('error');
-      toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to send message',
-        variant: 'destructive',
-      });
-      // Remove optimistic message on error
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
-    } finally {
-      setIsLoading(false);
-    }
+        if (!response.ok) throw new Error('Failed to send message');
+
+        const result = await response.json();
+
+        if (!result.ok) {
+          throw new Error(result.error?.message || 'Failed to process message');
+        }
+
+        const { artifacts: newArtifacts, ui } = result.data;
+
+        // M17.1: Transition to 'updating' when artifacts are being applied
+        setIsUpdating(true);
+
+        // Reload messages from database to get the actual persisted messages
+        await loadMessages();
+
+        // Reload artifacts to get updated state
+        await loadArtifacts();
+
+        // Handle UI hints (e.g., highlight specific artifact)
+        if (ui?.highlightId) {
+          setHighlightedArtifactId(ui.highlightId);
+          // Clear highlight after 3 seconds
+          setTimeout(() => setHighlightedArtifactId(null), 3000);
+        }
+
+        // Show success toast for created artifacts
+        if (newArtifacts?.createdProcesses?.length > 0) {
+          toast({
+            title: 'Process Created',
+            description: `Created: ${newArtifacts.createdProcesses.map((p: any) => p.name).join(', ')}`,
+          });
+        }
+        if (newArtifacts?.createdOpportunities?.length > 0) {
+          toast({
+            title: 'Opportunities Identified',
+            description: `Found ${newArtifacts.createdOpportunities.length} automation opportunities`,
+          });
+        }
+        if (newArtifacts?.createdBlueprints?.length > 0) {
+          toast({
+            title: 'Blueprint Generated',
+            description: `Created: ${newArtifacts.createdBlueprints.map((b: any) => b.title).join(', ')}`,
+          });
+        }
+
+        // M17.1: isUpdating will be cleared by handleArtifactsRendered callback
+      } catch (error) {
+        handleError(
+          error instanceof Error ? error : new Error('Unknown error'),
+          error instanceof Error ? error.message : 'Failed to send message'
+        );
+        // Remove optimistic message on error
+        setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+        setIsUpdating(false);
+      } finally {
+        setIsLoading(false);
+      }
+    });
   };
 
   return (
@@ -316,9 +367,9 @@ export function UnifiedSessionWorkspace({
             <div className="flex-1 min-w-0">
               <h1 className="text-lg font-semibold truncate">{sessionTitle}</h1>
             </div>
-            {/* M17: Assistant Presence Indicator */}
+            {/* M17.1: Assistant Presence Indicator with input energy */}
             <div className="h-6 w-px bg-border" />
-            <AssistantPresence state={presenceState} />
+            <AssistantPresence state={presenceState} inputEnergy={inputEnergy} />
           </div>
           <Button
             onClick={scanForOpportunities}
@@ -374,6 +425,7 @@ export function UnifiedSessionWorkspace({
             artifacts={artifacts}
             highlightedArtifactId={highlightedArtifactId}
             onScanForOpportunities={scanForOpportunities}
+            onArtifactsRendered={handleArtifactsRendered}
           />
         </div>
       </div>
