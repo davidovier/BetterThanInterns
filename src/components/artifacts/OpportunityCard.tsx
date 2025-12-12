@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Lightbulb, TrendingUp, Zap, Target, Maximize2 } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { OpportunityArtifact } from '@/types/artifacts';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -58,84 +57,41 @@ export function OpportunityCard({ opportunity, isNew = false }: OpportunityCardP
         transition={{ duration: 0.3, ease: 'easeOut' }}
         className={isNew ? 'ring-2 ring-amber-500 ring-offset-2' : ''}
       >
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-l-4 border-l-amber-500">
+        <Card
+          className="group hover:shadow-md transition-all duration-200 hover:border-amber-300 cursor-pointer"
+          onClick={() => setShowDetails(true)}
+        >
           <CardHeader className="pb-3">
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2">
+              <Lightbulb className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <Lightbulb className="h-4 w-4 text-amber-600 flex-shrink-0" />
-                  <CardTitle className="text-base line-clamp-2">{opportunity.title}</CardTitle>
-                </div>
-                <CardDescription className="line-clamp-2 text-xs">
+                <CardTitle className="text-sm font-medium line-clamp-2 leading-snug">
+                  {opportunity.title}
+                </CardTitle>
+                <CardDescription className="line-clamp-2 text-xs mt-1">
                   {opportunity.description}
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setShowDetails(true)}
-              >
-                <Maximize2 className="h-4 w-4" />
-              </Button>
             </div>
           </CardHeader>
 
-          <CardContent className="pt-0">
-            {/* Scores */}
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-3 w-3 text-muted-foreground" />
-                <div className="flex-1">
-                  <div className="text-xs text-muted-foreground">Impact</div>
-                  <Badge variant="outline" className={`mt-0.5 text-xs ${getImpactColor(opportunity.impactLevel)}`}>
-                    {opportunity.impactLevel} ({opportunity.impactScore})
-                  </Badge>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-3 w-3 text-muted-foreground" />
-                <div className="flex-1">
-                  <div className="text-xs text-muted-foreground">Effort</div>
-                  <Badge variant="outline" className={`mt-0.5 text-xs ${getEffortColor(opportunity.effortLevel)}`}>
-                    {opportunity.effortLevel}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
-            {/* Type and Context */}
-            <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-              <Badge variant="secondary" className="text-xs capitalize">
-                {opportunity.opportunityType.replace(/_/g, ' ')}
+          <CardContent className="pt-0 space-y-2">
+            {/* Impact and Effort badges */}
+            <div className="flex items-center gap-2">
+              <Badge variant="outline" className={`text-xs ${getImpactColor(opportunity.impactLevel)}`}>
+                {opportunity.impactLevel} impact
               </Badge>
-              {opportunity.process && (
-                <span className="text-xs">
-                  in <span className="font-medium">{opportunity.process.name}</span>
-                </span>
-              )}
-              {opportunity.step && (
-                <span className="text-xs">
-                  → <span className="font-medium">{opportunity.step.title}</span>
-                </span>
-              )}
+              <Badge variant="outline" className={`text-xs ${getEffortColor(opportunity.effortLevel)}`}>
+                {opportunity.effortLevel} effort
+              </Badge>
             </div>
 
-            {/* Feasibility Score */}
-            <div className="mt-3 pt-3 border-t border-border/50">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Feasibility Score</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-brand-500 rounded-full transition-all"
-                      style={{ width: `${opportunity.feasibilityScore}%` }}
-                    />
-                  </div>
-                  <span className="font-medium">{opportunity.feasibilityScore}%</span>
-                </div>
+            {/* Context */}
+            {opportunity.step && (
+              <div className="text-xs text-muted-foreground">
+                Step: <span className="font-medium text-foreground">{opportunity.step.title}</span>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
