@@ -9,7 +9,7 @@
 ## Architecture & Tech Stack
 
 ### Frontend
-- **Next.js 14+** with App Router and TypeScript
+- **Next.js 14.2.35** with App Router and TypeScript (updated for security fixes)
 - **React 18** with Server and Client Components
 - **React Flow** for interactive process graph visualization
 - **Shadcn/ui + Radix UI** for accessible component primitives
@@ -189,7 +189,40 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M15.3.3 - Restore 'Scan for Opportunities' button with dual approach**
+1. **redesign: Complete artifacts pane redesign with card grid layout**
+   - **SessionArtifactPane**: Added collapsible sections with chevron icons for each artifact type
+   - Slate color scheme (`bg-slate-50`, `text-slate-700`, `border-slate-200`)
+   - Compact header with smaller typography
+   - Grid layout with `gap-2` spacing (currently 1-column, ready for multi-column)
+   - Interactive section toggle functionality (Processes, Opportunities, Blueprints, AI Use Cases)
+   - **ProcessCard** (medium detail): Compact `p-3` card with icon + title + 1-line description + 2 key metrics (step count, opportunity count)
+   - **OpportunityCard** (medium detail): Compact `p-3` card with icon + title + 1-line description + 2 badges (impact, effort)
+   - Removed mini-map preview, timestamps, and expand buttons from cards
+   - Full details still available via click → dialog
+   - Much better vertical density - fits more artifacts in view
+   - Faster animations (0.2s vs 0.3s)
+
+2. **security: Update Next.js from 14.2.5 to 14.2.35**
+   - Fixes CVE-2025-55184 (high): DoS via malicious HTTP request
+   - Fixes CVE-2025-67779 (high): Incomplete fix for CVE-2025-55184 DoS via malicious RSC payload
+   - Applied via `fix-react2shell-next` scanner
+
+3. **fix: Sticky header improvements in artifacts pane**
+   - Changed from translucent to solid white background (`bg-white`)
+   - Added negative margins (`-mx-4 -mt-4`) to extend background edge-to-edge
+   - Added matching padding (`px-4 pt-4`) to maintain spacing
+   - Content now scrolls cleanly behind header without being visible
+
+4. **design: Simplify React Flow nodes and OpportunityCard to subtle, clean design**
+   - **React Flow nodes**: Changed from bold gradients to clean white backgrounds with subtle borders
+   - Node styling: `background: #ffffff`, `border: 1px solid #e5e7eb`, minimal shadows
+   - Subtle impact-based colors: high (red border/bg), medium (amber), low (blue)
+   - **Edges**: Changed from purple to gray (`stroke: #9ca3af, strokeWidth: 1.5`)
+   - Removed MiniMap and process info overlay from graph
+   - Simplified heatmap legend
+   - Clean, professional look with better readability
+
+5. **feat: M15.3.3 - Restore 'Scan for Opportunities' button with dual approach**
    - Added `scanForOpportunities` function to UnifiedSessionWorkspace
    - Added "Scan for Opportunities" button to page header (right side)
    - Button enables **dual approach** for opportunity discovery:
@@ -200,12 +233,10 @@ The graph is NOT optional - it's the core product experience.
    - Auto-reloads artifacts to display new opportunities
    - API: `POST /api/processes/[id]/scan-opportunities?sessionId=[id]`
 
-2. **feat: M15.3.2 - Update graph to use vertical layout with vibrant gradients**
+6. **feat: M15.3.2 - Update graph to use vertical layout**
    - Switch from horizontal to vertical layout (y = index * 150, x = 100)
-   - Add vibrant gradient styling to nodes (purple, red, orange, blue)
-   - Enhanced node styling with rounded corners, shadows, and padding
-   - Add purple animated edges with arrow markers
-   - Update heatmap legend with gradient swatches
+   - Vertical flowchart format for process steps (top-to-bottom)
+   - ~~Initially used vibrant gradients~~ (later simplified to subtle design in subsequent update)
 
 3. **feat: M15.3.1 - Restore React Flow process graph visualization**
    - **CRITICAL**: Restored the core value proposition removed in M15.2
