@@ -41,7 +41,7 @@ export function SessionArtifactPane({
     <div className="h-full overflow-y-auto p-4 bg-muted/10">
       <div className="space-y-4">
         {/* Header */}
-        <div className="sticky top-0 bg-background z-10 pb-3 pt-0 -mx-4 px-4 border-b border-border">
+        <div className="sticky top-0 bg-background z-10 pb-3 pt-4 -mx-4 -mt-4 px-4 border-b border-border">
           <h2 className="text-lg font-semibold">Artifacts</h2>
           <p className="text-xs text-muted-foreground mt-1">
             {hasAnyArtifacts
