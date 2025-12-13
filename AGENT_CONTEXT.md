@@ -199,6 +199,56 @@ The graph is NOT optional - it's the core product experience.
 
 ### Milestone Progress
 
+#### M22 - Executive Process Visualization (December 13, 2025)
+
+**M22 Executive Process Visualization** - Graph semantic elevation from technical diagram to executive summary
+- **Status**: ✅ Completed
+- **Goal**: Elevate process graph from technical flow diagram to executive summary visualization
+- **Target Aesthetic**: Calm, document-like, executive-readable - insights in under 5 seconds
+- **Design Principles**:
+  - No new interactions, modals, editing controls, tooltips, or hover explanations
+  - Outcome-focused language over procedural framing
+  - Visual emphasis through weight and hierarchy (not color)
+  - Restraint over cleverness
+- **Key Changes**:
+  - **Outcome-First Node Language**:
+    - Added `deriveExecutiveLabel()` transformation function
+    - Converts procedural labels to outcome-focused language
+    - Examples: "Validate invoice" → "Invoice verified for payment", "Process invoice" → "Invoice processed"
+    - Uses explicit transformations map + regex patterns for verb-based conversions
+    - Sentence case fallback for unmatched labels
+  - **Bottleneck & Leverage Visual Emphasis**:
+    - Bottleneck detection: Steps with duration >60 min get heavier 2px border in darker gray (#6b7280)
+    - Darker text (#111827) and medium font-weight (500) for high-friction steps
+    - Leverage emphasis: Steps with opportunities get thin 3px left accent line (#374151)
+    - No colored backgrounds, no heatmap legend - visual weight only
+  - **Opportunity Presence Annotations**:
+    - Subtle text annotation below node owner: "Automation potential identified"
+    - text-[10px] text-slate-400 mt-1 leading-tight
+    - One line max, no icons, no color emphasis
+  - **Executive Readability Defaults**:
+    - Increased vertical spacing: index * 150 → index * 180
+    - Softer shadows: 0 1px 2px rgba(0,0,0,0.05)
+    - Lighter edge prominence: stroke #d1d5db (was #9ca3af)
+    - Removed edge animation (animated: false) for calm feel
+    - Slightly darker base border for clarity (#d1d5db)
+    - Increased padding: 14px 18px (was 12px 16px)
+    - Removed heatmap legend completely
+- **Technical Details**:
+  - Frontend-only, no backend changes
+  - Modified graph node rendering to use executive labels
+  - Removed colored impact-level styling (red/amber/blue heatmap)
+  - Updated React Flow edges to be lighter and non-animated
+  - Added bottleneck detection based on step.duration metadata
+  - Bundle size increase: ~0.8kb (minimal)
+- **Files Modified**:
+  - `src/components/session/SessionGraphPane.tsx` (all M22 changes)
+- **Before vs After**:
+  - Before: Technical flow diagram with procedural steps, colored heatmap, animated edges
+  - After: Executive summary with outcome-focused steps, subtle emphasis on friction/leverage, calm document feel
+- **UX Risk**: Bottleneck detection (duration >60 min) may not match all organizational contexts - heuristic may need refinement
+- **Commit**: (pending)
+
 #### M21 - Decision Continuity (December 13, 2025)
 
 **M21 Decision Continuity** - System memory and resume flow for executive artifacts
@@ -496,7 +546,15 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M21 Decision Continuity - System memory and resume flow** (commit cf07e1c)
+1. **feat: M22 Executive Process Visualization - Graph semantic elevation** (commit pending)
+   - Outcome-first node language transformation (deriveExecutiveLabel function)
+   - Bottleneck & leverage visual emphasis (duration-based weight, opportunity accent)
+   - Opportunity presence annotations (subtle text below nodes)
+   - Executive readability defaults (increased spacing, lighter edges, no animation)
+   - Removed colored heatmap styling and legend
+   - Frontend-only, no backend changes
+
+2. **feat: M21 Decision Continuity - System memory and resume flow** (commit cf07e1c)
    - Authoritative Session Brief with subtle left border
    - Implicit next-step line below Session Brief
    - Smart Continue Work scroll behavior (context-aware targets)
@@ -1833,6 +1891,6 @@ Longer explanation if needed
 ---
 
 **Last Updated**: December 13, 2025
-**Document Version**: 1.3
-**Current App Version**: Based on commit `cf07e1c` (M21 Decision Continuity)
-**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity)
+**Document Version**: 1.4
+**Current App Version**: Based on M22 (Executive Process Visualization) - commit pending
+**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity), M22 (Executive Process Visualization)

@@ -25,6 +25,59 @@ type SessionGraphPaneProps = {
   onStepClick: (stepId: string, processId: string) => void;
 };
 
+// M22: Transform procedural labels to outcome-focused language
+function deriveExecutiveLabel(proceduralLabel: string): string {
+  const label = proceduralLabel.trim();
+
+  // Convert to sentence case, outcome-focused phrasing
+  // Remove procedural verbs like "validate", "click", "enter", "update"
+  // Favor completed states over actions
+
+  const transformations: Record<string, string> = {
+    // Common patterns - procedural → outcome
+    'validate invoice': 'Invoice verified for payment',
+    'approve request': 'Request approved',
+    'review document': 'Document reviewed',
+    'check vendor': 'Vendor checked',
+    'enter data': 'Data entered',
+    'update system': 'System updated',
+    'send email': 'Email sent',
+    'create report': 'Report created',
+    'assign task': 'Task assigned',
+  };
+
+  const lowerLabel = label.toLowerCase();
+
+  // Check for exact transformations
+  if (transformations[lowerLabel]) {
+    return transformations[lowerLabel];
+  }
+
+  // Simple heuristic: if starts with verb, try to convert to past/outcome
+  // "Process invoice" → "Invoice processed"
+  // "Verify payment" → "Payment verified"
+  const verbPatterns = [
+    { from: /^process (.+)/i, to: (match: string[]) => `${match[1]} processed` },
+    { from: /^verify (.+)/i, to: (match: string[]) => `${match[1]} verified` },
+    { from: /^validate (.+)/i, to: (match: string[]) => `${match[1]} validated` },
+    { from: /^approve (.+)/i, to: (match: string[]) => `${match[1]} approved` },
+    { from: /^review (.+)/i, to: (match: string[]) => `${match[1]} reviewed` },
+    { from: /^check (.+)/i, to: (match: string[]) => `${match[1]} checked` },
+    { from: /^send (.+)/i, to: (match: string[]) => `${match[1]} sent` },
+    { from: /^create (.+)/i, to: (match: string[]) => `${match[1]} created` },
+  ];
+
+  for (const pattern of verbPatterns) {
+    const match = label.match(pattern.from);
+    if (match) {
+      return pattern.to(match);
+    }
+  }
+
+  // Fallback: capitalize first letter only (sentence case)
+  return label.charAt(0).toUpperCase() + label.slice(1).toLowerCase();
+}
+
 export function SessionGraphPane({
   processes,
   opportunities,
@@ -54,30 +107,31 @@ export function SessionGraphPane({
       const stepOpportunity = opportunities.find(opp => opp.stepId === step.id);
       const impactLevel = stepOpportunity?.impactLevel;
 
-      // Subtle node styling - clean and minimal
+      // M22: Check if step is a bottleneck (high friction based on duration/frequency)
+      const isBottleneck = step.duration && parseFloat(step.duration) > 60; // >60 min is high friction
+
+      // M22: Base node styling - executive readability
       let nodeStyle: any = {
         background: '#ffffff',
         color: '#1f2937',
-        border: '1px solid #e5e7eb',
+        border: '1px solid #d1d5db', // Slightly darker base border for clarity
         borderRadius: '8px',
-        padding: '12px 16px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        minWidth: '180px',
+        padding: '14px 18px', // Slightly more padding for readability
+        boxShadow: '0 1px 2px rgba(0,0,0,0.05)', // Softer shadow
+        minWidth: '200px',
       };
 
-      // Subtle heatmap styling based on impact level
-      if (impactLevel === 'high') {
-        nodeStyle.borderColor = '#ef4444';
+      // M22: Bottleneck emphasis - heavier border, darker text (no color)
+      if (isBottleneck) {
         nodeStyle.borderWidth = '2px';
-        nodeStyle.backgroundColor = '#fef2f2';
-      } else if (impactLevel === 'medium') {
-        nodeStyle.borderColor = '#f59e0b';
-        nodeStyle.borderWidth = '2px';
-        nodeStyle.backgroundColor = '#fffbeb';
-      } else if (impactLevel === 'low') {
-        nodeStyle.borderColor = '#3b82f6';
-        nodeStyle.borderWidth = '2px';
-        nodeStyle.backgroundColor = '#eff6ff';
+        nodeStyle.borderColor = '#6b7280'; // Darker gray for emphasis
+        nodeStyle.color = '#111827'; // Darker text
+        nodeStyle.fontWeight = '500';
+      }
+
+      // M22: Leverage emphasis - thin left accent for opportunity presence
+      if (stepOpportunity) {
+        nodeStyle.borderLeft = '3px solid #374151'; // Brand-700 equivalent, subtle accent
       }
 
       // Add subtle highlight if this step is selected
@@ -85,41 +139,50 @@ export function SessionGraphPane({
         nodeStyle.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.3)';
       }
 
+      // M22: Derive executive label
+      const executiveLabel = deriveExecutiveLabel(step.title);
+
       return {
         id: step.id,
         type: 'default',
         data: {
           label: (
             <div className="text-center">
-              <div className="font-medium text-sm">{step.title}</div>
+              <div className="font-medium text-sm leading-snug">{executiveLabel}</div>
               {step.owner && (
-                <div className="text-xs text-muted-foreground mt-1">{step.owner}</div>
+                <div className="text-xs text-slate-500 mt-1.5">{step.owner}</div>
+              )}
+              {/* M22: Opportunity presence annotation (subtle, below owner) */}
+              {stepOpportunity && (
+                <div className="text-[10px] text-slate-400 mt-1 leading-tight">
+                  Automation potential identified
+                </div>
               )}
             </div>
           ),
         },
-        // Vertical layout: x stays centered, y increases for each step
-        position: { x: 100, y: index * 150 },
+        // M22: Vertical layout with increased spacing for executive readability
+        position: { x: 100, y: index * 180 },
         style: nodeStyle,
       };
     });
     setNodes(flowNodes);
 
-    // Convert links to React Flow edges with subtle styling
+    // M22: Convert links to React Flow edges with executive-appropriate styling
     if (process.links) {
       const flowEdges: Edge[] = process.links.map((link) => ({
         id: link.id,
         source: link.fromStepId,
         target: link.toStepId,
         label: link.label || undefined,
-        animated: true,
+        animated: false, // M22: Remove animation for calm, document-like feel
         style: {
-          stroke: '#9ca3af',
+          stroke: '#d1d5db', // Lighter, less prominent edges
           strokeWidth: 1.5,
         },
         markerEnd: {
           type: MarkerType.ArrowClosed,
-          color: '#9ca3af',
+          color: '#d1d5db',
         },
       }));
       setEdges(flowEdges);
@@ -167,27 +230,6 @@ export function SessionGraphPane({
             <Background />
             <Controls />
           </ReactFlow>
-
-          {/* Heatmap Legend */}
-          {opportunities.some((opp) => opp.processId === selectedProcess?.id) && (
-            <div className="absolute bottom-4 right-4 bg-card/95 backdrop-blur-sm rounded-lg p-3 shadow-sm border border-border">
-              <div className="text-xs font-medium mb-2 text-muted-foreground">Impact Level</div>
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-red-500 bg-red-50"></div>
-                  <span className="text-xs">High</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-amber-500 bg-amber-50"></div>
-                  <span className="text-xs">Medium</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 rounded border-2 border-blue-500 bg-blue-50"></div>
-                  <span className="text-xs">Low</span>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       ) : (
         // M16: Empty Graph State
