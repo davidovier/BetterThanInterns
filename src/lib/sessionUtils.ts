@@ -1,4 +1,5 @@
 // M18: Session state derivation utilities (frontend-only, no DB changes)
+// M20: First-run detection utilities
 
 export type SessionState = 'active' | 'in-progress' | 'decided' | 'archived';
 
@@ -98,4 +99,19 @@ export function getStateStyles(state: SessionState): {
     },
   };
   return styles[state];
+}
+
+/**
+ * M20: Detect if this is a first-run session
+ * A session is "first-run" if:
+ * - No messages
+ * - No artifacts (processes, opportunities, blueprints, aiUseCases)
+ * - No contextSummary
+ */
+export function isFirstRunSession(
+  hasMessages: boolean,
+  hasArtifacts: boolean,
+  contextSummary?: string
+): boolean {
+  return !hasMessages && !hasArtifacts && !contextSummary;
 }

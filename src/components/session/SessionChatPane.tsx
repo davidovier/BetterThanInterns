@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Send, Loader2, Sparkles, Zap } from 'lucide-react';
+import { Send, Loader2, Sparkles, Zap, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export type ChatMessage = {
@@ -25,6 +25,8 @@ type SessionChatPaneProps = {
   // M17: Presence layer events
   onInputFocus?: () => void;
   onInputBlur?: () => void;
+  // M20: First-run detection
+  isFirstRun?: boolean;
 };
 
 const STARTER_PROMPTS = [
@@ -48,9 +50,13 @@ export function SessionChatPane({
   hasProcesses = false,
   onInputFocus,
   onInputBlur,
+  isFirstRun = false,
 }: SessionChatPaneProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // M20: Dismissible starter example state
+  const [showStarterExample, setShowStarterExample] = useState(true);
 
   // M16: Determine if this is a brand new session
   const isFirstTime = messages.length === 0 && !hasProcesses;
@@ -98,6 +104,33 @@ export function SessionChatPane({
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
+        {/* M20: First-run starter example (dismissible) */}
+        {isFirstRun && showStarterExample && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="relative border border-slate-200 rounded-lg px-4 py-3 bg-slate-50/50"
+          >
+            <button
+              onClick={() => setShowStarterExample(false)}
+              className="absolute top-2 right-2 p-1 hover:bg-slate-200 rounded transition-colors"
+              aria-label="Dismiss example"
+            >
+              <X className="h-3 w-3 text-slate-400" />
+            </button>
+            <div className="pr-6">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">
+                Example
+              </p>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Invoices arrive by email, then finance checks the vendor, then approval is required before payment.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* M16: First-Time Welcome State */}
         {isFirstTime && (
           <motion.div

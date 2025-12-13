@@ -14,6 +14,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 import { formatDistanceToNow } from 'date-fns';
+import { isFirstRunSession } from '@/lib/sessionUtils';
 
 // M17.1 Verification: Debug mode for presence state (dev-only)
 const DEBUG_PRESENCE = false;
@@ -57,6 +58,19 @@ export function UnifiedSessionWorkspace({
 
   // M17.1: Input energy for listening state reactivity
   const inputEnergy = Math.max(0, Math.min(1, inputMessage.length / 120));
+
+  // M20: Detect first-run session
+  const hasAnyArtifacts =
+    artifacts.processes.length > 0 ||
+    artifacts.opportunities.length > 0 ||
+    artifacts.blueprints.length > 0 ||
+    artifacts.aiUseCases.length > 0;
+
+  const isFirstRun = isFirstRunSession(
+    messages.length > 0,
+    hasAnyArtifacts,
+    sessionData?.contextSummary
+  );
 
   // M17.1: Error recovery timeout ref
   const errorRecoveryTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -445,8 +459,10 @@ export function UnifiedSessionWorkspace({
                 {sessionData.contextSummary}
               </p>
             ) : (
-              <p className="text-sm text-slate-400 italic">
-                This session will summarize itself as decisions are made.
+              <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
+                {isFirstRun
+                  ? 'Use this working session to describe a process or decision. As work progresses, this brief will summarize what was decided.'
+                  : 'This session will summarize itself as decisions are made.'}
               </p>
             )}
           </div>
@@ -464,6 +480,7 @@ export function UnifiedSessionWorkspace({
                 hasProcesses={artifacts.processes.length > 0}
                 onInputFocus={() => setIsInputFocused(true)}
                 onInputBlur={() => setIsInputFocused(false)}
+                isFirstRun={isFirstRun}
               />
             </div>
 
@@ -487,6 +504,7 @@ export function UnifiedSessionWorkspace({
                 onScanForOpportunities={scanForOpportunities}
                 onArtifactsRendered={handleArtifactsRendered}
                 shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
+                isFirstRun={isFirstRun}
               />
             </div>
           </div>

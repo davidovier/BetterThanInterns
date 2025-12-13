@@ -20,6 +20,8 @@ type SessionArtifactPaneProps = {
   onArtifactsRendered?: () => void;
   // M17.1 Verification: Only fire callback when parent expects it
   shouldConfirmRender?: boolean;
+  // M20: First-run detection
+  isFirstRun?: boolean;
 };
 
 export function SessionArtifactPane({
@@ -29,6 +31,7 @@ export function SessionArtifactPane({
   onScanForOpportunities,
   onArtifactsRendered,
   shouldConfirmRender = false,
+  isFirstRun = false,
 }: SessionArtifactPaneProps) {
   const artifactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -157,12 +160,13 @@ export function SessionArtifactPane({
           )}
         </AnimatePresence>
 
-        {/* M19: Empty State - More document-like */}
+        {/* M20: Empty State - First-run specific copy */}
         {!hasAnyArtifacts && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <Inbox className="h-10 w-10 text-slate-200 mb-3" />
-            <p className="text-sm text-slate-400 max-w-[180px]">
-              Outputs will appear as work progresses.
+          <div className="py-16 text-center">
+            <p className="text-sm text-slate-500 max-w-[200px] mx-auto leading-relaxed">
+              {isFirstRun
+                ? 'Outputs will appear here as processes are identified and decisions are made.'
+                : 'Outputs will appear as work progresses.'}
             </p>
           </div>
         )}
