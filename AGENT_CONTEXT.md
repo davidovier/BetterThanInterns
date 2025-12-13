@@ -4,7 +4,7 @@
 
 **Better Than Interns** is a Next.js 14+ web application that helps teams map, analyze, and optimize business processes through conversational AI. Users describe their workflows in natural language, and the AI assistant extracts structured process information while generating real-time visual workflow graphs.
 
-**Current State**: The application has recently been simplified to focus on a sessions-first experience, removing unnecessary complexity and consolidating around core functionality. The session workspace has been rebuilt (M15.2 → M15.3) with a unified three-panel layout featuring chat, live process graph visualization, and artifact stream.
+**Current State**: The application has been elevated to CEO-grade quality through three executive elevation milestones (M18-M20). The sessions list page now features session states, featured sessions, and directional metrics. The session workspace has been transformed into an executive working file with document-style entries, session briefs, and decision gravity. First-run experience provides calm, invisible onboarding that feels like documentation, not tutorial. All changes are frontend-only with no backend modifications required.
 
 ## Architecture & Tech Stack
 
@@ -44,15 +44,16 @@
 │   ├── ui/                  # Shadcn/ui primitives + tooltip
 │   ├── layout/              # AppShell, navigation
 │   ├── workspace/           # Workspace context
-│   ├── sessions/            # SessionsHeader, SessionsFilterBar, SessionCard, AnimatedBackground (M16)
-│   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace, AssistantPresence (M17)
+│   ├── sessions/            # SessionsHeader, SessionsFilterBar, SessionCard, FeaturedSession, AnimatedBackground (M16, M18)
+│   ├── session/             # SessionChatPane, SessionGraphPane, SessionArtifactPane, UnifiedSessionWorkspace, AssistantPresence (M17-M20)
 │   ├── artifacts/           # ProcessCard, OpportunityCard, BlueprintCard, GovernanceCard
 │   ├── design-system/       # EmptyState, MetricCard
 │   └── process/             # step-details-dialog, other process components
 ├── lib/
 │   ├── auth.ts             # NextAuth configuration
 │   ├── prisma.ts           # Prisma client
-│   └── openai.ts           # OpenAI client
+│   ├── openai.ts           # OpenAI client
+│   └── sessionUtils.ts     # Session state derivation and first-run detection (M18, M20)
 └── types/
     └── artifacts.ts         # Artifact type definitions
 
@@ -198,6 +199,155 @@ The graph is NOT optional - it's the core product experience.
 
 ### Milestone Progress
 
+#### M20 - First-Run Experience (December 13, 2025)
+
+**M20 First-Run Experience** - Executive-appropriate onboarding for first session
+- **Status**: ✅ Completed
+- **Goal**: Make the first session feel intentional, guided, and calm without breaking the executive document metaphor
+- **Target Aesthetic**: Declarative, calm, neutral - no excitement, no promises
+- **Design Principles**:
+  - No global onboarding (no tours, no overlays, no tooltips)
+  - First-run copy feels unfinished but intentional
+  - Uses existing production styles (no special "demo mode" appearance)
+  - Dismissible guidance that never reappears
+- **Key Changes**:
+  - **First-run detection**: Added `isFirstRunSession()` utility to `sessionUtils.ts`
+    - Detects when session has no messages, no artifacts, and no contextSummary
+  - **Session Brief first-run copy**:
+    - "Use this working session to describe a process or decision. As work progresses, this brief will summarize what was decided."
+    - Unchanged styling from production (same text-slate-700, leading-relaxed)
+  - **Dismissible starter example** (Working Notes):
+    - Single example block showing how to describe a process
+    - "Example" label (uppercase, small, muted)
+    - Dismissible with × button in top-right
+    - Never reappears once dismissed (component-local state)
+  - **Outputs empty state first-run copy**:
+    - "Outputs will appear here as processes are identified and decisions are made."
+    - More descriptive than returning user empty state
+- **Technical Details**:
+  - Modified `src/lib/sessionUtils.ts` - added `isFirstRunSession()` function
+  - Modified `UnifiedSessionWorkspace.tsx` - detects first-run, passes to child components
+  - Modified `SessionChatPane.tsx` - dismissible starter example with useState
+  - Modified `SessionArtifactPane.tsx` - first-run-specific empty state copy
+- **Files Modified**:
+  - `src/lib/sessionUtils.ts` (added isFirstRunSession)
+  - `src/components/session/UnifiedSessionWorkspace.tsx` (first-run detection)
+  - `src/components/session/SessionChatPane.tsx` (starter example)
+  - `src/components/session/SessionArtifactPane.tsx` (first-run empty state)
+- **UX Philosophy**: Invisible onboarding - guidance that feels like documentation, not tutorial
+- **Commit**: `fa6b578`
+
+#### M19 - Session as Executive Working File (December 13, 2025)
+
+**M19 Session Detail Transformation** - Reframe session from "chat + artifacts" into executive working file
+- **Status**: ✅ Completed
+- **Goal**: Transform session detail page into a living executive working document
+- **Target Aesthetic**: CEO-grade, serious working document (not chat interface)
+- **Design Principles**:
+  - File cover metaphor (not chat header)
+  - Document-style entries (not chat bubbles)
+  - Decision gravity through visual weight (borders, typography)
+  - Assistant presence subordinate to document
+  - No exclamation points, no emojis, declarative sentences
+- **Key Changes**:
+  - **File Cover Header** (UnifiedSessionWorkspace):
+    - Document-style header with FileText icon
+    - 3xl title with tight tracking
+    - Metadata line: "Active working session · Last updated X ago · Workspace name"
+    - AssistantPresence moved next to "Continue Work" button (subordinate position)
+  - **Session Brief Section**:
+    - Positioned between header and workspace panels
+    - "SESSION BRIEF" uppercase label
+    - Empty state: "This session will summarize itself as decisions are made."
+    - Calm, declarative tone
+  - **Working Notes** (SessionChatPane):
+    - Changed from "Chat" to "Working Notes"
+    - Document-style message entries with timestamps
+    - "You · HH:MM" and "Assistant · HH:MM" labels
+    - Border-separated entries (not bubbles)
+    - Input placeholder: "Add context, clarify a process, or ask for analysis..."
+    - Button text: "Add Note" (not "Send")
+  - **Outputs Section** (SessionArtifactPane):
+    - Changed from "Artifacts" to "Outputs from this session"
+    - Grouped sections with collapsible headers:
+      - "Processes Identified" (font-semibold, text-slate-500)
+      - "Opportunities Discovered" (font-semibold, text-slate-500)
+      - "Blueprints" (font-bold, text-slate-700, border-b-2) - decision gravity
+      - "Governance & Decisions" (font-bold, text-slate-700, border-b-2) - decision gravity
+    - Empty state: "Outputs will appear as work progresses."
+  - **Decision Gravity**:
+    - Blueprints and Governance sections use heavier borders (2px vs 1px)
+    - Bolder typography (font-bold vs font-semibold)
+    - Visual weight without color changes
+- **Technical Details**:
+  - Modified `UnifiedSessionWorkspace.tsx` - document-style header, session brief section
+  - Modified `SessionChatPane.tsx` - working notes styling, document entries
+  - Modified `SessionArtifactPane.tsx` - outputs section, decision gravity
+  - Modified `src/app/(dashboard)/sessions/[sessionId]/page.tsx` - pass sessionData
+- **Files Modified**:
+  - `src/components/session/UnifiedSessionWorkspace.tsx`
+  - `src/components/session/SessionChatPane.tsx`
+  - `src/components/session/SessionArtifactPane.tsx`
+  - `src/app/(dashboard)/sessions/[sessionId]/page.tsx`
+- **UX Philosophy**: Session workspace feels like a living document file, not a chat interface
+- **Commit**: `6a44139`
+
+#### M18 - Sessions Page Executive Elevation Pass (December 13, 2025)
+
+**M18 Sessions Page Redesign** - Transform `/sessions` page to CEO-grade quality
+- **Status**: ✅ Completed
+- **Goal**: Elevate sessions list page from "mid-market" to executive/CEO-level aesthetic
+- **Target Audience**: CEOs, Founders, Heads of Ops/AI, Enterprise decision-makers
+- **Design Principles**:
+  - Executive Calm (no visual noise, generous whitespace)
+  - Strategic Weight (states over statuses, trends over numbers)
+  - Confidence Over Cleverness (no playful copy, declarative statements)
+  - Restraint (minimal brand color usage, subtle accents)
+- **Key Changes**:
+  - **Session States** (Frontend-only heuristics):
+    - Created `src/lib/sessionUtils.ts` with state derivation logic
+    - 4 states: Active (updated <48h), In Progress (has artifacts), Decided (has governance/blueprints), Archived (30+ days old)
+    - States derived from `updatedAt` timestamps and `metadata` artifact counts
+    - No backend changes required
+    - Subtle color coding: Active (brand), In Progress (blue), Decided (emerald), Archived (slate)
+  - **Featured Session** ("Where to go next"):
+    - Created `FeaturedSession.tsx` component
+    - Displays most recently updated session above grid
+    - Larger card with 4px left accent border
+    - State badge, title, contextSummary, "Continue →" button
+    - Empty state: "Summary will appear as decisions are made."
+  - **Directional Metrics**:
+    - Updated `MetricCard.tsx` to support trend indicators
+    - Added `direction?: 'up' | 'down' | 'neutral'` prop
+    - Added `directionLabel` for context (e.g., "vs last week")
+    - TrendingUp/TrendingDown/Minus icons
+    - Week-over-week session comparison
+  - **De-emphasized Grid**:
+    - Softer shadows (shadow-sm → shadow-md on hover)
+    - More whitespace (gap-8 instead of gap-6)
+    - 3px left accent border (state color)
+    - Smaller typography throughout
+  - **Executive Copy Tone**:
+    - Removed all exclamation points
+    - Changed to declarative statements
+    - "Summary pending" instead of "No summary yet"
+    - "Sessions" instead of "All Sessions"
+    - Calm, professional language throughout
+- **Technical Details**:
+  - Created `src/lib/sessionUtils.ts` - state derivation utilities
+  - Created `src/components/sessions/FeaturedSession.tsx` - featured session card
+  - Modified `src/components/sessions/SessionCard.tsx` - state indicators, de-emphasized styling
+  - Modified `src/components/design-system/MetricCard.tsx` - directional trends
+  - Modified `src/app/(dashboard)/sessions/page.tsx` - integrated all changes
+- **Files Modified**:
+  - `src/lib/sessionUtils.ts` (NEW)
+  - `src/components/sessions/FeaturedSession.tsx` (NEW)
+  - `src/components/sessions/SessionCard.tsx`
+  - `src/components/design-system/MetricCard.tsx`
+  - `src/app/(dashboard)/sessions/page.tsx`
+- **UX Philosophy**: Sessions page feels like an executive dashboard, not a task list
+- **Commit**: `d43259c`
+
 #### M17 - Assistant Presence Layer (December 12, 2025)
 
 **M17 Assistant Presence** - Visible AI presence indicator in session workspace
@@ -299,7 +449,26 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M16 Sessions UI Redesign - CEO-level premium visual style** (commit 10b1988)
+1. **feat: M20 First-Run Experience - Executive-appropriate onboarding** (commit fa6b578)
+   - Added `isFirstRunSession()` utility to sessionUtils.ts
+   - Dismissible starter example in Working Notes
+   - First-run specific empty states and copy
+   - No global onboarding (invisible, calm guidance)
+
+2. **feat: M19 Session as Executive Working File** (commit 6a44139)
+   - Transformed session detail page into executive working document
+   - File cover header, Session Brief section
+   - Working Notes (not Chat), Outputs (not Artifacts)
+   - Decision gravity through visual weight (borders, typography)
+
+3. **feat: M18 Sessions Page Executive Elevation Pass** (commit d43259c)
+   - Created session state derivation system (Active/In Progress/Decided/Archived)
+   - Added Featured Session component ("Where to go next")
+   - Directional metrics with trend indicators
+   - De-emphasized grid with executive copy tone
+   - Created FeaturedSession.tsx and sessionUtils.ts
+
+4. **feat: M16 Sessions UI Redesign - CEO-level premium visual style** (commit 10b1988)
    - Complete visual redesign with extracted components
    - Added @radix-ui/react-tooltip dependency
    - See M16_SESSIONS_UI_PROGRESS.md
@@ -1609,6 +1778,7 @@ Longer explanation if needed
 
 ---
 
-**Last Updated**: December 12, 2025
-**Document Version**: 1.1
-**Current App Version**: Based on commit `10b1988` (M16 Sessions UI Redesign)
+**Last Updated**: December 13, 2025
+**Document Version**: 1.2
+**Current App Version**: Based on commit `fa6b578` (M20 First-Run Experience)
+**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience)
