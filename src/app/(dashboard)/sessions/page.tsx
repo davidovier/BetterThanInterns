@@ -28,6 +28,8 @@ import { AnimatedBackground } from '@/components/sessions/AnimatedBackground';
 import { SessionsHeader } from '@/components/sessions/SessionsHeader';
 import { SessionsFilterBar, FilterType, SortType, ViewType } from '@/components/sessions/SessionsFilterBar';
 import { SessionCard } from '@/components/sessions/SessionCard';
+import { FeaturedSession } from '@/components/sessions/FeaturedSession';
+import { SessionWithState, deriveSessionState } from '@/lib/sessionUtils';
 
 type AssistantSession = {
   id: string;
@@ -121,8 +123,8 @@ export default function SessionsPage() {
       const newSession = result.ok && result.data ? result.data.session : result.session;
 
       toast({
-        title: 'Session created',
-        description: 'Your new session is ready',
+        title: 'Session Created',
+        description: 'Your new session is ready.',
       });
 
       router.push(`/sessions/${newSession.id}`);
@@ -155,8 +157,8 @@ export default function SessionsPage() {
       if (!response.ok) throw new Error('Failed to update session');
 
       toast({
-        title: 'Session updated',
-        description: 'Session name has been changed',
+        title: 'Session Updated',
+        description: 'Changes saved.',
       });
 
       setEditingSession(null);
@@ -185,8 +187,8 @@ export default function SessionsPage() {
       if (!response.ok) throw new Error('Failed to delete session');
 
       toast({
-        title: 'Session deleted',
-        description: 'Session has been removed',
+        title: 'Session Deleted',
+        description: 'Session removed.',
       });
 
       setDeletingSession(null);
@@ -202,9 +204,22 @@ export default function SessionsPage() {
     }
   };
 
+  // M18: Derive session states from existing data
+  const sessionsWithStates = useMemo(() => {
+    return sessions.map(session => ({
+      ...session,
+      state: deriveSessionState(session as SessionWithState)
+    }));
+  }, [sessions]);
+
+  // M18: Featured session (most recently updated)
+  const featuredSession = sessionsWithStates.length > 0
+    ? sessionsWithStates[0]  // Already sorted by updatedAt
+    : null;
+
   // Filter & Sort Logic
   const filteredAndSortedSessions = useMemo(() => {
-    let filtered = [...sessions];
+    let filtered = [...sessionsWithStates];
 
     // Apply filter
     switch (activeFilter) {
@@ -237,13 +252,31 @@ export default function SessionsPage() {
     }
 
     return filtered;
-  }, [sessions, activeFilter, sortBy]);
+  }, [sessionsWithStates, activeFilter, sortBy]);
 
-  // Compute metrics
+  // M18: Compute metrics with directional trends
   const recentSessionsCount = sessions.filter((s) => {
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     return new Date(s.updatedAt) > weekAgo;
   }).length;
+
+  const previousWeekSessionsCount = sessions.filter((s) => {
+    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const updatedAt = new Date(s.updatedAt);
+    return updatedAt > twoWeeksAgo && updatedAt <= weekAgo;
+  }).length;
+
+  const activeDirection = recentSessionsCount > previousWeekSessionsCount
+    ? 'up' as const
+    : recentSessionsCount < previousWeekSessionsCount
+    ? 'down' as const
+    : 'neutral' as const;
+
+  const activeDelta = Math.abs(recentSessionsCount - previousWeekSessionsCount);
+  const activeDirectionLabel = activeDirection === 'neutral'
+    ? 'No change vs last week'
+    : `${activeDelta} ${activeDirection === 'up' ? 'more' : 'fewer'} than last week`;
 
   const sessionsWithProcesses = sessions.filter((s) => s.metadata?.processIds?.length > 0).length;
   const sessionsWithOpportunities = sessions.filter((s) => s.metadata?.opportunityIds?.length > 0).length;
@@ -285,12 +318,23 @@ export default function SessionsPage() {
           onNewSession={() => setShowNewSession(true)}
         />
 
-        {/* Metrics Row */}
-        {sessions.length > 0 && (
+        {/* M18: Featured Session - "Where to go next" */}
+        {featuredSession && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <FeaturedSession session={featuredSession} />
+          </motion.div>
+        )}
+
+        {/* M18: Metrics Row with directional hints */}
+        {sessions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             <MetricCard label="Total Sessions" value={sessions.length} icon={Briefcase} variant="default" />
@@ -305,6 +349,8 @@ export default function SessionsPage() {
               value={recentSessionsCount}
               icon={Target}
               variant="success"
+              direction={activeDirection}
+              directionLabel={activeDirectionLabel}
             />
           </motion.div>
         )}
@@ -353,7 +399,7 @@ export default function SessionsPage() {
             </p>
           </motion.div>
         ) : (
-          <div className={viewType === 'grid' ? 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
+          <div className={viewType === 'grid' ? 'grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
             {filteredAndSortedSessions.map((sessionItem, index) => (
               <SessionCard
                 key={sessionItem.id}
@@ -367,13 +413,13 @@ export default function SessionsPage() {
         )}
       </div>
 
-      {/* New Session Dialog */}
+      {/* M18: New Session Dialog - Executive tone */}
       <Dialog open={showNewSession} onOpenChange={setShowNewSession}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Create New Session</DialogTitle>
+            <DialogTitle>New Working Session</DialogTitle>
             <DialogDescription>
-              Give your session a descriptive name. The AI will help you map processes and discover opportunities.
+              Name your session. The assistant will help you map processes and identify opportunities.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={createSession} className="space-y-4 py-4">
@@ -415,12 +461,12 @@ export default function SessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
+      {/* M18: Edit Dialog - Executive tone */}
       <Dialog open={!!editingSession} onOpenChange={(open) => !open && setEditingSession(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Session</DialogTitle>
-            <DialogDescription>Change the name of your session</DialogDescription>
+            <DialogDescription>Update the session name.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -452,13 +498,13 @@ export default function SessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* M18: Delete Confirmation Dialog - Executive tone */}
       <Dialog open={!!deletingSession} onOpenChange={(open) => !open && setDeletingSession(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Session</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{deletingSession?.title}"? This action cannot be undone.
+              This will permanently delete "{deletingSession?.title}" and all associated data. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
