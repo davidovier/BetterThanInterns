@@ -22,6 +22,9 @@ type SessionArtifactPaneProps = {
   shouldConfirmRender?: boolean;
   // M20: First-run detection
   isFirstRun?: boolean;
+  // M21: Scroll target refs for Continue Work behavior
+  outputsPaneRef?: React.RefObject<HTMLDivElement>;
+  governanceRef?: React.RefObject<HTMLDivElement>;
 };
 
 export function SessionArtifactPane({
@@ -32,6 +35,8 @@ export function SessionArtifactPane({
   onArtifactsRendered,
   shouldConfirmRender = false,
   isFirstRun = false,
+  outputsPaneRef,
+  governanceRef,
 }: SessionArtifactPaneProps) {
   const artifactRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
@@ -171,9 +176,9 @@ export function SessionArtifactPane({
           </div>
         )}
 
-        {/* M19: Processes Section - Grouped outputs */}
+        {/* M19/M21: Processes Section - Grouped outputs */}
         {artifacts.processes.length > 0 && (
-          <div className="mb-5">
+          <div className="mb-5" ref={outputsPaneRef}>
             <button
               onClick={() => toggleSection('processes')}
               className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"
@@ -288,9 +293,9 @@ export function SessionArtifactPane({
           </div>
         )}
 
-        {/* M19: AI Use Cases Section - Decision gravity (governance = heavier) */}
+        {/* M19/M21: AI Use Cases Section - Decision gravity (governance = heavier) */}
         {artifacts.aiUseCases.length > 0 && (
-          <div className="mb-5 pb-4 border-b-2 border-slate-200">
+          <div className="mb-5 pb-4 border-b-2 border-slate-200" ref={governanceRef}>
             <button
               onClick={() => toggleSection('aiUseCases')}
               className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"

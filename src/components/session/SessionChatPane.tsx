@@ -27,6 +27,9 @@ type SessionChatPaneProps = {
   onInputBlur?: () => void;
   // M20: First-run detection
   isFirstRun?: boolean;
+  // M21: Scroll target refs for Continue Work behavior
+  inputRef?: React.RefObject<HTMLTextAreaElement>;
+  messagesEndRef?: React.RefObject<HTMLDivElement>;
 };
 
 const STARTER_PROMPTS = [
@@ -51,9 +54,14 @@ export function SessionChatPane({
   onInputFocus,
   onInputBlur,
   isFirstRun = false,
+  inputRef: externalInputRef,
+  messagesEndRef: externalMessagesEndRef,
 }: SessionChatPaneProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // M21: Use external refs if provided, otherwise create internal ones
+  const internalMessagesEndRef = useRef<HTMLDivElement>(null);
+  const internalTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = externalMessagesEndRef || internalMessagesEndRef;
+  const textareaRef = externalInputRef || internalTextareaRef;
 
   // M20: Dismissible starter example state
   const [showStarterExample, setShowStarterExample] = useState(true);

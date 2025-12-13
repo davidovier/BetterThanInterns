@@ -19,6 +19,66 @@ import { isFirstRunSession } from '@/lib/sessionUtils';
 // M17.1 Verification: Debug mode for presence state (dev-only)
 const DEBUG_PRESENCE = false;
 
+// M21: Helper functions for decision continuity
+
+/**
+ * M21: Derive implicit next-step guidance based on artifact state
+ */
+function getNextStepGuidance(hasAnyArtifacts: boolean, artifacts: SessionArtifacts): string {
+  const hasProcesses = artifacts.processes.length > 0;
+  const hasOpportunities = artifacts.opportunities.length > 0;
+  const hasGovernance = artifacts.aiUseCases.length > 0 || artifacts.blueprints.length > 0;
+
+  if (!hasProcesses) {
+    return 'Next: Identify the core process.';
+  }
+  if (!hasOpportunities) {
+    return 'Next: Review automation opportunities.';
+  }
+  if (!hasGovernance) {
+    return 'Next: Decide what to move forward with.';
+  }
+  return 'Next: Review decisions and outcomes.';
+}
+
+/**
+ * M21: Derive last substantive update from artifacts
+ * Returns null if no meaningful event detected
+ */
+function getLastSubstantiveUpdate(artifacts: SessionArtifacts): string | null {
+  // Check for most recent artifact creation by examining counts
+  if (artifacts.aiUseCases.length > 0 || artifacts.blueprints.length > 0) {
+    return 'Governance decision recorded';
+  }
+  if (artifacts.opportunities.length > 0) {
+    return 'Opportunity scan completed';
+  }
+  if (artifacts.processes.length > 0) {
+    return 'Process identified';
+  }
+  return null;
+}
+
+/**
+ * M21: Get scroll target ref based on session state
+ */
+function getScrollTarget(
+  messages: ChatMessage[],
+  hasProcesses: boolean,
+  hasGovernance: boolean
+): 'input' | 'lastNote' | 'outputs' | 'governance' {
+  if (messages.length === 0) {
+    return 'input';
+  }
+  if (!hasProcesses) {
+    return 'lastNote';
+  }
+  if (hasGovernance) {
+    return 'governance';
+  }
+  return 'outputs';
+}
+
 type UnifiedSessionWorkspaceProps = {
   sessionId: string;
   sessionTitle: string;
@@ -74,6 +134,12 @@ export function UnifiedSessionWorkspace({
 
   // M17.1: Error recovery timeout ref
   const errorRecoveryTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // M21: Scroll target refs for Continue Work behavior
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const outputsPaneRef = useRef<HTMLDivElement | null>(null);
+  const governanceRef = useRef<HTMLDivElement | null>(null);
 
   // M17.1: Centralized async job wrapper
   const runJob = useCallback(async <T,>(fn: () => Promise<T>): Promise<T> => {
@@ -289,6 +355,29 @@ export function UnifiedSessionWorkspace({
     setIsUpdating(false);
   }, []);
 
+  // M21: Smart Continue Work scroll behavior
+  const handleContinueWork = useCallback(() => {
+    const hasProcesses = artifacts.processes.length > 0;
+    const hasGovernance = artifacts.aiUseCases.length > 0 || artifacts.blueprints.length > 0;
+    const target = getScrollTarget(messages, hasProcesses, hasGovernance);
+
+    switch (target) {
+      case 'input':
+        inputRef.current?.focus();
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        break;
+      case 'lastNote':
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        break;
+      case 'outputs':
+        outputsPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      case 'governance':
+        governanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+    }
+  }, [messages, artifacts]);
+
   // M17.1: Send message with job tracking
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
@@ -407,6 +496,16 @@ export function UnifiedSessionWorkspace({
                     <span>Last updated {formatDistanceToNow(new Date(sessionData.updatedAt), { addSuffix: true })}</span>
                   </>
                 )}
+                {/* M21: Last substantive update indicator */}
+                {(() => {
+                  const lastUpdate = getLastSubstantiveUpdate(artifacts);
+                  return lastUpdate ? (
+                    <>
+                      <span className="text-slate-300">·</span>
+                      <span>Last update: {lastUpdate}</span>
+                    </>
+                  ) : null;
+                })()}
                 {currentWorkspaceName && (
                   <>
                     <span className="text-slate-300">·</span>
@@ -416,14 +515,11 @@ export function UnifiedSessionWorkspace({
               </div>
             </div>
 
-            {/* M19: Single primary action + assistant presence */}
+            {/* M19/M21: Single primary action + assistant presence */}
             <div className="flex items-center gap-4 flex-shrink-0">
               <AssistantPresence state={presenceState} inputEnergy={inputEnergy} />
               <Button
-                onClick={() => {
-                  const textarea = document.querySelector('textarea');
-                  textarea?.focus();
-                }}
+                onClick={handleContinueWork}
                 className="bg-brand-600 hover:bg-brand-700"
               >
                 Continue Work
@@ -449,27 +545,35 @@ export function UnifiedSessionWorkspace({
       {/* M19: Document Body - Session Brief + Three-panel workspace */}
       <div className="flex-1 overflow-hidden flex flex-col">
         <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col overflow-hidden">
-          {/* M19: Session Brief Section */}
+          {/* M19/M21: Session Brief Section - Authoritative record of decisions */}
           <div className="bg-white border-b border-slate-200 px-8 py-6">
             <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
               Session Brief
             </h2>
-            {sessionData?.contextSummary ? (
-              <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
-                {sessionData.contextSummary}
-              </p>
-            ) : (
-              <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
-                {isFirstRun
-                  ? 'Use this working session to describe a process or decision. As work progresses, this brief will summarize what was decided.'
-                  : 'This session will summarize itself as decisions are made.'}
-              </p>
-            )}
+            {/* M21: Subtle left border for authority */}
+            <div className="border-l-2 border-slate-300 pl-4">
+              {sessionData?.contextSummary ? (
+                <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
+                  {sessionData.contextSummary}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
+                  {isFirstRun
+                    ? 'Use this working session to describe a process or decision. As work progresses, this brief will summarize what was decided.'
+                    : 'This session will summarize itself as decisions are made.'}
+                </p>
+              )}
+            </div>
+
+            {/* M21: Implicit next-step line */}
+            <p className="text-sm text-slate-600 mt-2 pl-4">
+              {getNextStepGuidance(hasAnyArtifacts, artifacts)}
+            </p>
           </div>
 
           {/* Main Workspace - Three-panel layout: Working Notes (30%) | Graph (45%) | Outputs (25%) */}
           <div className="flex-1 flex overflow-hidden">
-            {/* M19: Working Notes Pane (formerly Chat) - 30% */}
+            {/* M19/M21: Working Notes Pane (formerly Chat) - 30% */}
             <div className="w-[30%] border-r border-slate-200 bg-white">
               <SessionChatPane
                 messages={messages}
@@ -481,6 +585,8 @@ export function UnifiedSessionWorkspace({
                 onInputFocus={() => setIsInputFocused(true)}
                 onInputBlur={() => setIsInputFocused(false)}
                 isFirstRun={isFirstRun}
+                inputRef={inputRef}
+                messagesEndRef={messagesEndRef}
               />
             </div>
 
@@ -496,7 +602,7 @@ export function UnifiedSessionWorkspace({
               />
             </div>
 
-            {/* M19: Outputs Pane (formerly Artifacts) - 25% */}
+            {/* M19/M21: Outputs Pane (formerly Artifacts) - 25% */}
             <div className="w-[25%] bg-white">
               <SessionArtifactPane
                 artifacts={artifacts}
@@ -505,6 +611,8 @@ export function UnifiedSessionWorkspace({
                 onArtifactsRendered={handleArtifactsRendered}
                 shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
                 isFirstRun={isFirstRun}
+                outputsPaneRef={outputsPaneRef}
+                governanceRef={governanceRef}
               />
             </div>
           </div>
