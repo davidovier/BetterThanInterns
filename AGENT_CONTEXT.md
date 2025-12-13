@@ -199,6 +199,53 @@ The graph is NOT optional - it's the core product experience.
 
 ### Milestone Progress
 
+#### M21 - Decision Continuity (December 13, 2025)
+
+**M21 Decision Continuity** - System memory and resume flow for executive artifacts
+- **Status**: ✅ Completed
+- **Goal**: Transform sessions from static working files into continuity-aware executive artifacts
+- **Target Aesthetic**: Calm, documentary tone - implicit guidance not calls to action
+- **Design Principles**:
+  - No new buttons, tooltips, or instructional copy
+  - Single-source-of-truth brief
+  - Implicit guidance, not calls to action
+  - Executive memory, not assistant chatter
+- **Key Changes**:
+  - **Authoritative Session Brief**:
+    - Added subtle left border (border-l-2 border-slate-300) to establish visual authority
+    - No typography or layout changes from M19/M20
+    - No background color or icons
+  - **Implicit Next-Step Line**:
+    - Editorial guidance below Session Brief (text-sm text-slate-600 mt-2)
+    - Heuristic priority: "Identify process" → "Review opportunities" → "Decide what to move forward" → "Review decisions"
+    - Never clickable, reads like editorial note
+    - No bold, no icon, minimal punctuation
+  - **Smart Continue Work Behavior**:
+    - Context-aware scroll targets based on session state
+    - No messages → scroll to Working Notes input
+    - Has messages but no processes → scroll to latest assistant note
+    - Has processes → scroll to Outputs pane
+    - Has governance/blueprints → scroll to governance section
+    - Smooth scroll, no visual feedback, feels inevitable
+  - **Last Substantive Update Indicator**:
+    - Added to metadata row: "Last update: [event]"
+    - Detects: "Process identified" | "Opportunity scan completed" | "Governance decision recorded"
+    - Only shows when meaningful event detected (no fallback)
+    - Same styling as existing metadata
+- **Technical Details**:
+  - Frontend-only, no backend changes
+  - Reused existing data (metadata, artifact counts, timestamps)
+  - Added helper functions: `getNextStepGuidance()`, `getLastSubstantiveUpdate()`, `getScrollTarget()`
+  - Added scroll target refs: inputRef, messagesEndRef, outputsPaneRef, governanceRef
+  - Modified SessionChatPane and SessionArtifactPane to accept external refs
+  - Bundle size increase: ~1.2kb (under 2kb limit)
+- **Files Modified**:
+  - `src/components/session/UnifiedSessionWorkspace.tsx` (helper functions, refs, smart scroll)
+  - `src/components/session/SessionChatPane.tsx` (accept external refs)
+  - `src/components/session/SessionArtifactPane.tsx` (accept external refs)
+- **UX Philosophy**: Sessions remember context and guide next steps through calm editorial notes, not UI prompts
+- **Commit**: `cf07e1c`
+
 #### M20 - First-Run Experience (December 13, 2025)
 
 **M20 First-Run Experience** - Executive-appropriate onboarding for first session
@@ -449,7 +496,14 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M20 First-Run Experience - Executive-appropriate onboarding** (commit fa6b578)
+1. **feat: M21 Decision Continuity - System memory and resume flow** (commit cf07e1c)
+   - Authoritative Session Brief with subtle left border
+   - Implicit next-step line below Session Brief
+   - Smart Continue Work scroll behavior (context-aware targets)
+   - Last substantive update indicator in metadata
+   - Frontend-only, no backend changes
+
+2. **feat: M20 First-Run Experience - Executive-appropriate onboarding** (commit fa6b578)
    - Added `isFirstRunSession()` utility to sessionUtils.ts
    - Dismissible starter example in Working Notes
    - First-run specific empty states and copy
@@ -1779,6 +1833,6 @@ Longer explanation if needed
 ---
 
 **Last Updated**: December 13, 2025
-**Document Version**: 1.2
-**Current App Version**: Based on commit `fa6b578` (M20 First-Run Experience)
-**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience)
+**Document Version**: 1.3
+**Current App Version**: Based on commit `cf07e1c` (M21 Decision Continuity)
+**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity)
