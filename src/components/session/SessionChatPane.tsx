@@ -88,9 +88,16 @@ export function SessionChatPane({
   };
 
   return (
-    <div className="flex flex-col h-full bg-background">
-      {/* Chat Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-full bg-white">
+      {/* M19: Working Notes header */}
+      <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-slate-200">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+          Working Notes
+        </h2>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
         {/* M16: First-Time Welcome State */}
         {isFirstTime && (
           <motion.div
@@ -145,78 +152,76 @@ export function SessionChatPane({
           </motion.div>
         )}
 
-        {/* Regular Messages */}
+        {/* M19: Document-style messages (less chat-like) */}
         {!isFirstTime && (
           <AnimatePresence initial={false}>
             {messages.map((message, index) => (
               <motion.div
                 key={message.id}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                transition={{ duration: 0.15 }}
+                className="pb-4 border-b border-slate-100 last:border-0"
               >
-                <div
-                  className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                    message.role === 'user'
-                      ? 'bg-brand-500 text-white'
-                      : message.role === 'system'
-                      ? 'bg-muted/50 text-muted-foreground text-sm italic'
-                      : 'bg-muted'
-                  }`}
-                >
-                  {message.role === 'assistant' && (
-                    <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-                      <Sparkles className="h-3 w-3" />
-                      <span>AI Assistant</span>
+                {message.role === 'user' ? (
+                  <div>
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1.5">
+                      You · {new Date(message.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </div>
-                  )}
-                  <div className="whitespace-pre-wrap break-words">{message.content}</div>
-                  <div
-                    className={`text-xs mt-2 ${
-                      message.role === 'user' ? 'text-white/70' : 'text-muted-foreground'
-                    }`}
-                  >
-                    {new Date(message.createdAt).toLocaleTimeString([], {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    <div className="text-sm text-slate-900 leading-relaxed whitespace-pre-wrap break-words">
+                      {message.content}
+                    </div>
                   </div>
-                </div>
+                ) : message.role === 'system' ? (
+                  <div className="text-xs text-slate-400 italic">{message.content}</div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1.5">
+                      <Sparkles className="h-2.5 w-2.5" />
+                      <span>Assistant · {new Date(message.createdAt).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}</span>
+                    </div>
+                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                      {message.content}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
         )}
 
-        {/* Typing Indicator */}
+        {/* M19: Simplified typing indicator */}
         {isLoading && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex justify-start"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 text-xs text-slate-400"
           >
-            <div className="bg-muted rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3 w-3 text-muted-foreground" />
-                <div className="flex gap-1">
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: 0 }}
-                    className="w-2 h-2 bg-muted-foreground/50 rounded-full"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: 0.2 }}
-                    className="w-2 h-2 bg-muted-foreground/50 rounded-full"
-                  />
-                  <motion.div
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 0.6, repeat: Infinity, delay: 0.4 }}
-                    className="w-2 h-2 bg-muted-foreground/50 rounded-full"
-                  />
-                </div>
-              </div>
+            <Sparkles className="h-3 w-3" />
+            <span>Assistant is working</span>
+            <div className="flex gap-0.5">
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
+                className="w-1 h-1 bg-slate-400 rounded-full"
+              />
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
+                className="w-1 h-1 bg-slate-400 rounded-full"
+              />
+              <motion.div
+                animate={{ opacity: [0.4, 1, 0.4] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}
+                className="w-1 h-1 bg-slate-400 rounded-full"
+              />
             </div>
           </motion.div>
         )}
@@ -224,62 +229,36 @@ export function SessionChatPane({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="border-t border-border bg-background">
-        {/* M16: Early Session Helper */}
-        {showEarlyHelper && !isLoading && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="px-4 pt-3 pb-2"
-          >
-            <div className="flex items-start gap-2 text-xs text-slate-500">
-              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-brand-400" />
-              <div>
-                <span className="font-medium">Try describing steps like:</span>
-                <div className="mt-1 space-y-0.5">
-                  {EARLY_SESSION_HINTS.slice(0, 2).map((hint, idx) => (
-                    <div key={idx} className="text-slate-400">• {hint}</div>
-                  ))}
-                </div>
-              </div>
+      {/* M19: Input Area - More document-like */}
+      <div className="border-t border-slate-200 bg-white">
+        <div className="px-6 py-4">
+          <Textarea
+            ref={textareaRef}
+            value={inputMessage}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={onInputFocus}
+            onBlur={onInputBlur}
+            placeholder="Add context, clarify a process, or ask for analysis..."
+            className="resize-none min-h-[60px] max-h-[160px] text-sm border-slate-200 focus:border-slate-300 bg-white"
+            disabled={isLoading}
+          />
+          <div className="flex items-center justify-between mt-2">
+            <div className="text-[11px] text-slate-400">
+              Press Enter to send · Shift+Enter for new line
             </div>
-          </motion.div>
-        )}
-
-        <div className="p-4">
-          <div className="flex gap-2 items-end">
-            <Textarea
-              ref={textareaRef}
-              value={inputMessage}
-              onChange={(e) => onInputChange(e.target.value)}
-              onKeyDown={handleKeyDown}
-              onFocus={onInputFocus}
-              onBlur={onInputBlur}
-              placeholder={
-                isFirstTime
-                  ? "Describe your process... (e.g., 'First we receive an invoice, then...')"
-                  : "Describe your process, ask questions, or request analysis..."
-              }
-              className="resize-none min-h-[80px] max-h-[200px]"
-              disabled={isLoading}
-            />
             <Button
               onClick={onSendMessage}
               disabled={!inputMessage.trim() || isLoading}
-              size="lg"
-              className="flex-shrink-0"
+              size="sm"
+              className="bg-slate-700 hover:bg-slate-800 text-white h-7 px-3 text-xs"
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Send className="h-5 w-5" />
+                'Add Note'
               )}
             </Button>
-          </div>
-          <div className="text-xs text-muted-foreground mt-2">
-            Press Enter to send, Shift+Enter for new line
           </div>
         </div>
       </div>

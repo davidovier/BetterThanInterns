@@ -9,9 +9,11 @@ import { SessionArtifacts } from '@/types/artifacts';
 import { ProcessStep } from '@/types/process';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { useWorkspaceContext } from '@/components/workspace/workspace-context';
+import { formatDistanceToNow } from 'date-fns';
 
 // M17.1 Verification: Debug mode for presence state (dev-only)
 const DEBUG_PRESENCE = false;
@@ -19,13 +21,19 @@ const DEBUG_PRESENCE = false;
 type UnifiedSessionWorkspaceProps = {
   sessionId: string;
   sessionTitle: string;
+  sessionData?: {
+    contextSummary?: string;
+    updatedAt?: string;
+  };
 };
 
 export function UnifiedSessionWorkspace({
   sessionId,
   sessionTitle,
+  sessionData,
 }: UnifiedSessionWorkspaceProps) {
   const { toast } = useToast();
+  const { currentWorkspaceName } = useWorkspaceContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -355,42 +363,59 @@ export function UnifiedSessionWorkspace({
   };
 
   return (
-    <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="border-b border-border p-4 bg-background">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/sessions">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Link>
-            </Button>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex-1 min-w-0">
-              <h1 className="text-lg font-semibold truncate">{sessionTitle}</h1>
-            </div>
-            {/* M17.1: Assistant Presence Indicator with input energy */}
-            <div className="h-6 w-px bg-border" />
-            <AssistantPresence state={presenceState} inputEnergy={inputEnergy} />
-          </div>
-          <Button
-            onClick={scanForOpportunities}
-            disabled={isScanning || !artifacts.processes[selectedProcessIndex] || artifacts.processes.length === 0}
-            className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+    <div className="h-screen flex flex-col bg-slate-50">
+      {/* M19: Document-style File Cover Header */}
+      <div className="border-b border-slate-200 bg-white">
+        <div className="max-w-7xl mx-auto px-8 py-6">
+          {/* Back link */}
+          <Link
+            href="/sessions"
+            className="inline-flex items-center text-sm text-slate-500 hover:text-slate-700 transition-colors mb-4"
           >
-            {isScanning ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                Scanning...
-              </>
-            ) : (
-              <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Scan for Opportunities
-              </>
-            )}
-          </Button>
+            <ArrowLeft className="h-3.5 w-3.5 mr-1.5" />
+            Sessions
+          </Link>
+
+          {/* Document title and metadata */}
+          <div className="flex items-start justify-between gap-6">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <FileText className="h-6 w-6 text-slate-400 flex-shrink-0" />
+                <h1 className="text-3xl font-semibold text-slate-900 tracking-tight">
+                  {sessionTitle}
+                </h1>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-slate-500">
+                <span>Active working session</span>
+                {sessionData?.updatedAt && (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <span>Last updated {formatDistanceToNow(new Date(sessionData.updatedAt), { addSuffix: true })}</span>
+                  </>
+                )}
+                {currentWorkspaceName && (
+                  <>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-slate-400">{currentWorkspaceName}</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* M19: Single primary action + assistant presence */}
+            <div className="flex items-center gap-4 flex-shrink-0">
+              <AssistantPresence state={presenceState} inputEnergy={inputEnergy} />
+              <Button
+                onClick={() => {
+                  const textarea = document.querySelector('textarea');
+                  textarea?.focus();
+                }}
+                className="bg-brand-600 hover:bg-brand-700"
+              >
+                Continue Work
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -407,43 +432,64 @@ export function UnifiedSessionWorkspace({
         </div>
       )}
 
-      {/* Main Workspace - Three-panel layout: Chat (30%) | Graph (45%) | Artifacts (25%) */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Chat Pane - 30% */}
-        <div className="w-[30%] border-r border-border">
-          <SessionChatPane
-            messages={messages}
-            inputMessage={inputMessage}
-            isLoading={isLoading}
-            onInputChange={setInputMessage}
-            onSendMessage={sendMessage}
-            hasProcesses={artifacts.processes.length > 0}
-            onInputFocus={() => setIsInputFocused(true)}
-            onInputBlur={() => setIsInputFocused(false)}
-          />
-        </div>
+      {/* M19: Document Body - Session Brief + Three-panel workspace */}
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col overflow-hidden">
+          {/* M19: Session Brief Section */}
+          <div className="bg-white border-b border-slate-200 px-8 py-6">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-3">
+              Session Brief
+            </h2>
+            {sessionData?.contextSummary ? (
+              <p className="text-sm text-slate-700 leading-relaxed max-w-4xl">
+                {sessionData.contextSummary}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-400 italic">
+                This session will summarize itself as decisions are made.
+              </p>
+            )}
+          </div>
 
-        {/* Graph Pane - 45% */}
-        <div className="w-[45%] border-r border-border">
-          <SessionGraphPane
-            processes={artifacts.processes}
-            opportunities={artifacts.opportunities}
-            selectedProcessIndex={selectedProcessIndex}
-            highlightedStepId={highlightedArtifactId}
-            onProcessSelect={setSelectedProcessIndex}
-            onStepClick={handleStepClick}
-          />
-        </div>
+          {/* Main Workspace - Three-panel layout: Working Notes (30%) | Graph (45%) | Outputs (25%) */}
+          <div className="flex-1 flex overflow-hidden">
+            {/* M19: Working Notes Pane (formerly Chat) - 30% */}
+            <div className="w-[30%] border-r border-slate-200 bg-white">
+              <SessionChatPane
+                messages={messages}
+                inputMessage={inputMessage}
+                isLoading={isLoading}
+                onInputChange={setInputMessage}
+                onSendMessage={sendMessage}
+                hasProcesses={artifacts.processes.length > 0}
+                onInputFocus={() => setIsInputFocused(true)}
+                onInputBlur={() => setIsInputFocused(false)}
+              />
+            </div>
 
-        {/* Artifact Pane - 25% */}
-        <div className="w-[25%]">
-          <SessionArtifactPane
-            artifacts={artifacts}
-            highlightedArtifactId={highlightedArtifactId}
-            onScanForOpportunities={scanForOpportunities}
-            onArtifactsRendered={handleArtifactsRendered}
-            shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
-          />
+            {/* Graph Pane - 45% */}
+            <div className="w-[45%] border-r border-slate-200">
+              <SessionGraphPane
+                processes={artifacts.processes}
+                opportunities={artifacts.opportunities}
+                selectedProcessIndex={selectedProcessIndex}
+                highlightedStepId={highlightedArtifactId}
+                onProcessSelect={setSelectedProcessIndex}
+                onStepClick={handleStepClick}
+              />
+            </div>
+
+            {/* M19: Outputs Pane (formerly Artifacts) - 25% */}
+            <div className="w-[25%] bg-white">
+              <SessionArtifactPane
+                artifacts={artifacts}
+                highlightedArtifactId={highlightedArtifactId}
+                onScanForOpportunities={scanForOpportunities}
+                onArtifactsRendered={handleArtifactsRendered}
+                shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
+              />
+            </div>
+          </div>
         </div>
       </div>
 

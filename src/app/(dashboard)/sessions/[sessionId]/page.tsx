@@ -75,6 +75,10 @@ export default function SessionDetailPage() {
     <UnifiedSessionWorkspace
       sessionId={sessionId}
       sessionTitle={session.title}
+      sessionData={{
+        contextSummary: session.contextSummary,
+        updatedAt: session.updatedAt,
+      }}
     />
   );
 }
