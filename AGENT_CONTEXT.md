@@ -247,7 +247,7 @@ The graph is NOT optional - it's the core product experience.
   - Before: Technical flow diagram with procedural steps, colored heatmap, animated edges
   - After: Executive summary with outcome-focused steps, subtle emphasis on friction/leverage, calm document feel
 - **UX Risk**: Bottleneck detection (duration >60 min) may not match all organizational contexts - heuristic may need refinement
-- **Commit**: (pending)
+- **Commit**: `6a4389a`
 
 #### M21 - Decision Continuity (December 13, 2025)
 
@@ -546,7 +546,7 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M22 Executive Process Visualization - Graph semantic elevation** (commit pending)
+1. **feat: M22 Executive Process Visualization - Graph semantic elevation** (commit 6a4389a)
    - Outcome-first node language transformation (deriveExecutiveLabel function)
    - Bottleneck & leverage visual emphasis (duration-based weight, opportunity accent)
    - Opportunity presence annotations (subtle text below nodes)
@@ -1892,5 +1892,5 @@ Longer explanation if needed
 
 **Last Updated**: December 13, 2025
 **Document Version**: 1.4
-**Current App Version**: Based on M22 (Executive Process Visualization) - commit pending
+**Current App Version**: Based on commit `6a4389a` (M22 Executive Process Visualization)
 **Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity), M22 (Executive Process Visualization)
