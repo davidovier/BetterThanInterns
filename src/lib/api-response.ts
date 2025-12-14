@@ -18,6 +18,7 @@ export type ApiErrorResponse = {
   error: {
     code: string;
     message: string;
+    suggestedActions?: string[]; // M24.1: For billing errors
   };
 };
 
@@ -45,6 +46,10 @@ export const ErrorCodes = {
   OPPORTUNITY_SCAN_FAILED: 'OPPORTUNITY_SCAN_FAILED',
   TOOL_MATCH_FAILED: 'TOOL_MATCH_FAILED',
   PROCESS_ASSISTANT_FAILED: 'PROCESS_ASSISTANT_FAILED',
+
+  // Billing (M24.1)
+  BILLING_LIMIT_REACHED: 'BILLING_LIMIT_REACHED',
+  PAYG_CAP_REACHED: 'PAYG_CAP_REACHED',
 
   // Database
   DATABASE_ERROR: 'DATABASE_ERROR',
@@ -74,6 +79,7 @@ export function error(
   statusCode: number,
   code: string,
   message: string,
+  suggestedActions?: string[],
   init?: ResponseInit
 ): NextResponse<ApiErrorResponse> {
   return NextResponse.json(
@@ -82,6 +88,7 @@ export function error(
       error: {
         code,
         message,
+        ...(suggestedActions && { suggestedActions }),
       },
     },
     { status: statusCode, ...init }
@@ -115,4 +122,11 @@ export const CommonErrors = {
 
   internalError: (message = 'An unexpected error occurred') =>
     error(500, ErrorCodes.INTERNAL_ERROR, message),
+
+  // M24.1: Billing error helpers
+  billingLimitReached: (message: string, suggestedActions: string[]) =>
+    error(429, ErrorCodes.BILLING_LIMIT_REACHED, message, suggestedActions),
+
+  paygCapReached: (message: string, suggestedActions: string[]) =>
+    error(429, ErrorCodes.PAYG_CAP_REACHED, message, suggestedActions),
 };

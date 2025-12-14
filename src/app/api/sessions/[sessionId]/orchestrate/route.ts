@@ -6,6 +6,7 @@ import { ok, CommonErrors, error, ErrorCodes } from '@/lib/api-response';
 import { logError } from '@/lib/logging';
 import { orchestrate } from '@/lib/orchestration/router';
 import { OrchestrationContext } from '@/lib/orchestration/types';
+import { BillingLimitError } from '@/lib/icuAccounting';
 import { z } from 'zod';
 
 const orchestrateSchema = z.object({
@@ -138,6 +139,15 @@ export async function POST(
     });
   } catch (err: any) {
     logError('Orchestrate session', err, { sessionId: params.sessionId });
+
+    // M24.1: Check for billing limit errors
+    if (err instanceof BillingLimitError) {
+      if (err.code === 'BILLING_LIMIT_REACHED') {
+        return CommonErrors.billingLimitReached(err.message, err.suggestedActions);
+      } else if (err.code === 'PAYG_CAP_REACHED') {
+        return CommonErrors.paygCapReached(err.message, err.suggestedActions);
+      }
+    }
 
     // Check for validation errors
     if (err instanceof z.ZodError) {
