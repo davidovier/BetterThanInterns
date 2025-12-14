@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { ok, CommonErrors } from '@/lib/api-response';
 import { logError } from '@/lib/logging';
 import OpenAI from 'openai';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -183,21 +184,30 @@ Create a comprehensive implementation blueprint in markdown format that includes
 
 Keep it concise but actionable. Use clear headers and bullet points.`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an expert AI implementation consultant. Create clear, actionable implementation blueprints in markdown format.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-    });
+    const result = await chatCompletionWithBilling(
+      assistantSession.workspaceId,
+      'BLUEPRINT_GENERATION',
+      {
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are an expert AI implementation consultant. Create clear, actionable implementation blueprints in markdown format.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const completion = result.data;
     const blueprintMarkdown = completion.choices[0]?.message?.content || '';
 
     // Generate title if not provided

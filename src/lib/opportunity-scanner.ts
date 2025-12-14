@@ -6,6 +6,7 @@
 
 import { openai } from './llm';
 import { db } from './db';
+import { chatCompletionWithBilling } from './aiWrapper';
 
 // Types for opportunity analysis
 export type OpportunityAnalysis = {
@@ -79,6 +80,7 @@ If a step has NO meaningful automation opportunity, return:
  * Analyze a single process step for automation opportunities
  */
 export async function analyzeStepWithLLM(
+  workspaceId: string,
   step: ProcessStepData
 ): Promise<OpportunityAnalysis | null> {
   try {
@@ -96,19 +98,28 @@ Heuristic Hints:
 ${getHeuristicHints(step)}
 `;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Analyze this process step for automation opportunities:\n\n${stepContext}`,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    });
+    const result = await chatCompletionWithBilling(
+      workspaceId,
+      'OPPORTUNITY_SCAN',
+      {
+        model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Analyze this process step for automation opportunities:\n\n${stepContext}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const response = result.data;
     const content = response.choices[0]?.message?.content;
     if (!content) {
       console.error('No content in LLM response for step:', step.id);
@@ -228,7 +239,7 @@ export async function scanProcess(processId: string): Promise<any[]> {
         outputs: (step.outputs as string[]) || [],
       };
 
-      const analysis = await analyzeStepWithLLM(stepData);
+      const analysis = await analyzeStepWithLLM(process.workspaceId, stepData);
 
       if (analysis) {
         // Check if opportunity already exists for this step

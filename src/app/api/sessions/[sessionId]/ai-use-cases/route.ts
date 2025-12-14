@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { ok, CommonErrors } from '@/lib/api-response';
 import { logError } from '@/lib/logging';
 import OpenAI from 'openai';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -187,23 +188,32 @@ Return as JSON:
   "riskSummary": "..."
 }`;
 
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You are an expert AI governance consultant. Create clear, professional AI use case documentation. Return only valid JSON.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-      });
+      const result = await chatCompletionWithBilling(
+        assistantSession.workspaceId,
+        'GOVERNANCE_REASONING',
+        {
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are an expert AI governance consultant. Create clear, professional AI use case documentation. Return only valid JSON.',
+            },
+            {
+              role: 'user',
+              content: prompt,
+            },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+        }
+      );
 
+      if (!result.success) {
+        throw result.error;
+      }
+
+      const completion = result.data;
       const generated = JSON.parse(
         completion.choices[0]?.message?.content || '{}'
       );

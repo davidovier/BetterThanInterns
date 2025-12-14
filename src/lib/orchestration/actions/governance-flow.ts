@@ -6,6 +6,7 @@
 
 import { db } from '@/lib/db';
 import { openai } from '@/lib/llm';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 import { CreateUseCaseParams } from '../types';
 
 export async function createAiUseCase(
@@ -38,7 +39,7 @@ export async function createAiUseCase(
     // Optionally draft risk assessment using LLM
     if (options?.draftRiskAssessment) {
       try {
-        const riskAssessment = await draftRiskAssessment(aiUseCase.id, params);
+        const riskAssessment = await draftRiskAssessment(params.workspaceId, aiUseCase.id, params);
         riskAssessmentId = riskAssessment.id;
       } catch (error) {
         console.error('Failed to draft risk assessment:', error);
@@ -60,6 +61,7 @@ export async function createAiUseCase(
  * Draft a risk assessment for an AI use case using LLM
  */
 async function draftRiskAssessment(
+  workspaceId: string,
   aiUseCaseId: string,
   params: CreateUseCaseParams
 ) {
@@ -100,17 +102,26 @@ Please provide a conservative risk assessment in the following JSON format:
 }`;
 
   // Call LLM with JSON mode
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.3,
-    max_tokens: 2000,
-  });
+  const result = await chatCompletionWithBilling(
+    workspaceId,
+    'GOVERNANCE_REASONING',
+    {
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 2000,
+    }
+  );
 
+  if (!result.success) {
+    throw result.error;
+  }
+
+  const completion = result.data;
   const responseText = completion.choices[0]?.message?.content;
   if (!responseText) {
     throw new Error('Empty LLM response');

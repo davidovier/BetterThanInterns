@@ -6,6 +6,7 @@
 
 import { db } from '@/lib/db';
 import { openai } from '@/lib/llm';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 import { GenerateSummaryParams } from '../types';
 
 export async function generateSessionSummary(
@@ -72,16 +73,25 @@ Be specific about what was accomplished.`;
 
     const userPrompt = `Summarize this work session:\n\n${context}`;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.5,
-      max_tokens: 200,
-    });
+    const result = await chatCompletionWithBilling(
+      params.workspaceId,
+      'LIGHT_CLARIFICATION',
+      {
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.5,
+        max_tokens: 200,
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const completion = result.data;
     const summary = completion.choices[0]?.message?.content || 'Session summary generated.';
 
     // Update session with new summary

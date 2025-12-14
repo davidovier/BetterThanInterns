@@ -7,6 +7,7 @@
 
 import { openai } from '@/lib/llm';
 import { db } from '@/lib/db';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 import {
   OrchestrationContext,
   OrchestrationResult,
@@ -54,6 +55,7 @@ export async function orchestrate(
       // Generate clarification question instead of executing actions
       const sessionContextStr = await buildSessionContext(context);
       const clarificationMessage = await generateClarificationQuestion(
+        context.workspaceId,
         userMessage,
         sessionContextStr,
         needsClarification.reason
@@ -309,14 +311,23 @@ Return ONLY valid JSON in this exact format:
     });
   }
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: conversationMessages,
-    response_format: { type: 'json_object' },
-    temperature: 0.7,
-    max_tokens: 2000,
-  });
+  const result = await chatCompletionWithBilling(
+    context.workspaceId,
+    'LIGHT_CLARIFICATION',
+    {
+      model: 'gpt-4o',
+      messages: conversationMessages,
+      response_format: { type: 'json_object' },
+      temperature: 0.7,
+      max_tokens: 2000,
+    }
+  );
 
+  if (!result.success) {
+    throw result.error;
+  }
+
+  const completion = result.data;
   const responseText = completion.choices[0]?.message?.content;
   if (!responseText) {
     throw new Error('Empty LLM response');
@@ -1097,6 +1108,7 @@ async function maybeAutoUpdateSessionTitle(
 
     // Try to update title
     await maybeUpdateSessionTitle(
+      context.workspaceId,
       context.sessionId,
       session.title,
       firstMessages,

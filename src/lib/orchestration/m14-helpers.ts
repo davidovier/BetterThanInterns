@@ -6,6 +6,7 @@
 
 import { openai } from '@/lib/llm';
 import { db } from '@/lib/db';
+import { chatCompletionWithBilling } from '@/lib/aiWrapper';
 import type {
   NextStepSuggestion,
   ClarificationRequest,
@@ -102,6 +103,7 @@ export function computeNextStepSuggestion(sessionContext: {
  * M14: Called when confidence is low or extraction is incomplete
  */
 export async function generateClarificationQuestion(
+  workspaceId: string,
   userMessage: string,
   sessionContext: string,
   reason: 'low_intent_confidence' | 'low_extraction_confidence' | 'ambiguous_reference'
@@ -127,16 +129,25 @@ Examples of good clarification questions:
 
 Generate a single clarification question (max 2 sentences):`;
 
-  const completion = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userMessage },
-    ],
-    temperature: 0.7,
-    max_tokens: 150,
-  });
+  const result = await chatCompletionWithBilling(
+    workspaceId,
+    'LIGHT_CLARIFICATION',
+    {
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage },
+      ],
+      temperature: 0.7,
+      max_tokens: 150,
+    }
+  );
 
+  if (!result.success) {
+    throw result.error;
+  }
+
+  const completion = result.data;
   const question = completion.choices[0]?.message?.content?.trim();
 
   if (!question) {
@@ -224,6 +235,7 @@ export async function fetchArtifactNamesForContext(
  * M14: Replaces generic "New session" with descriptive titles
  */
 export async function maybeUpdateSessionTitle(
+  workspaceId: string,
   sessionId: string,
   sessionTitle: string,
   firstUserMessages: string[],
@@ -274,17 +286,26 @@ Respond with ONLY valid JSON in this format:
 { "title": "Your Title Here" }`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: context },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-      max_tokens: 100,
-    });
+    const result = await chatCompletionWithBilling(
+      workspaceId,
+      'LIGHT_CLARIFICATION',
+      {
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: context },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+        max_tokens: 100,
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const completion = result.data;
     const responseText = completion.choices[0]?.message?.content;
     if (!responseText) {
       return null;

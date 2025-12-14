@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { testLLMCall } from '@/lib/llm';
+import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
   try {
@@ -20,7 +21,26 @@ export async function POST(req: Request) {
       );
     }
 
-    const response = await testLLMCall(prompt);
+    // Get user's first workspace for billing (test endpoint)
+    const workspace = await db.workspace.findFirst({
+      where: {
+        members: {
+          some: {
+            userId: session.user.id,
+          },
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!workspace) {
+      return NextResponse.json(
+        { error: 'No workspace found for user' },
+        { status: 404 }
+      );
+    }
+
+    const response = await testLLMCall(workspace.id, prompt);
 
     return NextResponse.json({ response });
   } catch (error) {

@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { WorkflowDelta } from '@/types/process';
+import { chatCompletionWithBilling } from './aiWrapper';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -77,6 +78,7 @@ Guidelines:
 - Keep assistant_message friendly and use the brand voice (smart, helpful, slightly witty)`;
 
 export async function callProcessAssistant(
+  workspaceId: string,
   userMessage: string,
   context: ProcessContext
 ): Promise<{
@@ -115,14 +117,23 @@ export async function callProcessAssistant(
     });
 
     // Call OpenAI
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
-      messages,
-      temperature: 0.7,
-      max_tokens: 1500,
-      response_format: { type: 'json_object' },
-    });
+    const result = await chatCompletionWithBilling(
+      workspaceId,
+      'PROCESS_EXTRACTION',
+      {
+        model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, supports JSON mode)
+        messages,
+        temperature: 0.7,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const response = result.data;
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No response from LLM');

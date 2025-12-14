@@ -6,6 +6,7 @@
 
 import { openai } from './llm';
 import { db } from './db';
+import { chatCompletionWithBilling } from './aiWrapper';
 
 export type BlueprintContent = {
   title: string;
@@ -136,19 +137,28 @@ export async function generateBlueprintForWorkspace(
     const contextSummary = buildContextSummary(workspace);
 
     // Call LLM
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better JSON mode)
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
-        {
-          role: 'user',
-          content: `Create an implementation blueprint for this project:\n\n${contextSummary}`,
-        },
-      ],
-      response_format: { type: 'json_object' },
-      temperature: 0.7,
-    });
+    const result = await chatCompletionWithBilling(
+      workspaceId,
+      'BLUEPRINT_GENERATION',
+      {
+        model: 'gpt-4o', // Updated to gpt-4o (faster, cheaper, better JSON mode)
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content: `Create an implementation blueprint for this project:\n\n${contextSummary}`,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.7,
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const response = result.data;
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('No content in LLM response');

@@ -10,6 +10,7 @@
 
 import { openai } from './llm';
 import { db } from './db';
+import { chatCompletionWithBilling } from './aiWrapper';
 
 // Category mapping: opportunity type → tool categories
 const CATEGORY_MAPPING: Record<string, string[]> = {
@@ -76,7 +77,12 @@ export async function matchToolsForOpportunity(
     }
 
     // Use GPT-4o to intelligently match and rank tools
-    const toolMatches = await intelligentToolMatching(opportunity, allTools);
+    // Get workspace ID from opportunity's process
+    const process = await db.process.findUniqueOrThrow({
+      where: { id: opportunity.processId },
+      select: { workspaceId: true },
+    });
+    const toolMatches = await intelligentToolMatching(process.workspaceId, opportunity, allTools);
 
     // Store recommendations in database
     const recommendations: ToolRecommendation[] = [];
@@ -130,6 +136,7 @@ export async function matchToolsForOpportunity(
  * Use GPT-4o to intelligently analyze and match tools to the opportunity
  */
 async function intelligentToolMatching(
+  workspaceId: string,
   opportunity: any,
   allTools: any[]
 ): Promise<Array<{ toolId: string; score: number; rationale: string }>> {
@@ -180,17 +187,26 @@ ${JSON.stringify(toolCatalog, null, 2)}
 
 Return a JSON array of tool recommendations (2-5 best matches only):`;
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0.3, // Lower temperature for more consistent recommendations
-      max_tokens: 1500,
-      response_format: { type: 'json_object' },
-    });
+    const result = await chatCompletionWithBilling(
+      workspaceId,
+      'TOOL_MATCHING',
+      {
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.3, // Lower temperature for more consistent recommendations
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+      }
+    );
 
+    if (!result.success) {
+      throw result.error;
+    }
+
+    const response = result.data;
     const content = response.choices[0]?.message?.content;
     if (!content) {
       throw new Error('LLM returned empty response for tool matching');
