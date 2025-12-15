@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
+import { UsageBar } from '@/components/workspace/usage-bar';
 
 type AppShellProps = {
   children: ReactNode;
@@ -192,22 +193,25 @@ export function AppShell({ children }: AppShellProps) {
           {/* User section */}
           <div className="border-t p-4 space-y-3">
             {currentWorkspaceName && !sidebarCollapsed && (
-              <div className="rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-border/40 p-3 shadow-soft">
-                <p className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
-                  Workspace
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold truncate flex-1">
-                    {currentWorkspaceName}
+              <div className="rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-border/40 p-3 shadow-soft space-y-3">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
+                    Workspace
                   </p>
-                  <Badge
-                    variant="outline"
-                    className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${getPlanBadgeStyles(currentWorkspacePlan)}`}
-                    title={getPlanTooltip(currentWorkspacePlan)}
-                  >
-                    {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold truncate flex-1">
+                      {currentWorkspaceName}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${getPlanBadgeStyles(currentWorkspacePlan)}`}
+                      title={getPlanTooltip(currentWorkspacePlan)}
+                    >
+                      {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
+                    </Badge>
+                  </div>
                 </div>
+                <UsageBar />
               </div>
             )}
             <DropdownMenu>
