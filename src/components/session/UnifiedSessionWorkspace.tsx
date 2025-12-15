@@ -9,7 +9,7 @@ import { SessionArtifacts } from '@/types/artifacts';
 import { ProcessStep } from '@/types/process';
 import { StepDetailsDialog } from '@/components/process/step-details-dialog';
 import { useToast } from '@/components/ui/use-toast';
-import { ArrowLeft, Sparkles, Loader2, FileText } from 'lucide-react';
+import { ArrowLeft, Sparkles, Loader2, FileText, AlertCircle, X } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
@@ -115,6 +115,13 @@ export function UnifiedSessionWorkspace({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [presenceState, setPresenceState] = useState<AssistantPresenceState>('idle');
+
+  // M24.1: Billing limit state
+  const [billingBlock, setBillingBlock] = useState<{
+    message: string;
+    suggestedActions: string[];
+    code: 'BILLING_LIMIT_REACHED' | 'PAYG_CAP_REACHED';
+  } | null>(null);
 
   // M17.1: Input energy for listening state reactivity
   const inputEnergy = Math.max(0, Math.min(1, inputMessage.length / 120));
@@ -404,9 +411,25 @@ export function UnifiedSessionWorkspace({
           body: JSON.stringify({ message: userMsg }),
         });
 
-        if (!response.ok) throw new Error('Failed to send message');
-
         const result = await response.json();
+
+        // M24.1: Check for billing limit errors (429)
+        if (response.status === 429 && result.error) {
+          const { code, message, suggestedActions } = result.error;
+          if (code === 'BILLING_LIMIT_REACHED' || code === 'PAYG_CAP_REACHED') {
+            setBillingBlock({
+              message,
+              suggestedActions: suggestedActions || [],
+              code,
+            });
+            // Remove optimistic message
+            setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+            setIsLoading(false);
+            return; // Exit early without throwing
+          }
+        }
+
+        if (!response.ok) throw new Error('Failed to send message');
 
         if (!result.ok) {
           throw new Error(result.error?.message || 'Failed to process message');
@@ -570,6 +593,47 @@ export function UnifiedSessionWorkspace({
               {getNextStepGuidance(hasAnyArtifacts, artifacts)}
             </p>
           </div>
+
+          {/* M24.1: Billing Limit Block - Calm executive messaging */}
+          {billingBlock && (
+            <div className="border-b border-amber-200 bg-amber-50/50 px-8 py-4">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="text-sm font-semibold text-amber-900 mb-1">
+                      Intelligence Usage Limit Reached
+                    </h4>
+                    <p className="text-sm text-amber-800 mb-3">
+                      {billingBlock.message}
+                    </p>
+                    {billingBlock.suggestedActions.length > 0 && (
+                      <div className="space-y-1">
+                        <p className="text-xs font-medium text-amber-900 uppercase tracking-wide">
+                          What You Can Do:
+                        </p>
+                        <ul className="text-sm text-amber-800 space-y-1">
+                          {billingBlock.suggestedActions.map((action, idx) => (
+                            <li key={idx} className="flex items-start gap-2">
+                              <span className="text-amber-600 mt-0.5">•</span>
+                              <span>{action}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setBillingBlock(null)}
+                    className="text-amber-600 hover:text-amber-800 transition-colors"
+                    aria-label="Dismiss"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Main Workspace - Three-panel layout: Working Notes (30%) | Graph (45%) | Outputs (25%) */}
           <div className="flex-1 flex overflow-hidden">
