@@ -2,12 +2,12 @@
 
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Sparkles,
   LogOut,
   Settings,
   MessageSquare,
@@ -115,7 +115,7 @@ export function AppShell({ children }: AppShellProps) {
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-card/80 backdrop-blur-lg px-4 flex items-center justify-between">
         <Link href="/sessions" className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-brand-500" />
+          <Image src="/logo.png" alt="BTI Logo" width={24} height={24} className="flex-shrink-0" />
           <span className="text-lg font-semibold tracking-tight">Better Than Interns</span>
         </Link>
         <Button
@@ -144,7 +144,7 @@ export function AppShell({ children }: AppShellProps) {
               href="/sessions"
               className={`flex items-center transition-all ${sidebarCollapsed ? 'justify-center w-full' : 'space-x-2'}`}
             >
-              <Sparkles className="h-6 w-6 text-brand-500 flex-shrink-0" />
+              <Image src="/logo.png" alt="BTI Logo" width={24} height={24} className="flex-shrink-0" />
               {!sidebarCollapsed && (
                 <span className="text-lg font-semibold tracking-tight truncate">
                   Better Than Interns

@@ -9,8 +9,8 @@ export const metadata: Metadata = {
   title: 'Better Than Interns',
   description: 'We automate your workflow chaos so you don\'t have to babysit an intern.',
   icons: {
-    icon: '/favicon.svg',
-    apple: '/favicon.svg',
+    icon: '/logo.png',
+    apple: '/logo.png',
   },
 };
 
