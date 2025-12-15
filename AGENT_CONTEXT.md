@@ -4,7 +4,7 @@
 
 **Better Than Interns** is a Next.js 14+ web application that helps teams map, analyze, and optimize business processes through conversational AI. Users describe their workflows in natural language, and the AI assistant extracts structured process information while generating real-time visual workflow graphs.
 
-**Current State**: The application has been elevated to CEO-grade quality through three executive elevation milestones (M18-M20). The sessions list page now features session states, featured sessions, and directional metrics. The session workspace has been transformed into an executive working file with document-style entries, session briefs, and decision gravity. First-run experience provides calm, invisible onboarding that feels like documentation, not tutorial. All changes are frontend-only with no backend modifications required.
+**Current State**: The application has been elevated to CEO-grade quality through multiple executive elevation milestones (M18-M22). The sessions list page features session states, featured sessions, and directional metrics. The session workspace has been transformed into an executive working file with document-style entries, session briefs, and decision gravity. First-run experience provides calm, invisible onboarding. The process graph uses executive-focused outcome language and visual emphasis. Complete billing infrastructure (M24) with ICU-based accounting and all AI calls wired through billing wrappers (M24.1). Usage visibility available through WorkspaceContext and UsageBar component. Feature flag OFF by default - zero behavior change until enabled.
 
 ## Architecture & Tech Stack
 
@@ -198,6 +198,101 @@ The graph is NOT optional - it's the core product experience.
 ## Recent Major Changes
 
 ### Milestone Progress
+
+#### M24.1 - Billing Wiring + Minimal Executive UX (December 15, 2025)
+
+**M24.1 Billing Enforcement and Usage Visibility** - Complete billing integration with executive UX
+- **Status**: ✅ Completed
+- **Goal**: Wire all OpenAI calls through billing system and add minimal usage visibility
+- **Design Principles**:
+  - All-or-nothing enforcement (no unwrapped calls)
+  - Feature flag OFF by default (zero behavior change)
+  - Executive-focused UX (percentage only, no clutter)
+  - Calm, structured error responses with guidance
+- **Key Changes**:
+  - **Phase 1: Mechanical Refactor (Commit 17d3af4)**:
+    - Wrapped all 11 direct OpenAI calls across 12 files with `chatCompletionWithBilling()`
+    - Added `workspaceId` parameter to helper functions that needed it
+    - Updated all call sites to propagate workspaceId correctly
+    - Classified each call with appropriate action type (LIGHT_CLARIFICATION, PROCESS_EXTRACTION, OPPORTUNITY_SCAN, TOOL_MATCHING, BLUEPRINT_GENERATION, GOVERNANCE_REASONING)
+    - Verified complete coverage: zero unwrapped calls remain
+  - **Phase 2: Enable Enforcement + Error Plumbing (Commit 8a36b15)**:
+    - Added billing error codes (`BILLING_LIMIT_REACHED`, `PAYG_CAP_REACHED`) to ErrorCodes
+    - Updated API response types to support `suggestedActions` array
+    - Modified `error()` helper to accept optional suggestedActions parameter
+    - Added `billingLimitReached()` and `paygCapReached()` helpers to CommonErrors
+    - Updated orchestrate endpoint to catch BillingLimitError and return structured 429 responses
+  - **Phase 3: Minimal Executive UX (Commit 8a36b15)**:
+    - Extended WorkspaceContext to fetch and expose ICU usage data
+    - Added `WorkspaceUsage` type matching backend structure
+    - Implemented `fetchUsage()` on mount and `refetchUsage()` for manual updates
+    - Created `UsageBar` component with percentage-only display (no absolute numbers)
+    - Color-coded progress bar (green < 75%, amber 75-90%, red ≥ 90%)
+    - Executive-focused minimal design
+- **Technical Details**:
+  - Feature flag: `BILLING_ENFORCEMENT_ENABLED` (default: false)
+  - ICU costs per action: LIGHT_CLARIFICATION (20), PROCESS_EXTRACTION (60), OPPORTUNITY_SCAN (115), TOOL_MATCHING (60), BLUEPRINT_GENERATION (160), GOVERNANCE_REASONING (90)
+  - 429 error responses include structured guidance with suggestedActions array
+  - Usage data fetched from `/api/workspaces/[workspaceId]/usage`
+  - Result pattern: `{ success: boolean, data: T, icuCost: number, error?: BillingLimitError }`
+- **Files Modified**:
+  - Phase 1 (12 files): All files with OpenAI calls + helper function signatures
+  - Phase 2: `src/lib/api-response.ts`, `src/app/api/sessions/[sessionId]/orchestrate/route.ts`
+  - Phase 3: `src/components/workspace/workspace-context.tsx`, `src/components/workspace/usage-bar.tsx` (new)
+- **UX Philosophy**: Billing enforcement is mechanical and invisible until limits are reached, then provides calm, structured guidance
+- **Next Steps (Optional)**:
+  - Add UsageBar to layouts (dashboard header/sidebar)
+  - Add session-level billing block message when 429 is received
+  - Enable feature flag when ready to enforce limits
+  - Manual testing with artificially low limits
+- **Commits**: `17d3af4` (Phase 1), `8a36b15` (Phase 2-3)
+
+#### M24 - ICU Billing Backend (December 13, 2025)
+
+**M24 ICU Billing Backend** - Complete billing infrastructure and accounting system
+- **Status**: ✅ Completed (Commit 815de34)
+- **Goal**: Build production-ready billing system based on Intelligence Cost Units (ICU)
+- **Billing Model**:
+  - 1 ICU = €0.01 real OpenAI cost
+  - Base plans: Starter (900 ICU/month), Pro (3500 ICU/month), Enterprise (10000 ICU/month)
+  - Optional PAYG with monthly cap (€0.04 per ICU, 4× markup)
+  - Monthly reset on calendar boundary (UTC)
+- **Key Changes**:
+  - **Schema Extensions**:
+    - Added billing fields to Workspace model: `monthlyIcuLimit`, `monthlyIcuUsed`, `icuResetAt`, `paygEnabled`, `paygMonthlyCap`, `paygIcuUsed`
+    - Added `icuDeduction` field to Activity model for audit trail
+  - **ICU Accounting System** (`src/lib/icuAccounting.ts`):
+    - `ICU_COSTS` mapping for action types (LIGHT_CLARIFICATION, PROCESS_EXTRACTION, etc.)
+    - `checkIcuAvailability()` - Pre-check before AI calls
+    - `deductIcuCost()` - Post-deduction with fallback to PAYG
+    - `resetMonthlyIcu()` - Calendar month boundary reset
+    - `getWorkspaceUsage()` - Comprehensive usage summary for frontend
+    - `BillingLimitError` - Custom error with codes and suggestedActions
+  - **AI Wrapper** (`src/lib/aiWrapper.ts`):
+    - `chatCompletionWithBilling()` - Wraps OpenAI calls with pre-check and post-deduction
+    - `streamingCompletionWithBilling()` - Streaming variant (future use)
+    - Returns `{ success: boolean, data: T, icuCost: number, error?: BillingLimitError }`
+    - Feature flag: `BILLING_ENFORCEMENT_ENABLED` (default: false)
+  - **Usage API**:
+    - `GET /api/workspaces/[workspaceId]/usage` - Returns comprehensive usage summary
+    - Response includes: baseLimit, baseUsed, basePercentage, paygEnabled, paygUsed, paygPercentage, resetAt, daysUntilReset
+  - **Activity Logging**:
+    - All ICU deductions logged to Activity model with `icuDeduction` field
+    - Audit trail for billing transparency and debugging
+- **Technical Details**:
+  - Frontend-only consumption (no backend enforcement yet in M24)
+  - Hybrid model: Base subscription + optional PAYG
+  - Monthly reset logic based on UTC calendar month
+  - Graceful degradation when billing limits reached
+  - Structured error responses with actionable guidance
+- **Files Created/Modified**:
+  - `prisma/schema.prisma` - Added billing fields to Workspace, icuDeduction to Activity
+  - `src/lib/icuAccounting.ts` (NEW) - Core billing logic and accounting system
+  - `src/lib/aiWrapper.ts` (NEW) - OpenAI wrapper with billing integration
+  - `src/app/api/workspaces/[workspaceId]/usage/route.ts` (NEW) - Usage API endpoint
+  - `Billing.md` - Complete billing documentation
+- **UX Philosophy**: Transparent, predictable billing that respects user budgets with clear guidance
+- **Commit**: `815de34`
 
 #### M22 - Executive Process Visualization (December 13, 2025)
 
@@ -546,7 +641,29 @@ The graph is NOT optional - it's the core product experience.
 
 ### Latest Commits (Most Recent First)
 
-1. **feat: M22 Executive Process Visualization - Graph semantic elevation** (commit 6a4389a)
+1. **feat: billing enforcement + usage visibility (M24.1 Phase 2-3)** (commit 8a36b15)
+   - Phase 2: Enable enforcement + error plumbing
+   - Phase 3: Minimal executive UX with WorkspaceContext usage fetching and UsageBar component
+   - Added billing error codes (BILLING_LIMIT_REACHED, PAYG_CAP_REACHED)
+   - Updated API response types to support suggestedActions array
+   - Created UsageBar component with percentage-only display
+   - Feature flag still OFF - no behavior change
+
+2. **refactor: route all AI calls through billing wrapper (M24.1 Phase 1)** (commit 17d3af4)
+   - Wrapped all 11 direct OpenAI calls across 12 files with chatCompletionWithBilling()
+   - Added workspaceId parameter to helper functions
+   - Updated all call sites to propagate workspaceId correctly
+   - Verified complete coverage: zero unwrapped calls remain
+   - All changes backward compatible
+
+3. **feat: M24 ICU Billing Backend** (commit 815de34)
+   - Complete billing infrastructure and accounting system
+   - Added billing fields to Workspace model
+   - Created icuAccounting.ts and aiWrapper.ts
+   - Added /api/workspaces/[workspaceId]/usage endpoint
+   - Feature flag: BILLING_ENFORCEMENT_ENABLED (default: false)
+
+4. **feat: M22 Executive Process Visualization - Graph semantic elevation** (commit 6a4389a)
    - Outcome-first node language transformation (deriveExecutiveLabel function)
    - Bottleneck & leverage visual emphasis (duration-based weight, opportunity accent)
    - Opportunity presence annotations (subtle text below nodes)
@@ -1890,7 +2007,7 @@ Longer explanation if needed
 
 ---
 
-**Last Updated**: December 13, 2025
-**Document Version**: 1.4
-**Current App Version**: Based on commit `6a4389a` (M22 Executive Process Visualization)
-**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity), M22 (Executive Process Visualization)
+**Last Updated**: December 15, 2025
+**Document Version**: 1.5
+**Current App Version**: Based on commit `8a36b15` (M24.1 Billing Wiring + Usage Visibility)
+**Recent Milestones**: M18 (Sessions Page Executive Elevation), M19 (Session as Executive Working File), M20 (First-Run Experience), M21 (Decision Continuity), M22 (Executive Process Visualization), M24 (ICU Billing Backend), M24.1 (Billing Wiring + Minimal Executive UX)
