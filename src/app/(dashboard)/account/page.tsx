@@ -32,7 +32,8 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
-import { User, Lock, AlertTriangle, CreditCard, Calendar, Shield } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { User, Lock, AlertTriangle, CreditCard, Calendar, Shield, Activity } from 'lucide-react';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 
 type UserProfile = {
@@ -62,6 +63,9 @@ function AccountContent() {
     trialEndsAt,
     isOnTrial,
     isTrialExpired,
+    userRole,
+    usage,
+    refetchUsage,
     loading: workspaceLoading
   } = useWorkspaceContext();
 
@@ -106,6 +110,14 @@ function AccountContent() {
   const [isLoadingBilling, setIsLoadingBilling] = useState(false);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
 
+  // M25: PAYG state
+  const [paygEnabled, setPaygEnabled] = useState(false);
+  const [paygCapEur, setPaygCapEur] = useState(50); // Default €50
+  const [isSavingPayg, setIsSavingPayg] = useState(false);
+  const [showPaygConfirmModal, setShowPaygConfirmModal] = useState(false);
+  const [pendingPaygEnabled, setPendingPaygEnabled] = useState(false);
+  const [pendingPaygCapEur, setPendingPaygCapEur] = useState(50);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -116,6 +128,16 @@ function AccountContent() {
       loadBillingStatus();
     }
   }, [activeTab, currentWorkspaceId]);
+
+  // M25: Sync PAYG state with usage data
+  useEffect(() => {
+    if (usage) {
+      setPaygEnabled(usage.paygEnabled);
+      // Convert ICU cap to EUR (€0.04 per ICU)
+      const capEur = Math.round(usage.paygCap * 0.04);
+      setPaygCapEur(capEur > 0 ? capEur : 50);
+    }
+  }, [usage]);
 
   const loadData = async () => {
     try {
@@ -392,6 +414,89 @@ function AccountContent() {
     } finally {
       setIsSavingBilling(false);
     }
+  };
+
+  // M25: Handle PAYG toggle - shows confirmation modal
+  const handlePaygToggle = (enabled: boolean) => {
+    if (enabled) {
+      // Enabling requires confirmation
+      setPendingPaygEnabled(true);
+      setPendingPaygCapEur(paygCapEur);
+      setShowPaygConfirmModal(true);
+    } else {
+      // Disabling can be done directly
+      savePaygSettings(false, paygCapEur);
+    }
+  };
+
+  // M25: Handle PAYG cap change - shows confirmation if increasing
+  const handlePaygCapSave = () => {
+    if (paygCapEur > (usage?.paygCap || 0) * 0.04) {
+      // Increasing cap requires confirmation
+      setPendingPaygEnabled(paygEnabled);
+      setPendingPaygCapEur(paygCapEur);
+      setShowPaygConfirmModal(true);
+    } else {
+      // Decreasing cap can be done directly
+      savePaygSettings(paygEnabled, paygCapEur);
+    }
+  };
+
+  // M25: Save PAYG settings to API
+  const savePaygSettings = async (enabled: boolean, capEur: number) => {
+    if (!currentWorkspaceId) return;
+
+    setIsSavingPayg(true);
+    setShowPaygConfirmModal(false);
+
+    try {
+      const response = await fetch(
+        `/api/workspaces/${currentWorkspaceId}/usage-settings`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            paygEnabled: enabled,
+            paygMonthlyCapEur: capEur,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || 'Failed to update settings');
+      }
+
+      // Refresh usage data
+      await refetchUsage();
+
+      toast({
+        title: 'Settings updated',
+        description: enabled
+          ? `Pay-as-you-go enabled with €${capEur} monthly cap.`
+          : 'Pay-as-you-go disabled.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingPayg(false);
+    }
+  };
+
+  // M25: Confirm PAYG settings from modal
+  const confirmPaygSettings = () => {
+    savePaygSettings(pendingPaygEnabled, pendingPaygCapEur);
+  };
+
+  // M25: Helper to get usage bar color
+  const getUsageBarColor = (percentage: number): string => {
+    if (percentage >= 90) return 'bg-red-500';
+    if (percentage >= 75) return 'bg-amber-500';
+    return 'bg-brand-500';
   };
 
   if (isLoading) {
@@ -737,6 +842,162 @@ function AccountContent() {
         <TabsContent value="billing" className="space-y-6">
           {currentWorkspaceId && (
             <>
+              {/* M25: Usage Section */}
+              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Activity className="h-5 w-5 text-brand-500" />
+                    <CardTitle className="text-base">Usage</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">
+                    Intelligence usage for the current billing period.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {usage ? (
+                    <>
+                      {/* Base Allowance */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Base allowance</span>
+                          <span className="font-medium">{Math.round(usage.basePercentage)}%</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${getUsageBarColor(usage.basePercentage)}`}
+                            style={{ width: `${Math.min(100, usage.basePercentage)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* PAYG Usage (only if enabled) */}
+                      {usage.paygEnabled && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-muted-foreground">Pay-as-you-go</span>
+                            <span className="font-medium">{Math.round(usage.paygPercentage)}%</span>
+                          </div>
+                          <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${getUsageBarColor(usage.paygPercentage)}`}
+                              style={{ width: `${Math.min(100, usage.paygPercentage)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reset countdown */}
+                      <p className="text-xs text-muted-foreground pt-2">
+                        Resets in {usage.daysUntilReset} {usage.daysUntilReset === 1 ? 'day' : 'days'}.
+                      </p>
+                    </>
+                  ) : (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-2 w-full" />
+                      <Skeleton className="h-4 w-24 mt-2" />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* M25: Pay-As-You-Go Section */}
+              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="h-5 w-5 text-brand-500" />
+                    <CardTitle className="text-base">Pay-As-You-Go</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">
+                    {currentWorkspacePlan === 'starter'
+                      ? 'Available on Pro.'
+                      : 'Continue using intelligence after base allowance is exhausted.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentWorkspacePlan === 'starter' ? (
+                    <p className="text-sm text-muted-foreground">
+                      Pay-as-you-go is available on Pro and Enterprise plans.
+                    </p>
+                  ) : userRole === 'owner' ? (
+                    // Owner view - can modify
+                    <>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <Label htmlFor="payg-toggle" className="text-sm font-medium">
+                            Enable pay-as-you-go
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {paygEnabled ? 'Active. You will be charged for usage beyond base allowance.' : 'Disabled. AI features stop when base allowance is exhausted.'}
+                          </p>
+                        </div>
+                        <Switch
+                          id="payg-toggle"
+                          checked={paygEnabled}
+                          onCheckedChange={handlePaygToggle}
+                          disabled={isSavingPayg}
+                        />
+                      </div>
+
+                      {paygEnabled && (
+                        <div className="space-y-3 pt-2 border-t border-border/60">
+                          <div className="space-y-2">
+                            <Label htmlFor="payg-cap" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                              Monthly cap (EUR)
+                            </Label>
+                            <div className="flex items-center space-x-2">
+                              <Input
+                                id="payg-cap"
+                                type="number"
+                                min={10}
+                                max={500}
+                                step={10}
+                                value={paygCapEur}
+                                onChange={(e) => setPaygCapEur(Math.max(10, Math.min(500, parseInt(e.target.value) || 10)))}
+                                className="rounded-xl w-32"
+                                disabled={isSavingPayg}
+                              />
+                              <span className="text-sm text-muted-foreground">EUR/month</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Charges never exceed this cap. Current rate: €0.04 per unit.
+                            </p>
+                          </div>
+
+                          <Button
+                            onClick={handlePaygCapSave}
+                            disabled={isSavingPayg || paygCapEur === Math.round((usage?.paygCap || 0) * 0.04)}
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl"
+                          >
+                            {isSavingPayg ? 'Saving...' : 'Update cap'}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    // Member view - read only
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm">Status:</span>
+                        <Badge variant="outline" className="text-xs">
+                          {usage?.paygEnabled ? 'Enabled' : 'Disabled'}
+                        </Badge>
+                      </div>
+                      {usage?.paygEnabled && (
+                        <p className="text-sm text-muted-foreground">
+                          Monthly cap: €{Math.round((usage?.paygCap || 0) * 0.04)}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground pt-2">
+                        Contact workspace owner to modify.
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* Current Plan Card */}
               <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
                 <CardHeader>
@@ -890,6 +1151,43 @@ function AccountContent() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* M25: PAYG Confirmation Modal */}
+      <Dialog open={showPaygConfirmModal} onOpenChange={setShowPaygConfirmModal}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Confirm Pay-As-You-Go Settings</DialogTitle>
+            <DialogDescription>
+              {pendingPaygEnabled
+                ? `You are setting a monthly cap of €${pendingPaygCapEur}. Once base usage is exhausted, you will be charged at €0.04 per unit up to this cap.`
+                : 'You are disabling pay-as-you-go. AI features will stop when base allowance is exhausted.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">
+              This setting can be changed at any time.
+            </p>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowPaygConfirmModal(false)}
+              className="rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmPaygSettings}
+              disabled={isSavingPayg}
+              className="rounded-xl bg-brand-500 hover:bg-brand-600"
+            >
+              {isSavingPayg ? 'Saving...' : 'Confirm'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

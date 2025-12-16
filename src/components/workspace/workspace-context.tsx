@@ -25,6 +25,7 @@ type WorkspaceContextValue = {
   trialEndsAt: string | null;
   isOnTrial: boolean;
   isTrialExpired: boolean;
+  userRole: 'owner' | 'admin' | 'member' | null; // M25: User role for permissions
   usage: WorkspaceUsage | null; // M24.1: Billing usage
   loading: boolean;
   error: string | null;
@@ -53,6 +54,7 @@ export function WorkspaceContextProvider({ children }: WorkspaceContextProviderP
     trialEndsAt: null,
     isOnTrial: false,
     isTrialExpired: false,
+    userRole: null, // M25
     usage: null, // M24.1
     loading: true,
     error: null,
@@ -117,6 +119,7 @@ export function WorkspaceContextProvider({ children }: WorkspaceContextProviderP
             trialEndsAt,
             isOnTrial,
             isTrialExpired,
+            userRole: workspace.userRole || 'member', // M25
             usage, // M24.1
             loading: false,
             error: null,
@@ -129,6 +132,7 @@ export function WorkspaceContextProvider({ children }: WorkspaceContextProviderP
             trialEndsAt: null,
             isOnTrial: false,
             isTrialExpired: false,
+            userRole: null, // M25
             usage: null, // M24.1
             loading: false,
             error: 'No workspace found',
@@ -142,6 +146,7 @@ export function WorkspaceContextProvider({ children }: WorkspaceContextProviderP
           trialEndsAt: null,
           isOnTrial: false,
           isTrialExpired: false,
+          userRole: null, // M25
           usage: null, // M24.1
           loading: false,
           error: err instanceof Error ? err.message : 'Unknown error',

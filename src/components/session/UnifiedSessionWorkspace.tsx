@@ -94,7 +94,7 @@ export function UnifiedSessionWorkspace({
   sessionData,
 }: UnifiedSessionWorkspaceProps) {
   const { toast } = useToast();
-  const { currentWorkspaceName } = useWorkspaceContext();
+  const { currentWorkspaceName, userRole, usage } = useWorkspaceContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -594,7 +594,7 @@ export function UnifiedSessionWorkspace({
             </p>
           </div>
 
-          {/* M24.1: Billing Limit Block - Calm executive messaging */}
+          {/* M24.1/M25: Billing Limit Block - Calm executive messaging with contextual CTA */}
           {billingBlock && (
             <div className="border-b border-amber-200 bg-amber-50/50 px-8 py-4">
               <div className="max-w-7xl mx-auto">
@@ -607,21 +607,32 @@ export function UnifiedSessionWorkspace({
                     <p className="text-sm text-amber-800 mb-3">
                       {billingBlock.message}
                     </p>
-                    {billingBlock.suggestedActions.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium text-amber-900 uppercase tracking-wide">
-                          What You Can Do:
+                    {/* M25: Role-aware contextual CTA */}
+                    <div className="mt-2">
+                      {userRole === 'owner' ? (
+                        // Owner CTAs
+                        billingBlock.code === 'BILLING_LIMIT_REACHED' && !usage?.paygEnabled ? (
+                          <Link
+                            href="/account?tab=billing"
+                            className="inline-flex items-center text-sm font-medium text-amber-900 hover:text-amber-700 underline underline-offset-2"
+                          >
+                            Enable pay-as-you-go
+                          </Link>
+                        ) : (
+                          <Link
+                            href="/account?tab=billing"
+                            className="inline-flex items-center text-sm font-medium text-amber-900 hover:text-amber-700 underline underline-offset-2"
+                          >
+                            Increase PAYG cap
+                          </Link>
+                        )
+                      ) : (
+                        // Non-owner message
+                        <p className="text-sm text-amber-800">
+                          Contact workspace owner.
                         </p>
-                        <ul className="text-sm text-amber-800 space-y-1">
-                          {billingBlock.suggestedActions.map((action, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="text-amber-600 mt-0.5">•</span>
-                              <span>{action}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => setBillingBlock(null)}
