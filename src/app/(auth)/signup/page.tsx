@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 
 type PlanType = 'starter' | 'pro' | 'enterprise' | null;
 
@@ -142,7 +142,7 @@ function SignUpForm() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Pro</p>
-                      <p className="text-xs text-muted-foreground">Teams who actually ship AI projects.</p>
+                      <p className="text-xs text-muted-foreground">For operations leads and teams scaling AI.</p>
                     </div>
                     {selectedPlan === 'pro' && (
                       <Check className="h-5 w-5 text-primary flex-shrink-0" />
@@ -162,7 +162,7 @@ function SignUpForm() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">Enterprise</p>
-                      <p className="text-xs text-muted-foreground">You want AI and sleep. We'll talk.</p>
+                      <p className="text-xs text-muted-foreground">For organizations with advanced requirements.</p>
                     </div>
                     {selectedPlan === 'enterprise' && (
                       <Check className="h-5 w-5 text-primary flex-shrink-0" />
@@ -213,7 +213,14 @@ function SignUpForm() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Creating account...' : 'Create Account'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating account...
+                </>
+              ) : (
+                'Create Account'
+              )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Already have an account?{' '}

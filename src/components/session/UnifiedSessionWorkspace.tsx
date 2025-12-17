@@ -98,6 +98,7 @@ export function UnifiedSessionWorkspace({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [artifacts, setArtifacts] = useState<SessionArtifacts>({
     processes: [],
     opportunities: [],
@@ -126,14 +127,15 @@ export function UnifiedSessionWorkspace({
   // M17.1: Input energy for listening state reactivity
   const inputEnergy = Math.max(0, Math.min(1, inputMessage.length / 120));
 
-  // M20: Detect first-run session
+  // M20: Detect first-run session (only valid after initial load)
   const hasAnyArtifacts =
     artifacts.processes.length > 0 ||
     artifacts.opportunities.length > 0 ||
     artifacts.blueprints.length > 0 ||
     artifacts.aiUseCases.length > 0;
 
-  const isFirstRun = isFirstRunSession(
+  // Only compute isFirstRun after data has loaded to prevent flash
+  const isFirstRun = !isInitialLoading && isFirstRunSession(
     messages.length > 0,
     hasAnyArtifacts,
     sessionData?.contextSummary
@@ -199,8 +201,12 @@ export function UnifiedSessionWorkspace({
 
   // Load initial messages and artifacts
   useEffect(() => {
-    loadMessages();
-    loadArtifacts();
+    const loadInitialData = async () => {
+      setIsInitialLoading(true);
+      await Promise.all([loadMessages(), loadArtifacts()]);
+      setIsInitialLoading(false);
+    };
+    loadInitialData();
   }, [sessionId]);
 
   const loadMessages = async () => {
@@ -661,48 +667,83 @@ export function UnifiedSessionWorkspace({
 
           {/* Main Workspace - Three-panel layout: Working Notes (30%) | Graph (45%) | Outputs (25%) */}
           <div className="flex-1 flex overflow-hidden">
-            {/* M19/M21: Working Notes Pane (formerly Chat) - 30% */}
-            <div className="w-[30%] border-r border-slate-200 bg-white">
-              <SessionChatPane
-                messages={messages}
-                inputMessage={inputMessage}
-                isLoading={isLoading}
-                onInputChange={setInputMessage}
-                onSendMessage={sendMessage}
-                hasProcesses={artifacts.processes.length > 0}
-                onInputFocus={() => setIsInputFocused(true)}
-                onInputBlur={() => setIsInputFocused(false)}
-                isFirstRun={isFirstRun}
-                inputRef={inputRef}
-                messagesEndRef={messagesEndRef}
-              />
-            </div>
+            {isInitialLoading ? (
+              /* Loading Skeleton */
+              <>
+                <div className="w-[30%] border-r border-slate-200 bg-white p-4">
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-slate-200 rounded w-1/3" />
+                    <div className="space-y-2">
+                      <div className="h-12 bg-slate-100 rounded" />
+                      <div className="h-12 bg-slate-100 rounded" />
+                      <div className="h-12 bg-slate-100 rounded" />
+                    </div>
+                    <div className="h-24 bg-slate-100 rounded mt-auto" />
+                  </div>
+                </div>
+                <div className="w-[45%] border-r border-slate-200 bg-slate-50 p-4">
+                  <div className="h-full flex items-center justify-center">
+                    <div className="flex items-center gap-2 text-slate-400">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span className="text-sm">Loading session...</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-[25%] bg-white p-4">
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    <div className="h-20 bg-slate-100 rounded" />
+                    <div className="h-4 bg-slate-200 rounded w-1/2" />
+                    <div className="h-20 bg-slate-100 rounded" />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* M19/M21: Working Notes Pane (formerly Chat) - 30% */}
+                <div className="w-[30%] border-r border-slate-200 bg-white">
+                  <SessionChatPane
+                    messages={messages}
+                    inputMessage={inputMessage}
+                    isLoading={isLoading}
+                    onInputChange={setInputMessage}
+                    onSendMessage={sendMessage}
+                    hasProcesses={artifacts.processes.length > 0}
+                    onInputFocus={() => setIsInputFocused(true)}
+                    onInputBlur={() => setIsInputFocused(false)}
+                    isFirstRun={isFirstRun}
+                    inputRef={inputRef}
+                    messagesEndRef={messagesEndRef}
+                  />
+                </div>
 
-            {/* Graph Pane - 45% */}
-            <div className="w-[45%] border-r border-slate-200">
-              <SessionGraphPane
-                processes={artifacts.processes}
-                opportunities={artifacts.opportunities}
-                selectedProcessIndex={selectedProcessIndex}
-                highlightedStepId={highlightedArtifactId}
-                onProcessSelect={setSelectedProcessIndex}
-                onStepClick={handleStepClick}
-              />
-            </div>
+                {/* Graph Pane - 45% */}
+                <div className="w-[45%] border-r border-slate-200">
+                  <SessionGraphPane
+                    processes={artifacts.processes}
+                    opportunities={artifacts.opportunities}
+                    selectedProcessIndex={selectedProcessIndex}
+                    highlightedStepId={highlightedArtifactId}
+                    onProcessSelect={setSelectedProcessIndex}
+                    onStepClick={handleStepClick}
+                  />
+                </div>
 
-            {/* M19/M21: Outputs Pane (formerly Artifacts) - 25% */}
-            <div className="w-[25%] bg-white">
-              <SessionArtifactPane
-                artifacts={artifacts}
-                highlightedArtifactId={highlightedArtifactId}
-                onScanForOpportunities={scanForOpportunities}
-                onArtifactsRendered={handleArtifactsRendered}
-                shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
-                isFirstRun={isFirstRun}
-                outputsPaneRef={outputsPaneRef}
-                governanceRef={governanceRef}
-              />
-            </div>
+                {/* M19/M21: Outputs Pane (formerly Artifacts) - 25% */}
+                <div className="w-[25%] bg-white">
+                  <SessionArtifactPane
+                    artifacts={artifacts}
+                    highlightedArtifactId={highlightedArtifactId}
+                    onScanForOpportunities={scanForOpportunities}
+                    onArtifactsRendered={handleArtifactsRendered}
+                    shouldConfirmRender={isUpdating || highlightedArtifactId !== null}
+                    isFirstRun={isFirstRun}
+                    outputsPaneRef={outputsPaneRef}
+                    governanceRef={governanceRef}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

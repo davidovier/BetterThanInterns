@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,16 +21,21 @@ import {
 import { motion } from 'framer-motion';
 
 const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+  hidden: { opacity: 0.3, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.3 }
+  }
 };
 
 const staggerContainer = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0.3 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1
+      staggerChildren: 0.08,
+      duration: 0.2
     }
   }
 };
@@ -42,7 +48,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center space-x-2 transition-transform hover:scale-105">
-              <Sparkles className="h-6 w-6 text-brand-500" />
+              <Image src="/logo.png" alt="BTI" width={24} height={24} className="rounded" />
               <span className="font-bold text-xl">Better Than Interns</span>
             </Link>
             <div className="flex items-center space-x-3">
@@ -77,11 +83,6 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="space-y-8"
           >
-            <motion.div variants={fadeIn}>
-              <Badge variant="outline" className="mb-6 border-brand-200 text-brand-700">
-                No interns were harmed in the making of this product
-              </Badge>
-            </motion.div>
 
             <motion.h1
               variants={fadeIn}
@@ -185,21 +186,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="border-y bg-muted/20 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground mb-8">
-            Trusted by teams who are allergic to busy work
-          </p>
-          <div className="flex flex-wrap justify-center gap-8 items-center opacity-50">
-            {['Company A', 'Company B', 'Company C', 'Company D'].map((company) => (
-              <div key={company} className="px-8 py-4 bg-card rounded-2xl border border-border/40">
-                <span className="font-semibold text-lg">{company}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* How It Works */}
       <section id="how-it-works" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
@@ -219,9 +205,9 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { step: '01', icon: MessageSquare, title: 'Chat to map your process', desc: "Talk to our AI assistant like you're explaining to a smart intern. It builds a visual workflow map while you chat." },
-              { step: '02', icon: Search, title: 'Scan for AI opportunities', desc: "We analyze each step and flag what's ripe for automation. No hype, just honest assessments of impact vs. effort." },
-              { step: '03', icon: Wrench, title: "Pick tools that don't suck", desc: "Get matched with AI tools and platforms that actually solve your problem. We'll handle the AI brain, you handle the client lunch." },
+              { step: '01', icon: MessageSquare, title: 'Chat to map your process', desc: 'Describe your workflow in natural language. The assistant builds a visual process map as you explain.' },
+              { step: '02', icon: Search, title: 'Scan for AI opportunities', desc: 'Each step is analyzed for automation potential. Honest assessments of impact vs. effort, without the hype.' },
+              { step: '03', icon: Wrench, title: 'Find effective tools', desc: 'Get matched with AI tools and platforms that solve your problem. Recommendations based on your requirements, not vendor hype.' },
               { step: '04', icon: FileText, title: 'Export a real blueprint', desc: 'Download a professional implementation document with ROI estimates, tool recommendations, and risk assessments.' }
             ].map((item, i) => {
               const Icon = item.icon;
@@ -268,7 +254,7 @@ export default function LandingPage() {
                 When you're ready, flip on Governance Mode
               </CardTitle>
               <CardDescription className="text-lg pt-3">
-                Governance isn't sexy, but fines are worse
+                Governance built in from the start
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -396,7 +382,7 @@ export default function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-brand-500" />
+                <Image src="/logo.png" alt="BTI" width={20} height={20} className="rounded" />
                 <span className="font-bold">Better Than Interns</span>
               </div>
               <p className="text-sm text-muted-foreground">

@@ -16,7 +16,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Loader2 } from 'lucide-react';
 
 function LoginContent() {
   const router = useRouter();
@@ -114,7 +114,14 @@ function LoginContent() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                'Sign In'
+              )}
             </Button>
             <p className="text-sm text-muted-foreground text-center">
               Don't have an account?{' '}

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Check,
   ArrowRight,
-  Sparkles,
   HelpCircle
 } from 'lucide-react';
 
@@ -35,7 +35,7 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <Link href="/" className="flex items-center space-x-2 group">
-              <Sparkles className="h-6 w-6 text-brand-500" />
+              <Image src="/logo.png" alt="BTI" width={24} height={24} className="rounded" />
               <span className="font-bold text-xl">Better Than Interns</span>
             </Link>
             <div className="flex items-center space-x-4">
@@ -68,10 +68,10 @@ export default function PricingPage() {
           className="max-w-3xl mx-auto space-y-6"
         >
           <motion.h1 variants={fadeIn} className="text-5xl md:text-6xl font-bold tracking-tight">
-            Pricing that's better than hiring an intern
+            Pricing
           </motion.h1>
           <motion.p variants={fadeIn} className="text-xl text-muted-foreground">
-            Start small, scale when spreadsheets and sticky notes stop working
+            Choose a plan that fits your organization.
           </motion.p>
         </motion.div>
       </section>
@@ -98,7 +98,7 @@ export default function PricingPage() {
                 </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-bold">€39</span>
+                    <span className="text-5xl font-bold">€29</span>
                     <span className="text-muted-foreground ml-2 text-lg">/ month</span>
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default function PricingPage() {
               <CardHeader className="space-y-3 pt-8">
                 <CardTitle className="text-2xl font-semibold">Pro</CardTitle>
                 <CardDescription className="text-base">
-                  For teams who actually ship AI projects
+                  For operations leads and teams scaling AI
                 </CardDescription>
                 <Badge variant="outline" className="w-fit border-brand-300 text-brand-700 bg-brand-50 text-xs">
                   Best for: Ops/AI leads & compliance
@@ -202,14 +202,14 @@ export default function PricingPage() {
               <CardHeader className="space-y-3">
                 <CardTitle className="text-2xl font-semibold">Enterprise</CardTitle>
                 <CardDescription className="text-base">
-                  For companies who want AI and sleep
+                  For organizations with advanced requirements
                 </CardDescription>
                 <Badge variant="outline" className="w-fit border-muted-foreground/30 text-muted-foreground text-xs">
                   Best for: Large orgs with custom needs
                 </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
-                    <span className="text-3xl font-bold">Let's talk</span>
+                    <span className="text-3xl font-bold">Custom</span>
                   </div>
                 </div>
               </CardHeader>
@@ -544,7 +544,7 @@ export default function PricingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div className="space-y-4">
               <div className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-brand-500" />
+                <Image src="/logo.png" alt="BTI" width={20} height={20} className="rounded" />
                 <span className="font-bold">Better Than Interns</span>
               </div>
               <p className="text-sm text-muted-foreground">
