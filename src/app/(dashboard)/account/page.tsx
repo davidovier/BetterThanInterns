@@ -429,9 +429,12 @@ function AccountContent() {
     }
   };
 
+  // M25: Helper for EUR cap comparison (ICU * 0.04 = EUR)
+  const previousCapEur = Math.round((usage?.paygCap || 0) * 0.04);
+
   // M25: Handle PAYG cap change - shows confirmation if increasing
   const handlePaygCapSave = () => {
-    if (paygCapEur > (usage?.paygCap || 0) * 0.04) {
+    if (paygCapEur > previousCapEur) {
       // Increasing cap requires confirmation
       setPendingPaygEnabled(paygEnabled);
       setPendingPaygCapEur(paygCapEur);
@@ -526,7 +529,7 @@ function AccountContent() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Account</h1>
         <p className="text-muted-foreground mt-1">
-          Profile, security, billing — the boring but important bits.
+          Profile, security, and billing settings.
         </p>
       </div>
 
@@ -565,7 +568,7 @@ function AccountContent() {
                 <CardTitle className="text-base">Profile & Login</CardTitle>
               </div>
               <CardDescription className="text-xs">
-                Your public-facing info. Well, private-facing. You get it.
+                Your account information.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -733,7 +736,7 @@ function AccountContent() {
                   Sessions & Devices
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  We'll show active sessions here so you can kick your old laptop off the island.
+                  Active sessions will be shown here.
                 </p>
               </div>
             </CardContent>
@@ -962,11 +965,14 @@ function AccountContent() {
                             <p className="text-xs text-muted-foreground">
                               Charges never exceed this cap. Current rate: €0.04 per unit.
                             </p>
+                            <p className="text-xs text-muted-foreground">
+                              Approx. {Math.round(paygCapEur / 0.04).toLocaleString()} units at current rate.
+                            </p>
                           </div>
 
                           <Button
                             onClick={handlePaygCapSave}
-                            disabled={isSavingPayg || paygCapEur === Math.round((usage?.paygCap || 0) * 0.04)}
+                            disabled={isSavingPayg || paygCapEur === previousCapEur}
                             variant="outline"
                             size="sm"
                             className="rounded-xl"
@@ -1104,7 +1110,7 @@ function AccountContent() {
                             <div>
                               <h4 className="font-semibold text-base">Enterprise</h4>
                               <p className="text-xs text-muted-foreground mt-1">
-                                Bring your lawyers, we'll wait
+                                Custom terms and invoicing available.
                               </p>
                             </div>
                           </div>

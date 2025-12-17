@@ -94,7 +94,7 @@ export function UnifiedSessionWorkspace({
   sessionData,
 }: UnifiedSessionWorkspaceProps) {
   const { toast } = useToast();
-  const { currentWorkspaceName, userRole, usage } = useWorkspaceContext();
+  const { currentWorkspaceName, userRole, usage, refetchUsage } = useWorkspaceContext();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -346,6 +346,9 @@ export function UnifiedSessionWorkspace({
         // M17.1: Trigger updating state
         setIsUpdating(true);
         await loadArtifacts();
+
+        // M25X: Refresh usage after scan (ICUs deducted)
+        await refetchUsage();
       } catch (error) {
         handleError(
           error instanceof Error ? error : new Error('Unknown error'),
@@ -445,6 +448,9 @@ export function UnifiedSessionWorkspace({
 
         // Reload artifacts to get updated state
         await loadArtifacts();
+
+        // M25X: Refresh usage after AI operation (ICUs deducted)
+        await refetchUsage();
 
         // Handle UI hints (e.g., highlight specific artifact)
         if (ui?.highlightId) {
@@ -607,10 +613,10 @@ export function UnifiedSessionWorkspace({
                     <p className="text-sm text-amber-800 mb-3">
                       {billingBlock.message}
                     </p>
-                    {/* M25: Role-aware contextual CTA */}
+                    {/* M25/M25X: Role-aware contextual CTA - single action per scenario */}
                     <div className="mt-2">
                       {userRole === 'owner' ? (
-                        // Owner CTAs
+                        // Owner CTAs - explicit handling for all billing codes
                         billingBlock.code === 'BILLING_LIMIT_REACHED' && !usage?.paygEnabled ? (
                           <Link
                             href="/account?tab=billing"
@@ -618,14 +624,21 @@ export function UnifiedSessionWorkspace({
                           >
                             Enable pay-as-you-go
                           </Link>
-                        ) : (
+                        ) : billingBlock.code === 'BILLING_LIMIT_REACHED' && usage?.paygEnabled ? (
                           <Link
                             href="/account?tab=billing"
                             className="inline-flex items-center text-sm font-medium text-amber-900 hover:text-amber-700 underline underline-offset-2"
                           >
-                            Increase PAYG cap
+                            Increase monthly cap
                           </Link>
-                        )
+                        ) : billingBlock.code === 'PAYG_CAP_REACHED' ? (
+                          <Link
+                            href="/account?tab=billing"
+                            className="inline-flex items-center text-sm font-medium text-amber-900 hover:text-amber-700 underline underline-offset-2"
+                          >
+                            Increase monthly cap
+                          </Link>
+                        ) : null
                       ) : (
                         // Non-owner message
                         <p className="text-sm text-amber-800">

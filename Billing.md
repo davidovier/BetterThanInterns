@@ -270,3 +270,122 @@ Usage forecasting
 Enterprise usage pooling
 
 This document is the source of truth for billing behavior.
+
+---
+
+13. Commercial Model Summary
+
+Hybrid model combining base subscription with optional usage-based continuation.
+
+Tiers:
+- Starter (€29/month): 900 units included, no PAYG
+- Pro (€99/month): 3,500 units included, PAYG opt-in available
+- Enterprise (custom): Volume pricing, invoicing, SLA
+
+PAYG:
+- Available only on Pro+
+- Explicit opt-in with monthly cap required
+- €0.04 per unit (4× cost markup)
+- Never auto-enabled
+
+14. Unit Economics
+
+Cost Structure:
+- 1 unit = €0.01 real OpenAI cost
+- Base plans: 3.3× markup (€0.033 per unit)
+- PAYG: 4.0× markup (€0.04 per unit)
+- Target margin: 65-75%
+
+Why Units (not tokens):
+- Abstraction layer for model-agnostic pricing
+- Future-proof against model changes
+- Simpler user communication
+- Enables action-based rather than token-based billing
+
+Estimated Cost per Action (indicative):
+- Light clarification: €0.10-0.30
+- Process extraction: €0.40-0.80
+- Opportunity scan: €0.80-1.50
+- Blueprint generation: €1.20-2.00
+
+15. EU Compliance Checklist
+
+VAT/Invoicing:
+- [ ] B2B: Reverse charge for EU business customers
+- [ ] B2C EU: VAT OSS registration or Stripe Tax
+- [ ] Invoices: Required for all transactions
+- [ ] Receipt emails: Automatic via Stripe
+
+Consumer Rights:
+- [ ] Digital services exemption: No withdrawal right after service delivery begins
+- [ ] Clear terms: Service starts immediately upon subscription
+- [ ] Explicit consent: Required for PAYG activation
+
+Transparency (AI-assisted analysis):
+- [ ] Clear indication that analysis is AI-assisted
+- [ ] Users understand outputs are recommendations, not decisions
+- [ ] No claim of "automated decision-making" under GDPR Article 22
+- [ ] Framing: "AI-assisted analysis" not "automated decisions"
+
+Data Processing:
+- [ ] DPA: Available for enterprise customers
+- [ ] Sub-processors: OpenAI, Stripe, hosting provider documented
+- [ ] Data location: EU hosting preferred, documented in privacy policy
+
+16. Stripe Enablement Checklist
+
+Environment Variables:
+- STRIPE_SECRET_KEY (required)
+- STRIPE_WEBHOOK_SECRET (required)
+- STRIPE_PRICE_ID_PRO (required for checkout)
+- STRIPE_PRICE_ID_ENTERPRISE (required for checkout)
+- NEXTAUTH_URL (for redirect URLs)
+
+Webhook Setup:
+- Endpoint: /api/webhooks/stripe
+- Events: checkout.session.completed, customer.subscription.updated, customer.subscription.deleted
+- Signing: Verify with STRIPE_WEBHOOK_SECRET
+
+Customer Portal:
+- Enable for subscription management
+- Configure cancellation flow
+- Set up payment method updates
+
+Tax Configuration:
+- Enable Stripe Tax for automatic VAT calculation
+- Configure EU tax registration numbers
+- Set pricing to exclude VAT (added at checkout)
+
+Test Mode:
+- Use sk_test_* keys for development
+- Create test prices in Stripe Dashboard
+- Verify webhook delivery in test mode first
+
+17. KYC/KYB Clarifications
+
+Stripe Requirements (for us as merchant):
+- Business verification required for payouts
+- Identity verification for account owners
+- Bank account verification
+- Standard Stripe onboarding process
+
+Customer Requirements:
+- No KYC required for standard customers
+- No identity verification needed
+- Credit card fraud detection handled by Stripe
+- Enterprise invoicing may require business address
+
+What We Do NOT Do:
+- No customer identity verification
+- No document collection from users
+- No manual approval processes
+- No credit checks
+
+18. Open Questions
+
+For future iteration:
+- Exact OpenAI model mix and cost breakdown by action type
+- Enterprise invoicing workflow (manual vs Stripe Invoicing)
+- Multi-workspace billing consolidation
+- Usage forecasting accuracy requirements
+- Potential per-seat pricing for team features
