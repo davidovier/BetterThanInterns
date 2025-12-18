@@ -49,7 +49,7 @@ export const designTokens = {
     dangerSoft: 'bg-red-50 border-red-200 text-red-900',
     warningSoft: 'bg-amber-50 border-amber-200 text-amber-900',
     successSoft: 'bg-green-50 border-green-200 text-green-900',
-    infoSoft: 'bg-blue-50 border-blue-200 text-blue-900',
+    infoSoft: 'bg-brand-50 border-brand-200 text-brand-900',
 
     // Plan badges
     planStarter: 'bg-muted/60 text-muted-foreground border-border',

@@ -220,7 +220,7 @@ function SignUpForm() {
               <CardFooter className="flex flex-col px-0 pt-2 space-y-4">
                 <Button
                   type="submit"
-                  variant="brand"
+                  variant="cta"
                   className="w-full h-11"
                   disabled={isLoading}
                 >
@@ -249,15 +249,15 @@ function SignUpForm() {
       </div>
 
       {/* Right side - Branding */}
-      <div className="hidden lg:flex flex-1 bg-gradient-to-br from-brand-600 via-brand-500 to-brand-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+      <div className="hidden lg:flex flex-1 bg-brand-800 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
         <div className="relative flex flex-col justify-center px-12 xl:px-20 text-white">
           <div className="max-w-md space-y-8">
             <div className="space-y-4">
               <h2 className="text-3xl font-bold">
                 Turn messy processes into AI projects.
               </h2>
-              <p className="text-brand-100 text-lg leading-relaxed">
+              <p className="text-brand-200 text-lg leading-relaxed">
                 Map workflows, find automation opportunities, and produce implementation plans your team can act on.
               </p>
             </div>
@@ -278,7 +278,7 @@ function SignUpForm() {
             </div>
 
             <div className="pt-6 border-t border-white/20">
-              <p className="text-sm text-brand-100">
+              <p className="text-sm text-brand-200">
                 14-day free trial on Pro. No credit card required.
               </p>
             </div>

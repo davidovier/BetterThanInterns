@@ -29,7 +29,7 @@ const getStatusColor = (status: string) => {
     case 'approved':
       return 'text-teal-700 bg-teal-50 border-teal-200';
     case 'pilot':
-      return 'text-blue-700 bg-blue-50 border-blue-200';
+      return 'text-amber-700 bg-amber-50 border-amber-200';
     case 'planned':
       return 'text-gray-700 bg-gray-50 border-gray-200';
     case 'idea':
@@ -57,14 +57,14 @@ export function GovernanceCard({ aiUseCase, isNew = false }: GovernanceCardProps
         initial={isNew ? { opacity: 0, y: 20, scale: 0.95 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className={isNew ? 'ring-2 ring-purple-500 ring-offset-2' : ''}
+        className={isNew ? 'ring-2 ring-brand-500 ring-offset-2' : ''}
       >
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-l-4 border-l-purple-500">
+        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-l-4 border-l-brand-500">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <Shield className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                  <Shield className="h-4 w-4 text-brand-600 flex-shrink-0" />
                   <CardTitle className="text-base line-clamp-2">{aiUseCase.title}</CardTitle>
                 </div>
                 <CardDescription className="line-clamp-2 text-xs">
@@ -124,7 +124,7 @@ export function GovernanceCard({ aiUseCase, isNew = false }: GovernanceCardProps
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-purple-600" />
+              <Shield className="h-5 w-5 text-brand-600" />
               {aiUseCase.title}
             </DialogTitle>
             <DialogDescription>{aiUseCase.description}</DialogDescription>

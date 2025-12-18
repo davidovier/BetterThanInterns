@@ -20,8 +20,8 @@ const variantConfig: Record<BannerVariant, {
 }> = {
   info: {
     icon: Info,
-    className: 'bg-blue-50 border-blue-200',
-    iconClassName: 'text-blue-600',
+    className: 'bg-brand-50 border-brand-200',
+    iconClassName: 'text-brand-600',
   },
   warning: {
     icon: AlertTriangle,

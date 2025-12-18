@@ -30,14 +30,14 @@ export function BlueprintCard({ blueprint, isNew = false }: BlueprintCardProps) 
         initial={isNew ? { opacity: 0, y: 20, scale: 0.95 } : false}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className={isNew ? 'ring-2 ring-blue-500 ring-offset-2' : ''}
+        className={isNew ? 'ring-2 ring-amber-500 ring-offset-2' : ''}
       >
-        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-l-4 border-l-blue-500">
+        <Card className="group hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 cursor-pointer border-l-4 border-l-amber-500">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                  <FileText className="h-4 w-4 text-amber-600 flex-shrink-0" />
                   <CardTitle className="text-base truncate">{blueprint.title}</CardTitle>
                 </div>
                 <CardDescription className="text-xs">
@@ -99,7 +99,7 @@ export function BlueprintCard({ blueprint, isNew = false }: BlueprintCardProps) 
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
+              <FileText className="h-5 w-5 text-amber-600" />
               {blueprint.title}
             </DialogTitle>
             <DialogDescription>

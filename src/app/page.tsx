@@ -59,7 +59,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="brand" size="default">
+                <Button variant="cta" size="default">
                   Start free trial
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -84,7 +84,7 @@ export default function LandingPage() {
               className="text-display-sm lg:text-display font-bold tracking-tight"
             >
               Turn messy processes into{' '}
-              <span className="text-brand-500">AI projects</span> in under an hour.
+              <span className="text-amber-600">AI projects</span> in under an hour.
             </motion.h1>
 
             <motion.p
@@ -100,7 +100,7 @@ export default function LandingPage() {
               className="flex flex-col sm:flex-row gap-4 pt-2"
             >
               <Link href="/signup">
-                <Button variant="brand" size="xl">
+                <Button variant="cta" size="xl">
                   Start free trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -342,7 +342,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-600 py-20 lg:py-24">
+      <section className="bg-brand-800 py-20 lg:py-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -353,12 +353,12 @@ export default function LandingPage() {
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">
             Ready to be better than interns?
           </h2>
-          <p className="text-lg text-brand-100 mb-10 max-w-xl mx-auto">
+          <p className="text-lg text-brand-200 mb-10 max-w-xl mx-auto">
             Start with a free trial. Upgrade when spreadsheets and sticky notes stop working.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
-              <Button size="xl" className="bg-white text-brand-600 hover:bg-brand-50 shadow-medium">
+              <Button size="xl" variant="cta" className="shadow-medium">
                 Start free trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

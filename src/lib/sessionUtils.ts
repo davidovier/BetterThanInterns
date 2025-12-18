@@ -83,9 +83,9 @@ export function getStateStyles(state: SessionState): {
       bgColor: 'bg-brand-50',
     },
     'in-progress': {
-      borderColor: 'border-l-blue-400',
-      textColor: 'text-blue-700',
-      bgColor: 'bg-blue-50',
+      borderColor: 'border-l-amber-400',
+      textColor: 'text-amber-700',
+      bgColor: 'bg-amber-50',
     },
     decided: {
       borderColor: 'border-l-emerald-500',

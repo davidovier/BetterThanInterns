@@ -38,7 +38,7 @@ export function OpportunityCard({
   const [isExpanded, setIsExpanded] = useState(false);
 
   const impactColors = {
-    low: 'bg-blue-100 text-blue-800 border-blue-200',
+    low: 'bg-brand-100 text-brand-800 border-brand-200',
     medium: 'bg-amber-100 text-amber-800 border-amber-200',
     high: 'bg-red-100 text-red-800 border-red-200',
   };

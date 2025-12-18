@@ -50,7 +50,7 @@ export default function PricingPage() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button variant="brand" size="default">
+                <Button variant="cta" size="default">
                   Start free trial
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -169,7 +169,7 @@ export default function PricingPage() {
                 </ul>
 
                 <Link href="/signup?plan=pro" className="block">
-                  <Button variant="brand" className="w-full">
+                  <Button variant="cta" className="w-full">
                     Start 14-day trial
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -360,7 +360,7 @@ export default function PricingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-600 py-20">
+      <section className="bg-brand-800 py-20">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -371,12 +371,12 @@ export default function PricingPage() {
           <h2 className="text-3xl lg:text-4xl font-bold mb-6">
             Ready to begin.
           </h2>
-          <p className="text-lg text-brand-100 mb-10">
+          <p className="text-lg text-brand-200 mb-10">
             Start your 14-day free trial. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup?plan=pro">
-              <Button size="xl" className="bg-white text-brand-600 hover:bg-brand-50 shadow-medium">
+              <Button size="xl" variant="cta" className="shadow-medium">
                 Start free trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>

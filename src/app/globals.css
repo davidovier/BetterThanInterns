@@ -4,101 +4,149 @@
 
 @layer base {
   :root {
-    /* Core semantic colors */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.75rem;
+    /*
+     * BTI Design System: Editorial Warmth
+     * Warm stone neutrals + forest green accent + amber CTAs
+     * Anti-generic, executive-grade aesthetic
+     */
 
-    /* Surface hierarchy */
-    --surface-elevated: 0 0% 100%;
-    --surface-subtle: 210 20% 98%;
-    --surface-muted: 210 16% 96%;
+    /* Core semantic colors - warm stone base */
+    --background: 40 23% 97%;
+    --foreground: 30 10% 12%;
+    --card: 40 20% 99%;
+    --card-foreground: 30 10% 12%;
+    --popover: 40 20% 99%;
+    --popover-foreground: 30 10% 12%;
 
-    /* Text hierarchy */
-    --text-primary: 222 47% 11%;
-    --text-secondary: 215 16% 47%;
-    --text-tertiary: 215 14% 64%;
+    /* Primary - Forest green (sophisticated, anti-tech-blue) */
+    --primary: 162 63% 20%;
+    --primary-foreground: 40 20% 98%;
+
+    /* Secondary - Warm stone */
+    --secondary: 36 16% 93%;
+    --secondary-foreground: 30 10% 20%;
+
+    /* Muted - Warm gray */
+    --muted: 36 14% 93%;
+    --muted-foreground: 30 8% 46%;
+
+    /* Accent - Amber for CTAs */
+    --accent: 32 95% 44%;
+    --accent-foreground: 40 20% 98%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 40 20% 98%;
+
+    /* Borders - warm */
+    --border: 36 14% 88%;
+    --input: 36 14% 88%;
+    --ring: 162 63% 25%;
+    --radius: 0.625rem;
+
+    /* Surface hierarchy - warm */
+    --surface-elevated: 40 20% 99%;
+    --surface-subtle: 40 18% 97%;
+    --surface-muted: 36 14% 94%;
+
+    /* Text hierarchy - warm charcoal */
+    --text-primary: 30 10% 12%;
+    --text-secondary: 30 8% 42%;
+    --text-tertiary: 30 6% 56%;
 
     /* Border refinement */
-    --border-subtle: 214 32% 94%;
-    --border-default: 214 32% 91%;
+    --border-subtle: 36 14% 92%;
+    --border-default: 36 14% 88%;
 
-    /* Brand colors as CSS variables */
-    --brand-50: 226 100% 97%;
-    --brand-100: 226 100% 94%;
-    --brand-200: 228 96% 89%;
-    --brand-300: 230 94% 82%;
-    --brand-400: 239 84% 67%;
-    --brand-500: 239 84% 67%;
-    --brand-600: 243 75% 59%;
-    --brand-700: 245 58% 51%;
-    --brand-800: 244 47% 41%;
-    --brand-900: 242 47% 34%;
+    /* Brand colors - Forest green scale */
+    --brand-50: 158 44% 96%;
+    --brand-100: 158 44% 91%;
+    --brand-200: 160 48% 80%;
+    --brand-300: 161 52% 65%;
+    --brand-400: 162 56% 45%;
+    --brand-500: 162 63% 30%;
+    --brand-600: 162 63% 24%;
+    --brand-700: 162 63% 20%;
+    --brand-800: 163 60% 16%;
+    --brand-900: 164 55% 12%;
+
+    /* Amber accent scale - for CTAs */
+    --amber-50: 48 100% 96%;
+    --amber-100: 48 96% 89%;
+    --amber-200: 44 92% 78%;
+    --amber-300: 40 90% 65%;
+    --amber-400: 36 92% 55%;
+    --amber-500: 32 95% 44%;
+    --amber-600: 28 90% 38%;
+    --amber-700: 24 82% 32%;
+    --amber-800: 20 72% 26%;
+    --amber-900: 16 60% 20%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    /* Dark mode - warm charcoal base */
+    --background: 30 12% 8%;
+    --foreground: 40 14% 92%;
+    --card: 30 10% 10%;
+    --card-foreground: 40 14% 92%;
+    --popover: 30 10% 10%;
+    --popover-foreground: 40 14% 92%;
+
+    --primary: 160 50% 45%;
+    --primary-foreground: 30 12% 8%;
+
+    --secondary: 30 8% 16%;
+    --secondary-foreground: 40 14% 92%;
+
+    --muted: 30 8% 16%;
+    --muted-foreground: 36 10% 58%;
+
+    --accent: 36 92% 55%;
+    --accent-foreground: 30 12% 8%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 40 14% 92%;
+
+    --border: 30 8% 18%;
+    --input: 30 8% 18%;
+    --ring: 160 50% 40%;
 
     /* Surface hierarchy - dark mode */
-    --surface-elevated: 222 47% 11%;
-    --surface-subtle: 217 33% 12%;
-    --surface-muted: 217 33% 15%;
+    --surface-elevated: 30 10% 12%;
+    --surface-subtle: 30 8% 10%;
+    --surface-muted: 30 8% 14%;
 
     /* Text hierarchy - dark mode */
-    --text-primary: 210 40% 98%;
-    --text-secondary: 215 20% 65%;
-    --text-tertiary: 215 16% 47%;
+    --text-primary: 40 14% 92%;
+    --text-secondary: 36 10% 65%;
+    --text-tertiary: 36 8% 50%;
 
     /* Border refinement - dark mode */
-    --border-subtle: 217 33% 20%;
-    --border-default: 217 33% 25%;
+    --border-subtle: 30 8% 20%;
+    --border-default: 30 8% 24%;
 
     /* Brand colors - dark mode */
-    --brand-50: 242 47% 20%;
-    --brand-100: 244 47% 25%;
-    --brand-200: 245 58% 35%;
-    --brand-300: 243 75% 45%;
-    --brand-400: 239 84% 55%;
-    --brand-500: 239 84% 67%;
-    --brand-600: 230 94% 75%;
-    --brand-700: 228 96% 82%;
-    --brand-800: 226 100% 88%;
-    --brand-900: 226 100% 94%;
+    --brand-50: 164 55% 12%;
+    --brand-100: 163 60% 16%;
+    --brand-200: 162 63% 20%;
+    --brand-300: 162 63% 30%;
+    --brand-400: 162 56% 40%;
+    --brand-500: 161 52% 50%;
+    --brand-600: 160 48% 60%;
+    --brand-700: 158 44% 72%;
+    --brand-800: 158 44% 84%;
+    --brand-900: 158 44% 92%;
+
+    /* Amber - dark mode */
+    --amber-50: 16 60% 14%;
+    --amber-100: 20 72% 18%;
+    --amber-200: 24 82% 24%;
+    --amber-300: 28 90% 32%;
+    --amber-400: 32 95% 44%;
+    --amber-500: 36 92% 55%;
+    --amber-600: 40 90% 65%;
+    --amber-700: 44 92% 75%;
+    --amber-800: 48 96% 85%;
+    --amber-900: 48 100% 92%;
   }
 }
 
@@ -108,10 +156,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "ss01", "ss02", "cv01";
   }
 }
 
 /* Hide React Flow MiniMap position description */
 .react-flow__minimap-description {
   display: none !important;
+}
+
+/* Custom selection color */
+::selection {
+  background: hsl(var(--brand-200));
+  color: hsl(var(--brand-900));
 }

@@ -10,7 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        // Distinctive, editorial typography
+        sans: ['Plus Jakarta Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '1rem' }],
@@ -69,31 +71,44 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Rich brand colors
+        // Brand colors - Forest green scale (from CSS variables)
         brand: {
-          50: '#f0f4ff',
-          100: '#e0e9ff',
-          200: '#c7d7fe',
-          300: '#a5b8fc',
-          400: '#818cf8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+          50: 'hsl(var(--brand-50))',
+          100: 'hsl(var(--brand-100))',
+          200: 'hsl(var(--brand-200))',
+          300: 'hsl(var(--brand-300))',
+          400: 'hsl(var(--brand-400))',
+          500: 'hsl(var(--brand-500))',
+          600: 'hsl(var(--brand-600))',
+          700: 'hsl(var(--brand-700))',
+          800: 'hsl(var(--brand-800))',
+          900: 'hsl(var(--brand-900))',
         },
-        // Warm accent colors
+        // Amber accent for CTAs (from CSS variables)
+        amber: {
+          50: 'hsl(var(--amber-50))',
+          100: 'hsl(var(--amber-100))',
+          200: 'hsl(var(--amber-200))',
+          300: 'hsl(var(--amber-300))',
+          400: 'hsl(var(--amber-400))',
+          500: 'hsl(var(--amber-500))',
+          600: 'hsl(var(--amber-600))',
+          700: 'hsl(var(--amber-700))',
+          800: 'hsl(var(--amber-800))',
+          900: 'hsl(var(--amber-900))',
+        },
+        // Warm neutrals for legacy warm references
         warm: {
-          50: '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
-          600: '#d97706',
-          700: '#b45309',
-          800: '#92400e',
-          900: '#78350f',
+          50: 'hsl(var(--amber-50))',
+          100: 'hsl(var(--amber-100))',
+          200: 'hsl(var(--amber-200))',
+          300: 'hsl(var(--amber-300))',
+          400: 'hsl(var(--amber-400))',
+          500: 'hsl(var(--amber-500))',
+          600: 'hsl(var(--amber-600))',
+          700: 'hsl(var(--amber-700))',
+          800: 'hsl(var(--amber-800))',
+          900: 'hsl(var(--amber-900))',
         },
         // Surface semantic colors
         surface: {
@@ -123,8 +138,11 @@ const config: Config = {
         'strong': '0 8px 24px 0 rgb(0 0 0 / 0.12)',
         'elevated': '0 12px 40px -8px rgb(0 0 0 / 0.15)',
         'inner-subtle': 'inset 0 1px 2px 0 rgb(0 0 0 / 0.02)',
-        'glow': '0 0 20px -5px rgb(99 102 241 / 0.4)',
-        'glow-sm': '0 0 12px -3px rgb(99 102 241 / 0.3)',
+        // Updated glow to use forest green
+        'glow': '0 0 20px -5px hsl(162 63% 30% / 0.4)',
+        'glow-sm': '0 0 12px -3px hsl(162 63% 30% / 0.3)',
+        // Amber glow for CTAs
+        'glow-amber': '0 0 20px -5px hsl(32 95% 44% / 0.4)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

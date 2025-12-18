@@ -21,7 +21,7 @@ type SessionsHeaderProps = {
 const planColors = {
   starter: 'bg-muted text-muted-foreground border-border',
   pro: 'bg-brand-50 text-brand-700 border-brand-200',
-  enterprise: 'bg-purple-50 text-purple-700 border-purple-200',
+  enterprise: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
 export function SessionsHeader({

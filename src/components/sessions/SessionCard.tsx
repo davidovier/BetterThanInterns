@@ -73,7 +73,7 @@ export function SessionCard({ session, index, onEdit, onDelete }: SessionCardPro
               {/* Action Menu */}
               <div className="flex items-center gap-2 shrink-0">
                 {session.isDemo && (
-                  <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] font-semibold">
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] font-semibold">
                     Demo
                   </Badge>
                 )}
