@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CreditCard
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 import { UsageBar } from '@/components/workspace/usage-bar';
+import { cn } from '@/lib/utils';
 
 type AppShellProps = {
   children: ReactNode;
@@ -113,16 +115,16 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="min-h-screen bg-gradient-radial from-background via-background to-muted/20">
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b bg-card/80 backdrop-blur-lg px-4 flex items-center justify-between">
-        <Link href="/sessions" className="flex items-center space-x-2">
-          <Image src="/logo.png" alt="BTI Logo" width={24} height={24} className="flex-shrink-0" />
-          <span className="text-lg font-semibold tracking-tight">Better Than Interns</span>
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 border-b border-border/60 bg-card/95 backdrop-blur-xl px-4 flex items-center justify-between shadow-soft">
+        <Link href="/sessions" className="flex items-center space-x-2.5 group">
+          <Image src="/logo.png" alt="BTI Logo" width={28} height={28} className="flex-shrink-0 rounded" />
+          <span className="text-lg font-semibold tracking-tight group-hover:text-brand-600 transition-colors">Better Than Interns</span>
         </Link>
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="lg:hidden"
+          className="lg:hidden h-10 w-10 hover:bg-muted/60"
         >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -130,23 +132,27 @@ export function AppShell({ children }: AppShellProps) {
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed left-0 top-0 z-40 h-screen border-r bg-card/80 backdrop-blur-lg
-          transition-all duration-300 ease-in-out
-          ${sidebarCollapsed ? 'w-20' : 'w-64'}
-          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-        `}
+        className={cn(
+          'fixed left-0 top-0 z-40 h-screen border-r border-border/60',
+          'bg-gradient-to-b from-card via-card to-surface-subtle/50 backdrop-blur-xl',
+          'transition-all duration-300 ease-out',
+          sidebarCollapsed ? 'w-[72px]' : 'w-72',
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        )}
       >
         <div className="flex h-full flex-col">
           {/* Logo */}
-          <div className="flex h-16 items-center border-b px-4 justify-between">
+          <div className="flex h-18 items-center border-b border-border/60 px-4 justify-between">
             <Link
               href="/sessions"
-              className={`flex items-center transition-all ${sidebarCollapsed ? 'justify-center w-full' : 'space-x-2'}`}
+              className={cn(
+                'flex items-center transition-all group',
+                sidebarCollapsed ? 'justify-center w-full' : 'space-x-2.5'
+              )}
             >
-              <Image src="/logo.png" alt="BTI Logo" width={24} height={24} className="flex-shrink-0" />
+              <Image src="/logo.png" alt="BTI Logo" width={28} height={28} className="flex-shrink-0 rounded" />
               {!sidebarCollapsed && (
-                <span className="text-lg font-semibold tracking-tight truncate">
+                <span className="text-lg font-semibold tracking-tight truncate group-hover:text-brand-600 transition-colors">
                   Better Than Interns
                 </span>
               )}
@@ -154,15 +160,15 @@ export function AppShell({ children }: AppShellProps) {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 space-y-6 px-3 py-4 overflow-y-auto">
+          <nav className="flex-1 space-y-6 px-3 py-5 overflow-y-auto">
             {navSections.map((section, sectionIdx) => (
               <div key={sectionIdx}>
                 {section.label && !sidebarCollapsed && (
-                  <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  <h3 className="mb-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                     {section.label}
                   </h3>
                 )}
-                <div className="space-y-1">
+                <div className="space-y-1.5">
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
@@ -171,16 +177,19 @@ export function AppShell({ children }: AppShellProps) {
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`group flex items-center rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
-                          sidebarCollapsed ? 'justify-center' : 'space-x-3'
-                        } ${
+                        className={cn(
+                          'group flex items-center rounded-xl text-sm font-medium transition-all duration-200',
+                          sidebarCollapsed ? 'justify-center px-3 py-3' : 'px-4 py-3 space-x-3',
                           isActive
-                            ? 'bg-gradient-to-r from-brand-50 to-brand-50/50 text-brand-700 shadow-soft border border-brand-100'
-                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:-translate-y-[1px] hover:shadow-soft'
-                        }`}
+                            ? 'bg-brand-50 text-brand-700 shadow-soft border border-brand-100/80 ring-1 ring-brand-100'
+                            : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground hover:-translate-y-0.5 hover:shadow-soft'
+                        )}
                         title={sidebarCollapsed ? item.label : undefined}
                       >
-                        <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${isActive ? 'text-brand-600' : 'group-hover:text-foreground'}`} />
+                        <Icon className={cn(
+                          'h-5 w-5 flex-shrink-0 transition-colors',
+                          isActive ? 'text-brand-600' : 'group-hover:text-foreground'
+                        )} />
                         {!sidebarCollapsed && <span>{item.label}</span>}
                       </Link>
                     );
@@ -191,23 +200,26 @@ export function AppShell({ children }: AppShellProps) {
           </nav>
 
           {/* User section */}
-          <div className="border-t p-4 space-y-3">
+          <div className="border-t border-border/60 p-4 space-y-3">
             {currentWorkspaceName && !sidebarCollapsed && (
-              <div className="rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-border/40 p-3 shadow-soft space-y-3">
+              <div className="rounded-xl bg-gradient-to-br from-surface-subtle to-surface-muted/50 border border-border/50 p-4 shadow-soft space-y-3">
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
+                  <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest mb-2">
                     Workspace
                   </p>
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold truncate flex-1">
+                    <p className="text-sm font-semibold truncate flex-1 text-foreground">
                       {currentWorkspaceName}
                     </p>
                     <Badge
                       variant="outline"
-                      className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${getPlanBadgeStyles(currentWorkspacePlan)}`}
+                      className={cn(
+                        'text-[10px] rounded-full px-2 py-0.5 font-semibold uppercase tracking-wide',
+                        getPlanBadgeStyles(currentWorkspacePlan)
+                      )}
                       title={getPlanTooltip(currentWorkspacePlan)}
                     >
-                      {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)}
+                      {currentWorkspacePlan}
                     </Badge>
                   </div>
                 </div>
@@ -218,16 +230,19 @@ export function AppShell({ children }: AppShellProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className={`w-full hover:bg-muted/50 ${sidebarCollapsed ? 'justify-center px-0' : 'justify-start space-x-3'}`}
+                  className={cn(
+                    'w-full hover:bg-muted/50 transition-all',
+                    sidebarCollapsed ? 'justify-center px-0 py-3' : 'justify-start space-x-3 py-2.5'
+                  )}
                 >
-                  <Avatar className="h-8 w-8 flex-shrink-0">
-                    <AvatarFallback className="bg-brand-100 text-brand-700 text-xs">
+                  <Avatar className="h-9 w-9 flex-shrink-0 ring-2 ring-border/50">
+                    <AvatarFallback className="bg-brand-100 text-brand-700 text-xs font-semibold">
                       {getInitials(session?.user?.name)}
                     </AvatarFallback>
                   </Avatar>
                   {!sidebarCollapsed && (
                     <div className="flex-1 text-left">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-semibold truncate text-foreground">
                         {session?.user?.name || 'User'}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
@@ -237,16 +252,31 @@ export function AppShell({ children }: AppShellProps) {
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-56 shadow-medium">
+                <DropdownMenuLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  Account
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/account')}>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Account Settings
+                <DropdownMenuItem
+                  onClick={() => router.push('/account')}
+                  className="cursor-pointer"
+                >
+                  <Settings className="mr-2.5 h-4 w-4" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push('/account?tab=billing')}
+                  className="cursor-pointer"
+                >
+                  <CreditCard className="mr-2.5 h-4 w-4" />
+                  Billing
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className="cursor-pointer text-muted-foreground hover:text-foreground"
+                >
+                  <LogOut className="mr-2.5 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -257,13 +287,19 @@ export function AppShell({ children }: AppShellProps) {
         {/* Desktop Collapse Toggle - Only visible on desktop */}
         <button
           onClick={toggleSidebar}
-          className="hidden lg:flex absolute -right-3 top-20 z-50 h-6 w-6 items-center justify-center rounded-full border bg-card shadow-md hover:bg-muted transition-colors"
+          className={cn(
+            'hidden lg:flex absolute -right-3.5 top-[4.5rem] z-50',
+            'h-7 w-7 items-center justify-center rounded-full',
+            'border border-border/80 bg-card shadow-soft',
+            'hover:bg-muted hover:shadow-medium hover:scale-105',
+            'transition-all duration-200'
+          )}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {sidebarCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 text-muted-foreground" />
           )}
         </button>
       </aside>
@@ -271,13 +307,17 @@ export function AppShell({ children }: AppShellProps) {
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 z-30 bg-black/50 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-30 bg-black/60 backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Main content */}
-      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'} pt-16 lg:pt-0`}>
+      <div className={cn(
+        'transition-all duration-300 ease-out',
+        sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-72',
+        'pt-16 lg:pt-0'
+      )}>
         <main className="min-h-screen">
           {children}
         </main>

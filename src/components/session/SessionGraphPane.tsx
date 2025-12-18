@@ -208,7 +208,7 @@ export function SessionGraphPane({
                 value={selectedProcessIndex.toString()}
                 onValueChange={(val) => onProcessSelect(parseInt(val))}
               >
-                <TabsList className="bg-card/95 backdrop-blur-sm">
+                <TabsList className="bg-card/95 backdrop-blur-sm shadow-soft">
                   {processes.map((proc, idx) => (
                     <TabsTrigger key={proc.id} value={idx.toString()} className="text-xs">
                       {proc.name}
@@ -235,15 +235,15 @@ export function SessionGraphPane({
         // M16: Empty Graph State
         <div className="h-full flex items-center justify-center p-8">
           <div className="text-center max-w-sm space-y-4">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center mx-auto shadow-sm border border-slate-200">
-              <Sparkles className="h-10 w-10 text-slate-400" />
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center mx-auto shadow-soft border border-border">
+              <Sparkles className="h-10 w-10 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="font-semibold text-sm text-slate-900 mb-2">
-                Your process map will appear here
+              <h3 className="font-semibold text-sm text-foreground mb-2">
+                Your process map will appear here.
               </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Describe a workflow in the chat and we'll sketch it out for you. No need for perfect
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Describe a workflow in the chat and it will be sketched out for you. No need for perfect
                 wording—start with "First we... then we..."
               </p>
             </div>

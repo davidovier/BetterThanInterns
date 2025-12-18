@@ -102,10 +102,10 @@ export function SessionChatPane({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-card">
       {/* M19: Working Notes header */}
-      <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-slate-200">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <div className="sticky top-0 bg-card z-10 px-6 py-4 border-b border-border">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Working Notes
         </h2>
       </div>
@@ -119,20 +119,20 @@ export function SessionChatPane({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="relative border border-slate-200 rounded-lg px-4 py-3 bg-slate-50/50"
+            className="relative border border-border rounded-lg px-4 py-3 bg-muted/30"
           >
             <button
               onClick={() => setShowStarterExample(false)}
-              className="absolute top-2 right-2 p-1 hover:bg-slate-200 rounded transition-colors"
+              className="absolute top-2 right-2 p-1 hover:bg-muted rounded transition-colors"
               aria-label="Dismiss example"
             >
-              <X className="h-3 w-3 text-slate-400" />
+              <X className="h-3 w-3 text-muted-foreground" />
             </button>
             <div className="pr-6">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
                 Example
               </p>
-              <p className="text-sm text-slate-600 leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Invoices arrive by email, then finance checks the vendor, then approval is required before payment.
               </p>
             </div>
@@ -148,25 +148,25 @@ export function SessionChatPane({
             className="flex flex-col items-center justify-center h-full space-y-6 px-4"
           >
             {/* Welcome Icon */}
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-lg">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center shadow-soft">
               <Sparkles className="h-8 w-8 text-white" />
             </div>
 
             {/* Welcome Message */}
             <div className="text-center space-y-2 max-w-md">
-              <h2 className="text-xl font-semibold text-slate-900">
-                Let's map your process
+              <h2 className="text-xl font-semibold text-foreground">
+                Map your process.
               </h2>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Describe a process in your own words, and we'll turn it into a visual workflow
-                and scan for AI opportunities. No need for perfect wording—just start with
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Describe a process in your own words, and it will become a visual workflow
+                with AI opportunities identified. No need for perfect wording—start with
                 "First we... then we..."
               </p>
             </div>
 
             {/* Starter Prompts */}
             <div className="space-y-3 w-full max-w-md">
-              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Try one of these:
               </p>
               <div className="space-y-2">
@@ -178,11 +178,11 @@ export function SessionChatPane({
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                     onClick={() => handleStarterClick(prompt)}
                     disabled={isLoading}
-                    className="w-full text-left px-4 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-brand-400 hover:bg-brand-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full text-left px-4 py-3 rounded-xl bg-card border-2 border-border hover:border-brand-400 hover:bg-brand-50 transition-all duration-200 group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center gap-3">
                       <Zap className="h-4 w-4 text-brand-500 flex-shrink-0 group-hover:text-brand-600" />
-                      <span className="text-sm text-slate-700 group-hover:text-slate-900">
+                      <span className="text-sm text-foreground/80 group-hover:text-foreground">
                         {prompt}
                       </span>
                     </div>
@@ -203,32 +203,32 @@ export function SessionChatPane({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.15 }}
-                className="pb-4 border-b border-slate-100 last:border-0"
+                className="pb-4 border-b border-border/50 last:border-0"
               >
                 {message.role === 'user' ? (
                   <div>
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1.5">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 mb-1.5">
                       You · {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}
                     </div>
-                    <div className="text-sm text-slate-900 leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="text-sm text-foreground leading-relaxed whitespace-pre-wrap break-words">
                       {message.content}
                     </div>
                   </div>
                 ) : message.role === 'system' ? (
-                  <div className="text-xs text-slate-400 italic">{message.content}</div>
+                  <div className="text-xs text-muted-foreground/70 italic">{message.content}</div>
                 ) : (
                   <div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1.5">
+                    <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 mb-1.5">
                       <Sparkles className="h-2.5 w-2.5" />
                       <span>Assistant · {new Date(message.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
                       })}</span>
                     </div>
-                    <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap break-words">
+                    <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap break-words">
                       {message.content}
                     </div>
                   </div>
@@ -243,7 +243,7 @@ export function SessionChatPane({
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex items-center gap-2 text-xs text-slate-400"
+            className="flex items-center gap-2 text-xs text-muted-foreground"
           >
             <Sparkles className="h-3 w-3" />
             <span>Assistant is working</span>
@@ -251,17 +251,17 @@ export function SessionChatPane({
               <motion.div
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 1.2, repeat: Infinity, delay: 0 }}
-                className="w-1 h-1 bg-slate-400 rounded-full"
+                className="w-1 h-1 bg-muted-foreground rounded-full"
               />
               <motion.div
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 1.2, repeat: Infinity, delay: 0.3 }}
-                className="w-1 h-1 bg-slate-400 rounded-full"
+                className="w-1 h-1 bg-muted-foreground rounded-full"
               />
               <motion.div
                 animate={{ opacity: [0.4, 1, 0.4] }}
                 transition={{ duration: 1.2, repeat: Infinity, delay: 0.6 }}
-                className="w-1 h-1 bg-slate-400 rounded-full"
+                className="w-1 h-1 bg-muted-foreground rounded-full"
               />
             </div>
           </motion.div>
@@ -271,7 +271,7 @@ export function SessionChatPane({
       </div>
 
       {/* M19: Input Area - More document-like */}
-      <div className="border-t border-slate-200 bg-white">
+      <div className="border-t border-border bg-card">
         <div className="px-6 py-4">
           <Textarea
             ref={textareaRef}
@@ -281,18 +281,19 @@ export function SessionChatPane({
             onFocus={onInputFocus}
             onBlur={onInputBlur}
             placeholder="Add context, clarify a process, or ask for analysis..."
-            className="resize-none min-h-[60px] max-h-[160px] text-sm border-slate-200 focus:border-slate-300 bg-white"
+            className="resize-none min-h-[60px] max-h-[160px] text-sm border-border focus:border-brand-300 bg-card"
             disabled={isLoading}
           />
           <div className="flex items-center justify-between mt-2">
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[11px] text-muted-foreground/70">
               Press Enter to send · Shift+Enter for new line
             </div>
             <Button
               onClick={onSendMessage}
               disabled={!inputMessage.trim() || isLoading}
               size="sm"
-              className="bg-slate-700 hover:bg-slate-800 text-white h-7 px-3 text-xs"
+              variant="brand"
+              className="h-7 px-3 text-xs"
             >
               {isLoading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

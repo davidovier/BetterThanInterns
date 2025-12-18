@@ -10,6 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
 type SessionsHeaderProps = {
   workspaceName: string | null;
@@ -18,9 +19,9 @@ type SessionsHeaderProps = {
 };
 
 const planColors = {
-  starter: 'bg-slate-100 text-slate-700 border-slate-300',
-  pro: 'bg-brand-100 text-brand-700 border-brand-300',
-  enterprise: 'bg-purple-100 text-purple-700 border-purple-300',
+  starter: 'bg-muted text-muted-foreground border-border',
+  pro: 'bg-brand-50 text-brand-700 border-brand-200',
+  enterprise: 'bg-purple-50 text-purple-700 border-purple-200',
 };
 
 export function SessionsHeader({
@@ -32,49 +33,45 @@ export function SessionsHeader({
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: 'easeOut' }}
+      transition={{ duration: 0.4 }}
       className="relative"
     >
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-b from-slate-50/50 to-transparent opacity-50 pointer-events-none" />
-
-      <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-8">
+      <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 pb-6">
         {/* Left Side - Title & Meta */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Sessions
             </h1>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <button className="text-slate-400 hover:text-slate-600 transition-colors">
-                    <HelpCircle className="h-5 w-5" />
+                  <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                    <HelpCircle className="h-4 w-4" />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-xs">
-                  <p className="text-sm">
+                <TooltipContent className="max-w-xs" side="bottom">
+                  <p className="text-sm leading-relaxed">
                     Each session is a working file with your AI ops consultant. Map processes,
-                    identify opportunities, and generate implementation blueprints — all in one place.
+                    identify opportunities, and generate implementation blueprints.
                   </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
 
-          <p className="text-base text-slate-600 max-w-2xl leading-relaxed">
-            Each session is a working file with your AI ops consultant — processes, opportunities,
-            and decisions in one place.
+          <p className="text-base text-muted-foreground max-w-2xl leading-relaxed">
+            Working files with your AI ops consultant. Processes, opportunities, and decisions in one place.
           </p>
 
           {/* Meta Info */}
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="font-medium">Workspace:</span>
-            <span className="text-slate-700">{workspaceName || 'Loading...'}</span>
-            <span className="text-slate-300">·</span>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground/70">Workspace:</span>
+            <span className="font-medium text-foreground">{workspaceName || 'Loading...'}</span>
+            <span className="text-border">·</span>
             <Badge
               variant="outline"
-              className={`capitalize ${planColors[workspacePlan]}`}
+              className={cn('uppercase text-[10px] tracking-wide font-semibold', planColors[workspacePlan])}
             >
               {workspacePlan}
             </Badge>
@@ -85,11 +82,11 @@ export function SessionsHeader({
         <div className="flex items-center gap-3">
           <Button
             onClick={onNewSession}
+            variant="brand"
             size="lg"
-            className="bg-brand-600 hover:bg-brand-700 text-white shadow-sm hover:shadow-md hover:-translate-y-[1px] transition-all"
           >
             <Plus className="h-4 w-4 mr-2" />
-            New Session
+            New session
           </Button>
         </div>
       </div>

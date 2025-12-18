@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Core semantic colors */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
@@ -24,6 +25,32 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.75rem;
+
+    /* Surface hierarchy */
+    --surface-elevated: 0 0% 100%;
+    --surface-subtle: 210 20% 98%;
+    --surface-muted: 210 16% 96%;
+
+    /* Text hierarchy */
+    --text-primary: 222 47% 11%;
+    --text-secondary: 215 16% 47%;
+    --text-tertiary: 215 14% 64%;
+
+    /* Border refinement */
+    --border-subtle: 214 32% 94%;
+    --border-default: 214 32% 91%;
+
+    /* Brand colors as CSS variables */
+    --brand-50: 226 100% 97%;
+    --brand-100: 226 100% 94%;
+    --brand-200: 228 96% 89%;
+    --brand-300: 230 94% 82%;
+    --brand-400: 239 84% 67%;
+    --brand-500: 239 84% 67%;
+    --brand-600: 243 75% 59%;
+    --brand-700: 245 58% 51%;
+    --brand-800: 244 47% 41%;
+    --brand-900: 242 47% 34%;
   }
 
   .dark {
@@ -46,6 +73,32 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 224.3 76.3% 48%;
+
+    /* Surface hierarchy - dark mode */
+    --surface-elevated: 222 47% 11%;
+    --surface-subtle: 217 33% 12%;
+    --surface-muted: 217 33% 15%;
+
+    /* Text hierarchy - dark mode */
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20% 65%;
+    --text-tertiary: 215 16% 47%;
+
+    /* Border refinement - dark mode */
+    --border-subtle: 217 33% 20%;
+    --border-default: 217 33% 25%;
+
+    /* Brand colors - dark mode */
+    --brand-50: 242 47% 20%;
+    --brand-100: 244 47% 25%;
+    --brand-200: 245 58% 35%;
+    --brand-300: 243 75% 45%;
+    --brand-400: 239 84% 55%;
+    --brand-500: 239 84% 67%;
+    --brand-600: 230 94% 75%;
+    --brand-700: 228 96% 82%;
+    --brand-800: 226 100% 88%;
+    --brand-900: 226 100% 94%;
   }
 }
 

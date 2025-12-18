@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,46 +12,47 @@ import {
   HelpCircle
 } from 'lucide-react';
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
+const fadeIn: Variants = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
 };
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15
+      staggerChildren: 0.1
     }
   }
 };
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-gradient-radial from-background via-background to-muted/20">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b bg-card/80 backdrop-blur-md">
+    <div className="min-h-screen bg-gradient-radial from-background via-background to-surface-subtle">
+      {/* Navigation - matches landing page */}
+      <nav className="sticky top-0 z-50 border-b border-border/40 bg-card/90 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2 group">
-              <Image src="/logo.png" alt="BTI" width={24} height={24} className="rounded" />
-              <span className="font-bold text-xl">Better Than Interns</span>
+          <div className="flex justify-between items-center h-18">
+            <Link href="/" className="flex items-center space-x-2.5 transition-opacity hover:opacity-80">
+              <Image src="/logo.png" alt="BTI" width={28} height={28} className="rounded" />
+              <span className="font-semibold text-lg tracking-tight">Better Than Interns</span>
             </Link>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-2">
               <Link href="/">
-                <Button variant="ghost" className="hover:-translate-y-[1px] transition-all">
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
                   Home
                 </Button>
               </Link>
               <Link href="/login">
-                <Button variant="ghost" className="hover:-translate-y-[1px] transition-all">
-                  Login
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                  Sign in
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all">
-                  Get Started
+                <Button variant="brand" size="default">
+                  Start free trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
             </div>
@@ -65,70 +66,62 @@ export default function PricingPage() {
           initial="hidden"
           animate="visible"
           variants={staggerContainer}
-          className="max-w-3xl mx-auto space-y-6"
+          className="max-w-2xl mx-auto space-y-4"
         >
-          <motion.h1 variants={fadeIn} className="text-5xl md:text-6xl font-bold tracking-tight">
+          <motion.h1 variants={fadeIn} className="text-4xl lg:text-5xl font-bold tracking-tight">
             Pricing
           </motion.h1>
-          <motion.p variants={fadeIn} className="text-xl text-muted-foreground">
+          <motion.p variants={fadeIn} className="text-lg text-text-secondary">
             Choose a plan that fits your organization.
           </motion.p>
         </motion.div>
       </section>
 
       {/* Pricing Cards */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
-          className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto"
+          className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto"
         >
           {/* Starter */}
           <motion.div variants={fadeIn}>
-            <Card className="h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px]">
+            <Card variant="default" interactive className="h-full rounded-2xl">
               <CardHeader className="space-y-3">
-                <CardTitle className="text-2xl font-semibold">Starter</CardTitle>
-                <CardDescription className="text-base">
-                  For solo consultants & small teams
+                <CardTitle className="text-xl font-semibold">Starter</CardTitle>
+                <CardDescription className="text-sm">
+                  For solo consultants and small teams.
                 </CardDescription>
-                <Badge variant="outline" className="w-fit border-muted-foreground/30 text-muted-foreground text-xs">
-                  Best for: Testing the waters
+                <Badge variant="outline" className="w-fit text-xs">
+                  Testing the waters
                 </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-bold">€29</span>
-                    <span className="text-muted-foreground ml-2 text-lg">/ month</span>
+                    <span className="text-4xl font-bold">€29</span>
+                    <span className="text-muted-foreground ml-2">/ month</span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ul className="space-y-3.5">
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">1 workspace</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Up to 3 projects</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Process mapping + AI opportunities</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Tool recommendations</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Basic blueprint exports</span>
-                  </li>
+                <ul className="space-y-3">
+                  {[
+                    '1 workspace',
+                    'Up to 3 projects',
+                    'Process mapping + AI opportunities',
+                    'Tool recommendations',
+                    'Basic blueprint exports'
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start">
+                      <Check className="h-4 w-4 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
                 <Link href="/signup?plan=starter" className="block">
-                  <Button variant="outline" className="w-full hover:-translate-y-[1px] transition-all">
+                  <Button variant="outline" className="w-full">
                     Start with Starter
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -139,55 +132,44 @@ export default function PricingPage() {
 
           {/* Pro (Highlighted) */}
           <motion.div variants={fadeIn}>
-            <Card className="h-full rounded-2xl ring-2 ring-brand-400/60 bg-gradient-to-br from-brand-50/80 to-card shadow-strong transition-all hover:shadow-strong hover:ring-brand-500 hover:-translate-y-[2px] relative">
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-1">
-                Most Popular
+            <Card variant="elevated" className="h-full rounded-2xl ring-2 ring-brand-200 border-brand-200 relative">
+              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-500 text-white px-3 py-1 text-xs">
+                Popular
               </Badge>
               <CardHeader className="space-y-3 pt-8">
-                <CardTitle className="text-2xl font-semibold">Pro</CardTitle>
-                <CardDescription className="text-base">
-                  For operations leads and teams scaling AI
+                <CardTitle className="text-xl font-semibold">Pro</CardTitle>
+                <CardDescription className="text-sm">
+                  For operations leads and teams scaling AI.
                 </CardDescription>
-                <Badge variant="outline" className="w-fit border-brand-300 text-brand-700 bg-brand-50 text-xs">
-                  Best for: Ops/AI leads & compliance
+                <Badge variant="outline" className="w-fit border-brand-200 text-brand-700 bg-brand-50 text-xs">
+                  Ops/AI leads & compliance
                 </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-bold text-brand-600">€99</span>
-                    <span className="text-muted-foreground ml-2 text-lg">/ month</span>
+                    <span className="text-4xl font-bold text-brand-600">€99</span>
+                    <span className="text-muted-foreground ml-2">/ month</span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ul className="space-y-3.5">
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">Unlimited projects</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">Unlimited team members</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">Advanced blueprints + exports</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">AI Use Case Registry</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">Risk & Policy Management (G1-G3)</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm font-medium">Priority support</span>
-                  </li>
+                <ul className="space-y-3">
+                  {[
+                    'Unlimited projects',
+                    'Unlimited team members',
+                    'Advanced blueprints + exports',
+                    'AI Use Case Registry',
+                    'Risk & Policy Management (G1-G3)',
+                    'Priority support'
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start">
+                      <Check className="h-4 w-4 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
+                      <span className="text-sm font-medium">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
                 <Link href="/signup?plan=pro" className="block">
-                  <Button className="w-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all shadow-md">
+                  <Button variant="brand" className="w-full">
                     Start 14-day trial
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -198,14 +180,14 @@ export default function PricingPage() {
 
           {/* Enterprise */}
           <motion.div variants={fadeIn}>
-            <Card className="h-full rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200 hover:-translate-y-[2px]">
+            <Card variant="default" interactive className="h-full rounded-2xl">
               <CardHeader className="space-y-3">
-                <CardTitle className="text-2xl font-semibold">Enterprise</CardTitle>
-                <CardDescription className="text-base">
-                  For organizations with advanced requirements
+                <CardTitle className="text-xl font-semibold">Enterprise</CardTitle>
+                <CardDescription className="text-sm">
+                  For organizations with advanced requirements.
                 </CardDescription>
-                <Badge variant="outline" className="w-fit border-muted-foreground/30 text-muted-foreground text-xs">
-                  Best for: Large orgs with custom needs
+                <Badge variant="outline" className="w-fit text-xs">
+                  Large orgs with custom needs
                 </Badge>
                 <div className="pt-2">
                   <div className="flex items-baseline">
@@ -214,38 +196,27 @@ export default function PricingPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                <ul className="space-y-3.5">
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Everything in Pro</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Custom governance workflows</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">SSO & advanced security controls</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Dedicated onboarding & training</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Custom integrations & API access</span>
-                  </li>
-                  <li className="flex items-start">
-                    <Check className="h-5 w-5 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Dedicated account manager</span>
-                  </li>
+                <ul className="space-y-3">
+                  {[
+                    'Everything in Pro',
+                    'Custom governance workflows',
+                    'SSO & advanced security controls',
+                    'Dedicated onboarding & training',
+                    'Custom integrations & API access',
+                    'Dedicated account manager'
+                  ].map((feature) => (
+                    <li key={feature} className="flex items-start">
+                      <Check className="h-4 w-4 text-brand-500 mt-0.5 mr-3 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
                 </ul>
 
                 <a
-                  href="mailto:hello@betterthaninterns.com?subject=Enterprise%20Better%20Than%20Interns&body=Hi,%20I'm%20interested%20in%20the%20Enterprise%20plan.%20Here's%20some%20context%20about%20our%20team:"
+                  href="mailto:hello@betterthaninterns.com?subject=Enterprise%20Better%20Than%20Interns&body=Hi,%20I'm%20interested%20in%20the%20Enterprise%20plan."
                   className="block"
                 >
-                  <Button variant="outline" className="w-full hover:-translate-y-[1px] transition-all">
+                  <Button variant="outline" className="w-full">
                     Contact Sales
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -257,101 +228,63 @@ export default function PricingPage() {
       </section>
 
       {/* Comparison Table */}
-      <section className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="bg-surface-subtle/50 py-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
-          className="space-y-8"
+          className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12"
         >
           <motion.div variants={fadeIn} className="text-center space-y-3">
-            <h2 className="text-3xl font-bold">Compare Plans</h2>
-            <p className="text-lg text-muted-foreground">
-              See what's included in each tier
+            <h2 className="text-3xl font-bold tracking-tight">Compare Plans</h2>
+            <p className="text-text-secondary">
+              See what is included in each tier.
             </p>
           </motion.div>
 
           <motion.div variants={fadeIn}>
-            <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/30 shadow-soft overflow-hidden">
+            <Card variant="elevated" className="rounded-2xl overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
-                      <tr className="border-b border-border/40 bg-muted/20">
-                        <th className="text-left py-4 px-6 font-semibold text-sm">Feature</th>
-                        <th className="text-center py-4 px-4 font-semibold text-sm">Starter</th>
-                        <th className="text-center py-4 px-4 font-semibold text-sm bg-brand-50/50">Pro</th>
-                        <th className="text-center py-4 px-4 font-semibold text-sm">Enterprise</th>
+                      <tr className="border-b border-border/40 bg-surface-subtle">
+                        <th className="text-left py-4 px-6 font-medium text-sm">Feature</th>
+                        <th className="text-center py-4 px-4 font-medium text-sm">Starter</th>
+                        <th className="text-center py-4 px-4 font-medium text-sm bg-brand-50/50">Pro</th>
+                        <th className="text-center py-4 px-4 font-medium text-sm">Enterprise</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">Projects</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Up to 3</td>
-                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Unlimited</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Unlimited</td>
-                      </tr>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">Team members</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">1</td>
-                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Unlimited</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Unlimited</td>
-                      </tr>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">AI Use Case Registry</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center bg-brand-50/30">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                      </tr>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">Risk & Policy Management</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center bg-brand-50/30">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                      </tr>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">Custom integrations & API</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center bg-brand-50/30">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                      </tr>
-                      <tr className="border-b border-border/20">
-                        <td className="py-4 px-6 text-sm">SSO & advanced security</td>
-                        <td className="py-4 px-4 text-center">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center bg-brand-50/30">
-                          <span className="text-muted-foreground text-xl">-</span>
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          <Check className="h-5 w-5 text-brand-500 mx-auto" />
-                        </td>
-                      </tr>
-                      <tr>
-                        <td className="py-4 px-6 text-sm">Support</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Email</td>
-                        <td className="py-4 px-4 text-center text-sm bg-brand-50/30">Priority</td>
-                        <td className="py-4 px-4 text-center text-sm text-muted-foreground">Dedicated</td>
-                      </tr>
+                    <tbody className="text-sm">
+                      {[
+                        { feature: 'Projects', starter: 'Up to 3', pro: 'Unlimited', enterprise: 'Unlimited' },
+                        { feature: 'Team members', starter: '1', pro: 'Unlimited', enterprise: 'Unlimited' },
+                        { feature: 'AI Use Case Registry', starter: false, pro: true, enterprise: true },
+                        { feature: 'Risk & Policy Management', starter: false, pro: true, enterprise: true },
+                        { feature: 'Custom integrations & API', starter: false, pro: false, enterprise: true },
+                        { feature: 'SSO & advanced security', starter: false, pro: false, enterprise: true },
+                        { feature: 'Support', starter: 'Email', pro: 'Priority', enterprise: 'Dedicated' },
+                      ].map((row, i) => (
+                        <tr key={row.feature} className={i < 6 ? 'border-b border-border/20' : ''}>
+                          <td className="py-4 px-6">{row.feature}</td>
+                          <td className="py-4 px-4 text-center text-muted-foreground">
+                            {typeof row.starter === 'boolean' ? (
+                              row.starter ? <Check className="h-4 w-4 text-brand-500 mx-auto" /> : <span className="text-lg">-</span>
+                            ) : row.starter}
+                          </td>
+                          <td className="py-4 px-4 text-center bg-brand-50/30">
+                            {typeof row.pro === 'boolean' ? (
+                              row.pro ? <Check className="h-4 w-4 text-brand-500 mx-auto" /> : <span className="text-lg">-</span>
+                            ) : row.pro}
+                          </td>
+                          <td className="py-4 px-4 text-center text-muted-foreground">
+                            {typeof row.enterprise === 'boolean' ? (
+                              row.enterprise ? <Check className="h-4 w-4 text-brand-500 mx-auto" /> : <span className="text-lg">-</span>
+                            ) : row.enterprise}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -362,206 +295,125 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+      <section className="py-24">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
-          className="space-y-12"
+          className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12"
         >
-          <motion.div variants={fadeIn} className="text-center space-y-4">
-            <h2 className="text-4xl font-bold">Frequently Asked Questions</h2>
-            <p className="text-lg text-muted-foreground">
-              Honest answers to the questions you're actually wondering about
+          <motion.div variants={fadeIn} className="text-center space-y-3">
+            <h2 className="text-3xl font-bold tracking-tight">Frequently Asked Questions</h2>
+            <p className="text-text-secondary">
+              Honest answers to the questions you are actually wondering about.
             </p>
           </motion.div>
 
           <motion.div variants={staggerContainer} className="space-y-4">
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
+            {[
+              {
+                q: 'Can I cancel anytime?',
+                a: 'Yes. No long-term contracts, no cancellation fees. If you cancel, you keep access until the end of your billing period. Your data stays in your workspace so you can export or pick up where you left off if you come back.'
+              },
+              {
+                q: 'Do you store my client data?',
+                a: "We store process maps, blueprints, and governance data you create in the app. We use OpenAI's API for AI features with zero retention (they do not train on your data). All data is encrypted at rest and in transit. We never sell or share your data with third parties."
+              },
+              {
+                q: 'Can I use this just for internal processes?',
+                a: "Absolutely. Many teams use Better Than Interns to map and automate their own operations, not just client work. Whether you are a consultant, internal ops team, or compliance department, the tool works the same way."
+              },
+              {
+                q: 'What happens after the 14-day trial?',
+                a: "Your trial includes full Pro access. After 14 days, you can choose to subscribe to Pro, downgrade to Starter (limited projects), or cancel. We will send reminders before your trial ends."
+              },
+              {
+                q: 'Do you offer discounts for nonprofits or educators?',
+                a: 'Yes. We offer 50% off Pro plans for registered nonprofits and educational institutions. Email us with proof of status and we will set you up.'
+              },
+              {
+                q: 'Can I upgrade or downgrade my plan?',
+                a: "Yes, anytime. Upgrades take effect immediately and we will prorate the charge. Downgrades take effect at the end of your current billing cycle."
+              }
+            ].map((faq) => (
+              <motion.div key={faq.q} variants={fadeIn}>
+                <Card variant="default" interactive className="rounded-xl">
+                  <CardHeader className="space-y-2">
+                    <div className="flex items-start gap-3">
+                      <div className="rounded-full bg-brand-50 p-2 flex-shrink-0">
+                        <HelpCircle className="h-4 w-4 text-brand-500" />
+                      </div>
+                      <div className="flex-1 space-y-2">
+                        <CardTitle className="text-base font-medium">{faq.q}</CardTitle>
+                        <CardDescription className="text-sm leading-relaxed">
+                          {faq.a}
+                        </CardDescription>
+                      </div>
                     </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">Can I cancel anytime?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        Yes. No long-term contracts, no cancellation fees. If you cancel, you keep access
-                        until the end of your billing period. Your data stays in your workspace so you can
-                        export or pick up where you left off if you come back.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">Do you store my client data?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        We store process maps, blueprints, and governance data you create in the app.
-                        We use OpenAI's API for AI features with zero retention (they don't train on your data).
-                        All data is encrypted at rest and in transit. We never sell or share your data with third parties.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">Can I use this just for internal processes?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        Absolutely. Many teams use Better Than Interns to map and automate their own operations,
-                        not just client work. Whether you're a consultant, internal ops team, or compliance department,
-                        the tool works the same way.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">What happens after the 14-day trial?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        Your trial includes full Pro access. After 14 days, you can choose to subscribe to Pro,
-                        downgrade to Starter (limited projects), or cancel. We'll send friendly reminders before
-                        your trial ends—no surprise charges.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">Do you offer discounts for nonprofits or educators?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        Yes! We offer 50% off Pro plans for registered nonprofits and educational institutions.
-                        Email us at{' '}
-                        <a
-                          href="mailto:hello@betterthaninterns.com?subject=Nonprofit/Education%20Discount"
-                          className="text-brand-500 hover:text-brand-600 underline underline-offset-2"
-                        >
-                          hello@betterthaninterns.com
-                        </a>{' '}
-                        with proof of status and we'll set you up.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeIn}>
-              <Card className="rounded-2xl border-border/60 bg-gradient-to-br from-card to-muted/40 shadow-soft transition-all hover:shadow-medium hover:border-brand-200">
-                <CardHeader className="space-y-3">
-                  <div className="flex items-start space-x-4">
-                    <div className="rounded-full bg-brand-50 p-2">
-                      <HelpCircle className="h-5 w-5 text-brand-500 flex-shrink-0" />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <CardTitle className="text-lg font-semibold">Can I upgrade or downgrade my plan?</CardTitle>
-                      <CardDescription className="text-base leading-relaxed">
-                        Yes, anytime. Upgrades take effect immediately and we'll prorate the charge. Downgrades
-                        take effect at the end of your current billing cycle. If downgrading to Starter would exceed
-                        the 3-project limit, we'll let you archive or delete projects first.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            </motion.div>
+                  </CardHeader>
+                </Card>
+              </motion.div>
+            ))}
           </motion.div>
         </motion.div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-br from-brand-500 to-brand-600 py-20">
+      <section className="bg-gradient-to-br from-brand-600 via-brand-500 to-brand-600 py-20">
         <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          variants={staggerContainer}
-          className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8"
+          variants={fadeIn}
+          className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white"
         >
-          <motion.h2 variants={fadeIn} className="text-4xl md:text-5xl font-bold text-white">
-            Ready to get started?
-          </motion.h2>
-          <motion.p variants={fadeIn} className="text-xl text-brand-50">
+          <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+            Ready to begin.
+          </h2>
+          <p className="text-lg text-brand-100 mb-10">
             Start your 14-day free trial. No credit card required.
-          </motion.p>
-          <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup?plan=pro">
-              <Button size="lg" className="text-lg px-8 bg-white text-brand-600 hover:bg-brand-50 hover:-translate-y-[2px] transition-all shadow-strong">
+              <Button size="xl" className="bg-white text-brand-600 hover:bg-brand-50 shadow-medium">
                 Start free trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
             <Link href="/">
-              <Button size="lg" variant="outline" className="text-lg px-8 border-white text-white hover:bg-white/10 hover:-translate-y-[2px] transition-all">
+              <Button size="xl" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:border-white/50">
                 Learn more
               </Button>
             </Link>
-          </motion.div>
+          </div>
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-card py-12">
+      {/* Footer - matches landing page */}
+      <footer className="border-t border-border/40 bg-surface-subtle/30 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-4 gap-12">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Image src="/logo.png" alt="BTI" width={20} height={20} className="rounded" />
-                <span className="font-bold">Better Than Interns</span>
+              <div className="flex items-center gap-2">
+                <Image src="/logo.png" alt="BTI" width={24} height={24} className="rounded" />
+                <span className="font-semibold">Better Than Interns</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                AI implementation planning without the hype
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                AI implementation planning without the hype.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground">Product</h4>
+              <h4 className="font-medium text-sm mb-4">Product</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/pricing" className="text-foreground/80 hover:text-brand-500 transition-colors">
+                  <Link href="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/#how-it-works" className="text-foreground/80 hover:text-brand-500 transition-colors">
+                  <Link href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                     How It Works
                   </Link>
                 </li>
@@ -569,42 +421,42 @@ export default function PricingPage() {
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground">Account</h4>
+              <h4 className="font-medium text-sm mb-4">Account</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <Link href="/login" className="text-foreground/80 hover:text-brand-500 transition-colors">
-                    Login
+                  <Link href="/login" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Sign in
                   </Link>
                 </li>
                 <li>
-                  <Link href="/signup" className="text-foreground/80 hover:text-brand-500 transition-colors">
-                    Sign Up
+                  <Link href="/signup" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Create account
                   </Link>
                 </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-xs uppercase tracking-wide text-muted-foreground">Legal & Contact</h4>
+              <h4 className="font-medium text-sm mb-4">Legal & Contact</h4>
               <ul className="space-y-3 text-sm">
                 <li>
-                  <a href="#" className="text-foreground/80 hover:text-brand-500 transition-colors">
-                    Privacy Policy (coming soon)
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Privacy Policy
                   </a>
                 </li>
                 <li>
                   <a
                     href="mailto:hello@betterthaninterns.com?subject=Contact%20Better%20Than%20Interns"
-                    className="text-foreground/80 hover:text-brand-500 transition-colors"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    Contact Us
+                    Contact
                   </a>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="border-t mt-8 pt-8 text-center text-sm text-muted-foreground">
+          <div className="border-t border-border/40 mt-12 pt-8 text-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} Better Than Interns. Built with AI, governed by humans.</p>
           </div>
         </div>

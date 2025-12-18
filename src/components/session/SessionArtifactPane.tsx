@@ -104,14 +104,14 @@ export function SessionArtifactPane({
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-white">
+    <div className="h-full overflow-y-auto bg-card">
       {/* M19: "Outputs from this session" Header */}
-      <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-slate-200">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      <div className="sticky top-0 bg-card z-10 px-6 py-4 border-b border-border">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Outputs from this session
         </h2>
         {hasAnyArtifacts && (
-          <p className="text-[11px] text-slate-400 mt-1">
+          <p className="text-[11px] text-muted-foreground/70 mt-1">
             Created in this session
           </p>
         )}
@@ -134,17 +134,17 @@ export function SessionArtifactPane({
                   className="absolute top-2 right-2 p-1 hover:bg-white/80 rounded-full transition-colors"
                   aria-label="Dismiss suggestion"
                 >
-                  <X className="h-3 w-3 text-slate-400" />
+                  <X className="h-3 w-3 text-muted-foreground" />
                 </button>
                 <div className="pr-6">
                   <div className="flex items-start gap-2 mb-2">
                     <Sparkles className="h-4 w-4 text-brand-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs font-medium text-slate-900 mb-1">
-                        Ready to find automation opportunities?
+                      <p className="text-xs font-medium text-foreground mb-1">
+                        Ready to find automation opportunities.
                       </p>
-                      <p className="text-xs text-slate-600 mb-2">
-                        Let's scan your process to identify where AI can help save time
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Scan your process to identify where AI can help save time.
                       </p>
                     </div>
                   </div>
@@ -154,7 +154,8 @@ export function SessionArtifactPane({
                       setShowScanSuggestion(false);
                     }}
                     size="sm"
-                    className="w-full bg-brand-500 hover:bg-brand-600 text-xs h-8"
+                    variant="brand"
+                    className="w-full text-xs h-8"
                   >
                     <Sparkles className="h-3 w-3 mr-1.5" />
                     Scan for Opportunities
@@ -168,7 +169,7 @@ export function SessionArtifactPane({
         {/* M20: Empty State - First-run specific copy */}
         {!hasAnyArtifacts && (
           <div className="py-16 text-center">
-            <p className="text-sm text-slate-500 max-w-[200px] mx-auto leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-[200px] mx-auto leading-relaxed">
               {isFirstRun
                 ? 'Outputs will appear here as processes are identified and decisions are made.'
                 : 'Outputs will appear as work progresses.'}
@@ -181,18 +182,18 @@ export function SessionArtifactPane({
           <div className="mb-5" ref={outputsPaneRef}>
             <button
               onClick={() => toggleSection('processes')}
-              className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"
+              className="w-full flex items-center justify-between px-1 py-1 hover:bg-muted/50 rounded transition-colors mb-2"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.processes ? (
-                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-3 w-3 text-slate-400" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Processes Identified
                 </h3>
-                <span className="text-[10px] text-slate-400">({artifacts.processes.length})</span>
+                <span className="text-[10px] text-muted-foreground/70">({artifacts.processes.length})</span>
               </div>
             </button>
 
@@ -220,18 +221,18 @@ export function SessionArtifactPane({
           <div className="mb-5">
             <button
               onClick={() => toggleSection('opportunities')}
-              className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"
+              className="w-full flex items-center justify-between px-1 py-1 hover:bg-muted/50 rounded transition-colors mb-2"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.opportunities ? (
-                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-3 w-3 text-slate-400" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
-                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Opportunities Discovered
                 </h3>
-                <span className="text-[10px] text-slate-400">({artifacts.opportunities.length})</span>
+                <span className="text-[10px] text-muted-foreground/70">({artifacts.opportunities.length})</span>
               </div>
             </button>
 
@@ -256,21 +257,21 @@ export function SessionArtifactPane({
 
         {/* M19: Blueprints Section - Decision gravity (heavier border) */}
         {artifacts.blueprints.length > 0 && (
-          <div className="mb-5 pb-4 border-b-2 border-slate-200">
+          <div className="mb-5 pb-4 border-b-2 border-border">
             <button
               onClick={() => toggleSection('blueprints')}
-              className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"
+              className="w-full flex items-center justify-between px-1 py-1 hover:bg-muted/50 rounded transition-colors mb-2"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.blueprints ? (
-                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-3 w-3 text-slate-400" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
                   Blueprints
                 </h3>
-                <span className="text-[10px] text-slate-400">({artifacts.blueprints.length})</span>
+                <span className="text-[10px] text-muted-foreground/70">({artifacts.blueprints.length})</span>
               </div>
             </button>
 
@@ -295,21 +296,21 @@ export function SessionArtifactPane({
 
         {/* M19/M21: AI Use Cases Section - Decision gravity (governance = heavier) */}
         {artifacts.aiUseCases.length > 0 && (
-          <div className="mb-5 pb-4 border-b-2 border-slate-200" ref={governanceRef}>
+          <div className="mb-5 pb-4 border-b-2 border-border" ref={governanceRef}>
             <button
               onClick={() => toggleSection('aiUseCases')}
-              className="w-full flex items-center justify-between px-1 py-1 hover:bg-slate-50 rounded transition-colors mb-2"
+              className="w-full flex items-center justify-between px-1 py-1 hover:bg-muted/50 rounded transition-colors mb-2"
             >
               <div className="flex items-center gap-2">
                 {expandedSections.aiUseCases ? (
-                  <ChevronDown className="h-3 w-3 text-slate-400" />
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 ) : (
-                  <ChevronRight className="h-3 w-3 text-slate-400" />
+                  <ChevronRight className="h-3 w-3 text-muted-foreground" />
                 )}
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-700">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-foreground/80">
                   Governance & Decisions
                 </h3>
-                <span className="text-[10px] text-slate-400">({artifacts.aiUseCases.length})</span>
+                <span className="text-[10px] text-muted-foreground/70">({artifacts.aiUseCases.length})</span>
               </div>
             </button>
 

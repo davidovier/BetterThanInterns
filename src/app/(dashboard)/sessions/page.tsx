@@ -5,12 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useWorkspaceContext } from '@/components/workspace/workspace-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
-import { Loader2, Briefcase, GitBranch, Target } from 'lucide-react';
+import { Loader2, Briefcase, GitBranch, Target, Plus, ArrowRight } from 'lucide-react';
 import { EmptyState } from '@/components/design-system/EmptyState';
 import { MetricCard } from '@/components/design-system/MetricCard';
 import {
@@ -283,18 +283,27 @@ export default function SessionsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50 relative">
+      <div className="min-h-screen bg-gradient-to-b from-surface-subtle to-background">
         <AnimatedBackground />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-8">
           <div>
-            <Skeleton className="h-10 w-64 mb-3" />
-            <Skeleton className="h-5 w-96" />
+            <Skeleton className="h-10 w-64 mb-3 rounded-lg" />
+            <Skeleton className="h-5 w-96 rounded-lg" />
           </div>
           <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="rounded-2xl">
+              <Card key={i} variant="flat" className="rounded-xl">
                 <CardContent className="p-6">
-                  <Skeleton className="h-20" />
+                  <Skeleton className="h-24 rounded-lg" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} variant="flat" className="rounded-xl">
+                <CardContent className="p-5">
+                  <Skeleton className="h-40 rounded-lg" />
                 </CardContent>
               </Card>
             ))}
@@ -305,12 +314,12 @@ export default function SessionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 relative">
+    <div className="min-h-screen bg-gradient-to-b from-surface-subtle to-background">
       {/* Animated Background */}
       <AnimatedBackground />
 
       {/* Content */}
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-8">
         {/* Header */}
         <SessionsHeader
           workspaceName={currentWorkspaceName}
@@ -373,33 +382,44 @@ export default function SessionsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex flex-col items-center justify-center py-16"
+            className="flex flex-col items-center justify-center py-20"
           >
             <EmptyState
               icon={Briefcase}
-              title="No sessions yet"
+              title="No sessions yet."
               description="Start a session to map a process with the assistant, turn it into a visual workflow, and spot automation opportunities."
             />
             <Button
               onClick={() => setShowNewSession(true)}
+              variant="brand"
               size="lg"
-              className="mt-6 bg-brand-600 hover:bg-brand-700 text-white shadow-sm hover:shadow-md"
+              className="mt-8"
             >
-              Create Your First Session
+              <Plus className="h-4 w-4 mr-2" />
+              Create your first session
             </Button>
           </motion.div>
         ) : filteredAndSortedSessions.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-16"
+            className="flex flex-col items-center justify-center py-20"
           >
-            <p className="text-slate-600 text-center">
-              No sessions match your current filter. Try a different filter or create a new session.
-            </p>
+            <Card variant="flat" className="max-w-md text-center p-8">
+              <p className="text-muted-foreground">
+                No sessions match your current filter. Try a different filter or create a new session.
+              </p>
+              <Button
+                onClick={() => setActiveFilter('all')}
+                variant="outline"
+                className="mt-4"
+              >
+                Clear filters
+              </Button>
+            </Card>
           </motion.div>
         ) : (
-          <div className={viewType === 'grid' ? 'grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
+          <div className={viewType === 'grid' ? 'grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
             {filteredAndSortedSessions.map((sessionItem, index) => (
               <SessionCard
                 key={sessionItem.id}
@@ -413,18 +433,18 @@ export default function SessionsPage() {
         )}
       </div>
 
-      {/* M18: New Session Dialog - Executive tone */}
+      {/* New Session Dialog */}
       <Dialog open={showNewSession} onOpenChange={setShowNewSession}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[480px]">
           <DialogHeader>
-            <DialogTitle>New Working Session</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">New working session</DialogTitle>
+            <DialogDescription className="text-base">
               Name your session. The assistant will help you map processes and identify opportunities.
             </DialogDescription>
           </DialogHeader>
-          <form onSubmit={createSession} className="space-y-4 py-4">
+          <form onSubmit={createSession} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="session-title">Session Title</Label>
+              <Label htmlFor="session-title" className="text-sm font-medium">Session title</Label>
               <Input
                 id="session-title"
                 value={newSessionTitle}
@@ -435,10 +455,10 @@ export default function SessionsPage() {
                 autoFocus
               />
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => {
                   setShowNewSession(false);
                   setNewSessionTitle('');
@@ -446,14 +466,17 @@ export default function SessionsPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isCreating} className="bg-brand-600 hover:bg-brand-700">
+              <Button type="submit" variant="brand" disabled={isCreating}>
                 {isCreating ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Creating...
                   </>
                 ) : (
-                  'Create Session'
+                  <>
+                    Create session
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </>
                 )}
               </Button>
             </DialogFooter>
@@ -461,16 +484,16 @@ export default function SessionsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* M18: Edit Dialog - Executive tone */}
+      {/* Edit Dialog */}
       <Dialog open={!!editingSession} onOpenChange={(open) => !open && setEditingSession(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Rename Session</DialogTitle>
-            <DialogDescription>Update the session name.</DialogDescription>
+            <DialogTitle className="text-xl">Rename session</DialogTitle>
+            <DialogDescription>Update the session title.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="edit-title">Session Title</Label>
+              <Label htmlFor="edit-title" className="text-sm font-medium">Session title</Label>
               <Input
                 id="edit-title"
                 value={editTitle}
@@ -480,35 +503,35 @@ export default function SessionsPage() {
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingSession(null)} disabled={isUpdating}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="ghost" onClick={() => setEditingSession(null)} disabled={isUpdating}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate} disabled={isUpdating || !editTitle.trim()}>
+            <Button variant="brand" onClick={handleUpdate} disabled={isUpdating || !editTitle.trim()}>
               {isUpdating ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Saving...
                 </>
               ) : (
-                'Save Changes'
+                'Save changes'
               )}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* M18: Delete Confirmation Dialog - Executive tone */}
+      {/* Delete Confirmation Dialog */}
       <Dialog open={!!deletingSession} onOpenChange={(open) => !open && setDeletingSession(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Delete Session</DialogTitle>
-            <DialogDescription>
-              This will permanently delete "{deletingSession?.title}" and all associated data. This action cannot be undone.
+            <DialogTitle className="text-xl">Delete session</DialogTitle>
+            <DialogDescription className="text-base">
+              This will permanently delete &ldquo;{deletingSession?.title}&rdquo; and all associated data. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingSession(null)} disabled={isDeleting}>
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button variant="ghost" onClick={() => setDeletingSession(null)} disabled={isDeleting}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
@@ -518,7 +541,7 @@ export default function SessionsPage() {
                   Deleting...
                 </>
               ) : (
-                'Delete Session'
+                'Delete session'
               )}
             </Button>
           </DialogFooter>

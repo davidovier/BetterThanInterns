@@ -504,117 +504,118 @@ function AccountContent() {
 
   if (isLoading) {
     return (
-      <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
-        <div>
-          <Skeleton className="h-10 w-48 mb-2" />
-          <Skeleton className="h-5 w-96" />
+      <div className="min-h-screen bg-gradient-to-b from-surface-subtle to-background">
+        <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-8">
+          <div>
+            <Skeleton className="h-9 w-48 mb-3 rounded-lg" />
+            <Skeleton className="h-5 w-72 rounded-lg" />
+          </div>
+          <Skeleton className="h-12 w-full max-w-md rounded-xl" />
+          <Card variant="flat" className="rounded-xl">
+            <CardHeader>
+              <Skeleton className="h-6 w-1/3 rounded-lg" />
+              <Skeleton className="h-4 w-2/3 mt-2 rounded-lg" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </CardContent>
+          </Card>
         </div>
-        <Skeleton className="h-12 w-full max-w-md" />
-        <Card className="rounded-2xl">
-          <CardHeader>
-            <Skeleton className="h-6 w-1/3" />
-            <Skeleton className="h-4 w-2/3 mt-2" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-32 w-full" />
-          </CardContent>
-        </Card>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-8 py-8 space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Account</h1>
-        <p className="text-muted-foreground mt-1">
-          Profile, security, and billing settings.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-surface-subtle to-background">
+      <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-10 py-10 space-y-8">
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Account</h1>
+          <p className="text-muted-foreground mt-1">
+            Profile, security, and billing settings.
+          </p>
+        </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-muted/30 p-1">
-          <TabsTrigger
-            value="profile"
-            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
-          >
-            <User className="h-4 w-4 mr-2" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger
-            value="security"
-            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
-          >
-            <Lock className="h-4 w-4 mr-2" />
-            Security
-          </TabsTrigger>
-          <TabsTrigger
-            value="billing"
-            className="rounded-lg data-[state=active]:bg-brand-50 data-[state=active]:text-brand-700 data-[state=active]:shadow-soft transition-all"
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Billing
-          </TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="grid w-full max-w-md grid-cols-3 rounded-xl bg-muted/40 p-1.5 shadow-soft">
+            <TabsTrigger
+              value="profile"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft transition-all text-sm font-medium"
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger
+              value="security"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft transition-all text-sm font-medium"
+            >
+              <Lock className="h-4 w-4 mr-2" />
+              Security
+            </TabsTrigger>
+            <TabsTrigger
+              value="billing"
+              className="rounded-lg data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-soft transition-all text-sm font-medium"
+            >
+              <CreditCard className="h-4 w-4 mr-2" />
+              Billing
+            </TabsTrigger>
+          </TabsList>
 
         {/* Profile Tab */}
-        <TabsContent value="profile" className="space-y-6">
-          <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <User className="h-5 w-5 text-brand-500" />
-                <CardTitle className="text-base">Profile & Login</CardTitle>
+        <TabsContent value="profile" className="space-y-6 mt-6">
+          <Card className="shadow-soft">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="rounded-lg bg-brand-50 p-2">
+                  <User className="h-4 w-4 text-brand-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Profile</CardTitle>
+                  <CardDescription>Your account information.</CardDescription>
+                </div>
               </div>
-              <CardDescription className="text-xs">
-                Your account information.
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4">
+            <CardContent className="space-y-5">
+              <div className="grid gap-5">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Name
-                  </Label>
+                  <Label htmlFor="name" className="text-sm font-medium">Name</Label>
                   <Input
                     id="name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="rounded-xl"
+                    className="h-11"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Email
-                  </Label>
+                  <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="rounded-xl"
+                    className="h-11"
                   />
                 </div>
               </div>
 
               {email !== profile?.email && (
-                <div className="space-y-2">
-                  <Label htmlFor="current-password" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Current Password (required for email change)
+                <div className="space-y-2 pt-2 border-t border-border/50">
+                  <Label htmlFor="current-password" className="text-sm font-medium">
+                    Current password
                   </Label>
                   <Input
                     id="current-password"
                     type="password"
                     value={currentPassword}
                     onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter current password"
-                    className="rounded-xl"
+                    placeholder="Required for email change"
+                    className="h-11"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Changing your email requires your current password because we're not monsters.
+                    Changing your email requires your current password.
                   </p>
                 </div>
               )}
@@ -622,44 +623,42 @@ function AccountContent() {
               <Button
                 onClick={saveProfile}
                 disabled={isSavingProfile}
-                className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
+                variant="brand"
               >
-                {isSavingProfile ? 'Saving...' : 'Save Profile'}
+                {isSavingProfile ? 'Saving...' : 'Save changes'}
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Security Tab */}
-        <TabsContent value="security" className="space-y-6">
-          <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-            <CardHeader>
-              <div className="flex items-center space-x-2">
-                <Lock className="h-5 w-5 text-brand-500" />
-                <CardTitle className="text-base">Password & Security</CardTitle>
+        <TabsContent value="security" className="space-y-6 mt-6">
+          <Card className="shadow-soft">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="rounded-lg bg-brand-50 p-2">
+                  <Lock className="h-4 w-4 text-brand-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Password</CardTitle>
+                  <CardDescription>Manage your account security.</CardDescription>
+                </div>
               </div>
-              <CardDescription className="text-xs">
-                Keep your account locked down. Your therapist would be proud.
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-5">
               {!showPasswordForm ? (
                 <Button
                   onClick={() => setShowPasswordForm(true)}
                   variant="outline"
-                  className="rounded-xl hover:-translate-y-[1px] transition-all"
                 >
                   <Lock className="h-4 w-4 mr-2" />
-                  Change Password
+                  Change password
                 </Button>
               ) : (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Change Password
-                  </h4>
+                <div className="space-y-5">
                   <div className="grid gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs">Current Password</Label>
+                      <Label className="text-sm font-medium">Current password</Label>
                       <Input
                         type="password"
                         value={passwordData.currentPassword}
@@ -669,11 +668,11 @@ function AccountContent() {
                             currentPassword: e.target.value,
                           })
                         }
-                        className="rounded-xl"
+                        className="h-11"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">New Password</Label>
+                      <Label className="text-sm font-medium">New password</Label>
                       <Input
                         type="password"
                         value={passwordData.newPassword}
@@ -683,15 +682,15 @@ function AccountContent() {
                             newPassword: e.target.value,
                           })
                         }
-                        placeholder="At least 10 characters, with letter and number"
-                        className="rounded-xl"
+                        placeholder="At least 10 characters"
+                        className="h-11"
                       />
                       <p className="text-xs text-muted-foreground">
                         At least 10 characters, with a letter and a number.
                       </p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Confirm New Password</Label>
+                      <Label className="text-sm font-medium">Confirm new password</Label>
                       <Input
                         type="password"
                         value={passwordData.confirmPassword}
@@ -701,17 +700,17 @@ function AccountContent() {
                             confirmPassword: e.target.value,
                           })
                         }
-                        className="rounded-xl"
+                        className="h-11"
                       />
                     </div>
                   </div>
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2">
                     <Button
                       onClick={changePassword}
                       disabled={isChangingPassword}
-                      className="bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] hover:shadow-md transition-all"
+                      variant="brand"
                     >
-                      {isChangingPassword ? 'Changing...' : 'Change Password'}
+                      {isChangingPassword ? 'Changing...' : 'Update password'}
                     </Button>
                     <Button
                       onClick={() => {
@@ -723,7 +722,6 @@ function AccountContent() {
                         });
                       }}
                       variant="ghost"
-                      className="hover:-translate-y-[1px] transition-all"
                     >
                       Cancel
                     </Button>
@@ -731,9 +729,9 @@ function AccountContent() {
                 </div>
               )}
 
-              <div className="pt-6 border-t border-border space-y-3">
-                <h4 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  Sessions & Devices
+              <div className="pt-5 border-t border-border/50 space-y-2">
+                <h4 className="text-sm font-medium text-foreground">
+                  Sessions
                 </h4>
                 <p className="text-sm text-muted-foreground">
                   Active sessions will be shown here.
@@ -742,62 +740,58 @@ function AccountContent() {
             </CardContent>
           </Card>
 
-          {/* Danger Zone in Security Tab */}
-          <Card className="rounded-2xl border-2 border-red-200 bg-gradient-to-br from-red-50/50 to-card shadow-soft hover:shadow-medium transition-all">
-            <CardHeader>
-              <div className="flex items-center space-x-3">
-                <div className="rounded-full bg-red-100 p-2">
-                  <AlertTriangle className="h-5 w-5 text-red-600" />
+          {/* Account Deletion - less alarming per CLAUDE.md */}
+          <Card className="shadow-soft border-border/60">
+            <CardHeader className="pb-4">
+              <div className="flex items-center space-x-2.5">
+                <div className="rounded-lg bg-muted p-2">
+                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-base text-red-700 font-bold">Danger Zone</CardTitle>
-                  <CardDescription className="text-xs text-red-600 mt-1">
-                    Delete your account and personal data. This can't be undone.
-                  </CardDescription>
+                  <CardTitle className="text-lg">Delete account</CardTitle>
+                  <CardDescription>Permanently remove your account and data.</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                We'll delete your personal data and remove you from all workspaces.
-                Workspaces shared with other people stay active; your personal
-                workspace may be removed.
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                This will delete your personal data and remove you from all workspaces.
+                Workspaces shared with other people stay active. This action cannot be undone.
               </p>
 
               <Button
-                variant="destructive"
+                variant="outline"
                 onClick={() => setShowDeleteDialog(true)}
-                className="rounded-xl hover:-translate-y-[1px] hover:shadow-md transition-all"
+                className="text-muted-foreground hover:text-destructive hover:border-destructive"
               >
-                Delete Account
+                Delete account
               </Button>
 
               <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <DialogContent className="rounded-2xl">
+                <DialogContent className="sm:max-w-[440px]">
                   <DialogHeader>
-                    <DialogTitle>Delete Account</DialogTitle>
-                    <DialogDescription>
-                      This will permanently delete your account and all associated data.
-                      This action cannot be undone.
+                    <DialogTitle className="text-xl">Delete account</DialogTitle>
+                    <DialogDescription className="text-base">
+                      This will permanently delete your account and all associated data. This action cannot be undone.
                     </DialogDescription>
                   </DialogHeader>
 
-                  <div className="space-y-4 py-4">
+                  <div className="space-y-4 pt-2">
                     <div className="space-y-2">
-                      <Label htmlFor="delete-password">Current Password</Label>
+                      <Label htmlFor="delete-password" className="text-sm font-medium">Current password</Label>
                       <Input
                         id="delete-password"
                         type="password"
                         value={deletePassword}
                         onChange={(e) => setDeletePassword(e.target.value)}
                         placeholder="Enter your password"
-                        className="rounded-xl"
+                        className="h-11"
                       />
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="delete-confirmation">
-                        Type <strong>DELETE</strong> to confirm
+                      <Label htmlFor="delete-confirmation" className="text-sm font-medium">
+                        Type DELETE to confirm
                       </Label>
                       <Input
                         id="delete-confirmation"
@@ -805,20 +799,19 @@ function AccountContent() {
                         value={deleteConfirmation}
                         onChange={(e) => setDeleteConfirmation(e.target.value)}
                         placeholder="DELETE"
-                        className="rounded-xl"
+                        className="h-11"
                       />
                     </div>
                   </div>
 
-                  <DialogFooter>
+                  <DialogFooter className="gap-2 sm:gap-0 pt-2">
                     <Button
-                      variant="outline"
+                      variant="ghost"
                       onClick={() => {
                         setShowDeleteDialog(false);
                         setDeletePassword('');
                         setDeleteConfirmation('');
                       }}
-                      className="rounded-xl"
                     >
                       Cancel
                     </Button>
@@ -830,9 +823,8 @@ function AccountContent() {
                         !deletePassword ||
                         deleteConfirmation !== 'DELETE'
                       }
-                      className="rounded-xl"
                     >
-                      {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                      {isDeletingAccount ? 'Deleting...' : 'Delete account'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -842,19 +834,21 @@ function AccountContent() {
         </TabsContent>
 
         {/* Billing Tab */}
-        <TabsContent value="billing" className="space-y-6">
+        <TabsContent value="billing" className="space-y-6 mt-6">
           {currentWorkspaceId && (
             <>
-              {/* M25: Usage Section */}
-              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-                <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <Activity className="h-5 w-5 text-brand-500" />
-                    <CardTitle className="text-base">Usage</CardTitle>
+              {/* Usage Section */}
+              <Card className="shadow-soft">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="rounded-lg bg-brand-50 p-2">
+                      <Activity className="h-4 w-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Usage</CardTitle>
+                      <CardDescription>Intelligence usage for the current billing period.</CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-xs">
-                    Intelligence usage for the current billing period.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {usage ? (
@@ -904,18 +898,22 @@ function AccountContent() {
                 </CardContent>
               </Card>
 
-              {/* M25: Pay-As-You-Go Section */}
-              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-                <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="h-5 w-5 text-brand-500" />
-                    <CardTitle className="text-base">Pay-As-You-Go</CardTitle>
+              {/* Pay-As-You-Go Section */}
+              <Card className="shadow-soft">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="rounded-lg bg-brand-50 p-2">
+                      <CreditCard className="h-4 w-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Pay-as-you-go</CardTitle>
+                      <CardDescription>
+                        {currentWorkspacePlan === 'starter'
+                          ? 'Available on Pro.'
+                          : 'Continue using intelligence after base allowance is exhausted.'}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-xs">
-                    {currentWorkspacePlan === 'starter'
-                      ? 'Available on Pro.'
-                      : 'Continue using intelligence after base allowance is exhausted.'}
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {currentWorkspacePlan === 'starter' ? (
@@ -1005,15 +1003,19 @@ function AccountContent() {
               </Card>
 
               {/* Current Plan Card */}
-              <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-                <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <CreditCard className="h-5 w-5 text-brand-500" />
-                    <CardTitle className="text-base">Current Plan</CardTitle>
+              <Card className="shadow-soft">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="rounded-lg bg-brand-50 p-2">
+                      <Shield className="h-4 w-4 text-brand-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">Current plan</CardTitle>
+                      <CardDescription>
+                        You are on the {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
+                      </CardDescription>
+                    </div>
                   </div>
-                  <CardDescription className="text-xs">
-                    You're on the {currentWorkspacePlan.charAt(0).toUpperCase() + currentWorkspacePlan.slice(1)} plan{currentWorkspaceName ? ` in ${currentWorkspaceName} workspace` : ''}.
-                  </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center justify-between">
@@ -1077,39 +1079,41 @@ function AccountContent() {
 
               {/* Upgrade Options (only show if not on highest plan) */}
               {currentWorkspacePlan !== 'enterprise' && (
-                <Card className="rounded-2xl border-border/60 bg-card shadow-soft hover:shadow-medium transition-all">
-                  <CardHeader>
-                    <CardTitle className="text-base">Upgrade Your Plan</CardTitle>
-                    <CardDescription className="text-xs">
-                      Scale up when you're ready. Powered by Stripe (EUR, Europe-friendly).
+                <Card className="shadow-soft">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="text-lg">Upgrade plan</CardTitle>
+                    <CardDescription>
+                      Scale up when ready. Powered by Stripe (EUR, Europe-friendly).
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {currentWorkspacePlan === 'starter' && (
                       <>
-                        <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-4">
-                          <div className="flex items-start justify-between mb-3">
+                        <div className="rounded-xl border-2 border-brand-200 bg-brand-50/30 p-5">
+                          <div className="flex items-start justify-between mb-4">
                             <div>
                               <h4 className="font-semibold text-base">Pro</h4>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                For teams actually shipping automations
+                              <p className="text-sm text-muted-foreground mt-1">
+                                For teams actually shipping automations.
                               </p>
                             </div>
+                            <Badge className="bg-brand-500 text-white text-xs">Recommended</Badge>
                           </div>
                           <Button
                             onClick={() => createCheckoutSession('pro')}
                             disabled={isCreatingCheckout}
-                            className="w-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                            variant="brand"
+                            className="w-full"
                           >
                             {isCreatingCheckout ? 'Creating...' : 'Upgrade to Pro'}
                           </Button>
                         </div>
 
-                        <div className="rounded-xl border border-border/60 p-4">
-                          <div className="flex items-start justify-between mb-3">
+                        <div className="rounded-xl border border-border/60 p-5">
+                          <div className="flex items-start justify-between mb-4">
                             <div>
                               <h4 className="font-semibold text-base">Enterprise</h4>
-                              <p className="text-xs text-muted-foreground mt-1">
+                              <p className="text-sm text-muted-foreground mt-1">
                                 Custom terms and invoicing available.
                               </p>
                             </div>
@@ -1118,37 +1122,38 @@ function AccountContent() {
                             onClick={() => createCheckoutSession('enterprise')}
                             disabled={isCreatingCheckout}
                             variant="outline"
-                            className="w-full hover:-translate-y-[1px] transition-all"
+                            className="w-full"
                           >
-                            {isCreatingCheckout ? 'Creating...' : 'Upgrade to Enterprise'}
+                            {isCreatingCheckout ? 'Creating...' : 'Contact for Enterprise'}
                           </Button>
                         </div>
                       </>
                     )}
 
                     {currentWorkspacePlan === 'pro' && (
-                      <div className="rounded-xl border border-border/60 p-4">
-                        <div className="flex items-start justify-between mb-3">
+                      <div className="rounded-xl border border-border/60 p-5">
+                        <div className="flex items-start justify-between mb-4">
                           <div>
                             <h4 className="font-semibold text-base">Enterprise</h4>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Bring your lawyers, we'll wait
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Custom terms and invoicing available.
                             </p>
                           </div>
                         </div>
                         <Button
                           onClick={() => createCheckoutSession('enterprise')}
                           disabled={isCreatingCheckout}
-                          className="w-full bg-brand-500 hover:bg-brand-600 hover:-translate-y-[1px] transition-all"
+                          variant="brand"
+                          className="w-full"
                         >
                           {isCreatingCheckout ? 'Creating...' : 'Upgrade to Enterprise'}
                         </Button>
                       </div>
                     )}
 
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground pt-2">
                       Billing is handled securely through Stripe. Cancel anytime.
-                      {!billingStatus?.stripeEnabled && ' (Stripe setup required - contact support for manual upgrades)'}
+                      {!billingStatus?.stripeEnabled && ' Stripe setup required. Contact support for manual upgrades.'}
                     </p>
                   </CardContent>
                 </Card>
@@ -1158,49 +1163,53 @@ function AccountContent() {
         </TabsContent>
       </Tabs>
 
-      {/* M25: PAYG Confirmation Modal */}
+      {/* PAYG Confirmation Modal */}
       <Dialog open={showPaygConfirmModal} onOpenChange={setShowPaygConfirmModal}>
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
-            <DialogTitle>Confirm Pay-As-You-Go Settings</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl">Confirm settings</DialogTitle>
+            <DialogDescription className="text-base">
               {pendingPaygEnabled
                 ? `You are setting a monthly cap of €${pendingPaygCapEur}. Once base usage is exhausted, you will be charged at €0.04 per unit up to this cap.`
                 : 'You are disabling pay-as-you-go. AI features will stop when base allowance is exhausted.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-2">
             <p className="text-sm text-muted-foreground">
               This setting can be changed at any time.
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setShowPaygConfirmModal(false)}
-              className="rounded-xl"
             >
               Cancel
             </Button>
             <Button
               onClick={confirmPaygSettings}
               disabled={isSavingPayg}
-              className="rounded-xl bg-brand-500 hover:bg-brand-600"
+              variant="brand"
             >
               {isSavingPayg ? 'Saving...' : 'Confirm'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
 
 export default function AccountPage() {
   return (
-    <Suspense fallback={<div className="max-w-5xl mx-auto px-8 py-8">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-surface-subtle to-background flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    }>
       <AccountContent />
     </Suspense>
   );
