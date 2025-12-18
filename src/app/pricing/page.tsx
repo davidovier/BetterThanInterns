@@ -382,7 +382,7 @@ export default function PricingPage() {
               </Button>
             </Link>
             <Link href="/">
-              <Button size="xl" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:border-white/50">
+              <Button size="xl" variant="outline" className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:border-white/50">
                 Learn more
               </Button>
             </Link>
